@@ -1,0 +1,40 @@
+name: Release
+on:
+  pull_request:
+    types:
+      - closed
+jobs:
+  tag:
+    name: Tag
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - id: bump
+        name: Determine version bump
+        uses: zwaldowski/match-label-action@v5
+        with:
+          allowed: major, minor, patch
+
+      - id: tag
+        uses: zwaldowski/semver-release-action@v4
+        name: Create Tag
+        with:
+          bump: ${{ steps.bump.outputs.match }}
+          prefix: 'v'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.bump.outputs.match != 'none'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag.outputs.version_tag }}
+          name: Release ${{ steps.tag.outputs.version_tag }}
+          body: |
+            ## What's New
+            See the [changelog](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }})
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,62 @@
+name: Test
+on: pull_request_target
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    permissions:
+      id-token: write
+      contents: read
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+          go-version-file: test/go.mod
+          cache: true
+          cache-dependency-path: test/go.mod
+
+      - name: AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: eu-central-1
+          role-to-assume: arn:aws:iam::867344431996:role/terratest-microservice
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Run Tests
+        shell: bash
+        working-directory: test/
+        run: |
+          go install github.com/jstemmer/go-junit-report@latest
+          go test -v ./... | go-junit-report -set-exit-code > report.xml
+
+      - name: Post Test Summary
+        uses: test-summary/action@v2
+        with:
+          paths: |
+            test/report.xml
+        if: always()
