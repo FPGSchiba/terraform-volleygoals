@@ -5,6 +5,8 @@
 *.tfstate
 *.tfstate.*
 
+*.lock.hcl
+
 # Crash log files
 crash.log
 crash.*.log
@@ -38,3 +40,6 @@ terraform.rc
 
 # IDE
 .idea
+
+# Built Code
+*.zip
