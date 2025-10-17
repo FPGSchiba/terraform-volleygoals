@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"go.opentelemetry.io/contrib/detectors/aws/ec2"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 	pxray "go.opentelemetry.io/contrib/propagators/aws/xray"
@@ -88,7 +88,7 @@ func response(status int, body interface{}) (*events.APIGatewayProxyResponse, er
 
 func handleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Parse the input event
-	secretArn := os.Getenv("DB_SECRET_ARN")
+	tableName := os.Getenv("TABLE_TEST_NAME")
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -96,17 +96,18 @@ func handleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	}
 
 	otelaws.AppendMiddlewares(&cfg.APIOptions)
-	svc := secretsmanager.NewFromConfig(cfg)
+	ddb := dynamodb.NewFromConfig(cfg)
 
-	input := &secretsmanager.GetSecretValueInput{
-		SecretId:     aws.String(secretArn),
-		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
+	input := &dynamodb.DescribeTableInput{
+		TableName: aws.String(tableName),
 	}
 
-	_, err = svc.GetSecretValue(ctx, input)
+	result, err := ddb.DescribeTable(ctx, input)
 	if err != nil {
 		log.Fatalf("unable to load secret, %s", err.Error())
 	}
+
+	log.Printf("Successfully loaded table %v", result.Table)
 
 	// Return the region from environment variable
 	return response(http.StatusOK,

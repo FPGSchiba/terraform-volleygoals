@@ -1,5 +1,5 @@
 module "mc_test" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.2.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.2.3"
 
   api_name           = aws_api_gateway_rest_api.api.name
   code_dir           = "${path.module}/files/src"
@@ -11,43 +11,20 @@ module "mc_test" {
   authorizer_id      = aws_api_gateway_authorizer.this.id
   authorization_type = "COGNITO_USER_POOLS"
   enable_tracing     = true
-  vpc_id             = module.vpc.vpc_id
-  vpc_networked      = true
+  timeout            = 29
+  vpc_networked      = false
 
   environment_variables = {
-    "DB_SECRET_ARN" = module.db.secret_arn
+    "TABLE_TEST_NAME" = aws_dynamodb_table.test.name
   }
 
   additional_iam_statements = [
     {
       actions = [
-        "secretsmanager:GetSecretValue"
+        "dynamodb:DescribeTable",
       ]
       resources = [
-        module.db.secret_arn
-      ]
-    }
-  ]
-
-  security_groups = [
-    {
-      name        = "${var.prefix}-volleygoals-lambda"
-      description = "Security group for VolleyGoals Lambda functions"
-      rules = [
-        {
-          type             = "egress"
-          ip_protocol      = "-1"
-          ipv4_cidr_blocks = ["0.0.0.0/0"]
-          ipv6_cidr_blocks = ["::/0"]
-        },
-        {
-          type             = "ingress"
-          from_port        = 5432
-          to_port          = 5432
-          ip_protocol      = "tcp"
-          ipv4_cidr_blocks = ["172.16.0.0/16"] # VPC
-          ipv6_cidr_blocks = []                # VPC
-        }
+        aws_dynamodb_table.test.arn
       ]
     }
   ]
