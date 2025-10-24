@@ -3,8 +3,9 @@
 package main
 
 import (
-	"github.com/aws/aws-lambda-go/events"
 	"testing"
+
+	"github.com/aws/aws-lambda-go/events"
 )
 
 func TestConnection(t *testing.T) {
