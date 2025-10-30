@@ -1,4 +1,4 @@
-//go:build connection
+//go:build getTeam
 
 package main
 

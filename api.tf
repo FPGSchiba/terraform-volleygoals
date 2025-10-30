@@ -6,12 +6,19 @@ resource "aws_api_gateway_rest_api" "api" {
     types = ["REGIONAL"]
   }
 
-  tags = merge(
-    {
-      "Application" = "volleygoals"
-    },
-    var.tags,
-  )
+  tags = local.tags
+}
+
+resource "aws_api_gateway_resource" "api" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = "api"
+}
+
+resource "aws_api_gateway_resource" "v1" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.api.id
+  path_part   = "v1"
 }
 
 resource "aws_api_gateway_authorizer" "this" {
@@ -26,12 +33,7 @@ resource "aws_acm_certificate" "api" {
   validation_method = "DNS"
   region            = "eu-central-1" # API Gateway only supports certificates in us-east-1 for edge-optimized and eu-central-1 for regional
 
-  tags = merge(
-    {
-      "Application" = "volleygoals"
-    },
-    var.tags,
-  )
+  tags = local.tags
 }
 
 resource "aws_route53_record" "api_cert_validation" {
@@ -65,12 +67,7 @@ resource "aws_api_gateway_domain_name" "this" {
     types = ["REGIONAL"]
   }
 
-  tags = merge(
-    {
-      "Application" = "volleygoals"
-    },
-    var.tags,
-  )
+  tags = local.tags
 }
 
 resource "aws_route53_record" "api_domain" {
@@ -93,7 +90,8 @@ resource "aws_api_gateway_deployment" "this" {
   }
 
   depends_on = [
-    module.mc_test
+    module.get_team_ms,
+    module.get_teams_ms,
   ]
 }
 
@@ -131,12 +129,7 @@ resource "aws_cloudwatch_log_group" "api" {
   name              = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.api.id}/api"
   retention_in_days = 30
 
-  tags = merge(
-    {
-      "Application" = "volleygoals"
-    },
-    var.tags,
-  )
+  tags = local.tags
 }
 
 resource "aws_api_gateway_account" "this" {
