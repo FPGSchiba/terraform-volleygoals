@@ -1,6 +1,6 @@
-//go:build getTeams
+//go:build getTeam
 
-package main
+package router
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
-func handleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	// Return the region from environment variable
 	return utils.Response(http.StatusOK,
 		map[string]interface{}{

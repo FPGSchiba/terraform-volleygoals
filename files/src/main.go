@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/router"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -17,5 +18,5 @@ func init() {
 }
 
 func main() {
-	lambda.Start(handleRequest)
+	lambda.Start(router.HandleRequest)
 }

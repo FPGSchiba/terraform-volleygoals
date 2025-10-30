@@ -87,11 +87,16 @@ resource "aws_api_gateway_deployment" "this" {
 
   lifecycle {
     create_before_destroy = true
+    replace_triggered_by = [ # TODO: improve this list with all modules
+    ]
   }
 
   depends_on = [
     module.get_team_ms,
     module.get_teams_ms,
+    module.create_team_ms,
+    module.delete_team_ms,
+    module.update_team_ms,
   ]
 }
 

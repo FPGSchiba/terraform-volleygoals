@@ -1,6 +1,6 @@
-//go:build getTeams
+//go:build getTeam
 
-package main
+package router
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestConnection(t *testing.T) {
-	resp, err := handleRequest(t.Context(), events.APIGatewayProxyRequest{})
+	resp, err := HandleRequest(t.Context(), events.APIGatewayProxyRequest{})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
