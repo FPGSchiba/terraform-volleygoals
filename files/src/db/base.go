@@ -25,7 +25,7 @@ var commentsTableName = os.Getenv("COMMENTS_TABLE_NAME")
 var commentFilesTableName = os.Getenv("COMMENT_FILES_TABLE_NAME")
 
 func GetClient() *dynamodb.Client {
-	if client != nil {
+	if client == nil {
 		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
 			log.Fatalf("unable to load AWS-SDK config, %v", err)

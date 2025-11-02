@@ -14,7 +14,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("failed to setup tracing: %v", err)
 	}
-	db.GetClient() // Initialize DB client
+	db.GetClient()
 }
 
 func main() {

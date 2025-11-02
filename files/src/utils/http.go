@@ -6,6 +6,20 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
+type ResponseMessage string
+
+const (
+	MsgInternalServerError ResponseMessage = "error.internalServerError"
+	MsgBadRequest          ResponseMessage = "error.badRequest"
+	MsgNotFound            ResponseMessage = "error.notFound"
+	MsgUnauthorized        ResponseMessage = "error.unauthorized"
+	MsgForbidden           ResponseMessage = "error.forbidden"
+	MsgErrorTeamExists     ResponseMessage = "error.team.exists"
+
+	MsgSuccess            ResponseMessage = "success.ok"
+	MsgSuccessTeamCreated ResponseMessage = "success.team.created"
+)
+
 func Response(status int, body interface{}) (*events.APIGatewayProxyResponse, error) {
 	resp := events.APIGatewayProxyResponse{
 		Headers: map[string]string{
@@ -23,4 +37,26 @@ func Response(status int, body interface{}) (*events.APIGatewayProxyResponse, er
 	resp.Body = string(sBody)
 
 	return &resp, nil
+}
+
+func SuccessResponse(status int, message ResponseMessage, data interface{}) (*events.APIGatewayProxyResponse, error) {
+	respMap := map[string]interface{}{
+		"message": string(message),
+	}
+	if data == nil {
+		return Response(status, respMap)
+	}
+	if m, ok := data.(map[string]interface{}); ok {
+		for k, v := range m {
+			respMap[k] = v
+		}
+		return Response(status, respMap)
+	}
+	// Fallback: include data under "data" key
+	respMap["data"] = data
+	return Response(status, respMap)
+}
+
+func ErrorResponse(status int, message ResponseMessage, err error) (*events.APIGatewayProxyResponse, error) {
+	return Response(status, map[string]interface{}{"message": string(message), "error": err.Error()})
 }

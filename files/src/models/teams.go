@@ -16,7 +16,7 @@ const (
 
 type Team struct {
 	Id        string     `dynamodbav:"id" json:"id"`
-	Name      string     `dynamodbav:"name" json:"name"`
+	Name      string     `dynamodbav:"teamName" json:"name"`
 	Status    TeamStatus `dynamodbav:"status" json:"status"`
 	CreatedAt time.Time  `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time  `dynamodbav:"updatedAt" json:"updatedAt"`
@@ -47,7 +47,7 @@ func (t *Team) ToAttributeValues() map[string]types.AttributeValue {
 
 	attributeValues := map[string]types.AttributeValue{
 		"id":        id,
-		"name":      name,
+		"teamName":  name,
 		"status":    status,
 		"createdAt": createdAt,
 		"updatedAt": updatedAt,

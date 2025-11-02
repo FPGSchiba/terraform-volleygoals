@@ -5,7 +5,6 @@ package router
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -18,21 +17,22 @@ type CreateTeamRequest struct {
 }
 
 func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	log.Printf("Event: %v", event)
 	var request CreateTeamRequest
 	err := json.Unmarshal([]byte(event.Body), &request)
 	if err != nil {
-		return nil, err // TODO: improve error handling
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
 	team, err := db.CreateTeam(context.Background(), request.Name)
 	if err != nil {
-		return nil, err // TODO: improve error handling
+		if err.Error() == "team already exists" {
+			return utils.ErrorResponse(http.StatusBadRequest, utils.MsgErrorTeamExists, err)
+		}
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
-	log.Printf("Created team: %v", team)
 	// Return the region from environment variable
-	return utils.Response(http.StatusOK,
+	return utils.SuccessResponse(http.StatusOK,
+		utils.MsgSuccessTeamCreated,
 		map[string]interface{}{
-			"message": "Team created successfully",
-			"team":    team,
+			"team": team,
 		})
 }
