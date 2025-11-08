@@ -9,7 +9,7 @@ import (
 
 type TeamSettings struct {
 	Id                          string    `dynamodbav:"id" json:"id"`
-	TeamID                      string    `dynamodbav:"id" json:"teamId"`
+	TeamID                      string    `dynamodbav:"teamId" json:"teamId"`
 	AllowFileUploads            bool      `dynamodbav:"allowFileUploads" json:"allowFileUploads"`
 	AllowTeamGoalComments       bool      `dynamodbav:"allowTeamGoalComments" json:"allowTeamGoalComments"`
 	AllowIndividualGoalComments bool      `dynamodbav:"allowIndividualGoalComments" json:"allowIndividualGoalComments"`

@@ -1,16 +1,13 @@
 package db
 
 import (
-	"context"
 	"log"
 	"os"
+	"sync"
 
-	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 )
-
-var client *dynamodb.Client
 
 // Table Names
 var teamsTableName = os.Getenv("TEAMS_TABLE_NAME")
@@ -24,17 +21,25 @@ var progressTableName = os.Getenv("PROGRESS_TABLE_NAME")
 var commentsTableName = os.Getenv("COMMENTS_TABLE_NAME")
 var commentFilesTableName = os.Getenv("COMMENT_FILES_TABLE_NAME")
 
+var (
+	client     *dynamodb.Client
+	clientOnce sync.Once
+	cfg        *aws.Config
+)
+
+// InitClient initializes the DynamoDB client with the provided config
+// This should be called once during init() in main.go
+func InitClient(awsConfig *aws.Config) {
+	clientOnce.Do(func() {
+		cfg = awsConfig
+		client = dynamodb.NewFromConfig(*cfg)
+	})
+}
+
+// GetClient returns the initialized client
 func GetClient() *dynamodb.Client {
 	if client == nil {
-		cfg, err := config.LoadDefaultConfig(context.TODO())
-		if err != nil {
-			log.Fatalf("unable to load AWS-SDK config, %v", err)
-		}
-
-		otelaws.AppendMiddlewares(&cfg.APIOptions)
-		client = dynamodb.NewFromConfig(cfg)
-		return client
-	} else {
-		return client
+		log.Fatal("❌ DynamoDB client not initialized. Call InitClient first.")
 	}
+	return client
 }

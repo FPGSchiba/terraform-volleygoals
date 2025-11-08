@@ -9,13 +9,22 @@ import (
 type ResponseMessage string
 
 const (
+	// General errors
 	MsgInternalServerError ResponseMessage = "error.internalServerError"
 	MsgBadRequest          ResponseMessage = "error.badRequest"
-	MsgNotFound            ResponseMessage = "error.notFound"
-	MsgUnauthorized        ResponseMessage = "error.unauthorized"
-	MsgForbidden           ResponseMessage = "error.forbidden"
-	MsgErrorTeamExists     ResponseMessage = "error.team.exists"
+	MsgErrorForbidden      ResponseMessage = "error.forbidden"
+	MsgErrorNotFound       ResponseMessage = "error.notFound"
+	MsgNotImplemented      ResponseMessage = "error.notImplemented"
+	MsgErrorUnauthorized   ResponseMessage = "error.unauthorized"
 
+	// Team related errors
+	MsgErrorTeamExists   ResponseMessage = "error.team.exists"
+	MsgErrorTeamNotFound ResponseMessage = "error.team.notFound"
+
+	// Team Settings related errors
+	MsgErrorTeamSettingsNotFound ResponseMessage = "error.teamSettings.notFound"
+
+	// Success messages
 	MsgSuccess            ResponseMessage = "success.ok"
 	MsgSuccessTeamCreated ResponseMessage = "success.team.created"
 )
@@ -58,5 +67,8 @@ func SuccessResponse(status int, message ResponseMessage, data interface{}) (*ev
 }
 
 func ErrorResponse(status int, message ResponseMessage, err error) (*events.APIGatewayProxyResponse, error) {
+	if err == nil {
+		return Response(status, map[string]interface{}{"message": string(message)})
+	}
 	return Response(status, map[string]interface{}{"message": string(message), "error": err.Error()})
 }

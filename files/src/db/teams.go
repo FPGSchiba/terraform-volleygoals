@@ -2,6 +2,7 @@ package db
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -9,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/fpgschiba/volleygoals/models"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/net/context"
 )
 
@@ -63,4 +65,34 @@ func CreateTeam(ctx context.Context, name string) (*models.Team, error) {
 		return nil, err
 	}
 	return team, nil
+}
+
+func GetTeamByID(ctx context.Context, teamId string) (*models.Team, error) {
+	span := trace.SpanFromContext(ctx)
+	log.Printf("🔍 Span valid: %v, TraceID: %s",
+		span.SpanContext().IsValid(),
+		span.SpanContext().TraceID().String())
+
+	client := GetClient() // Now returns the instrumented client
+
+	result, err := client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(teamsTableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: teamId},
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	if result.Item == nil {
+		return nil, nil
+	}
+
+	var team models.Team
+	err = attributevalue.UnmarshalMap(result.Item, &team)
+	if err != nil {
+		return nil, err
+	}
+	return &team, nil
 }

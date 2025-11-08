@@ -82,12 +82,20 @@ resource "aws_route53_record" "api_domain" {
   }
 }
 
+
+resource "null_resource" "force_redeploy" {
+  triggers = {
+    redeploy = timestamp()
+  }
+}
+
 resource "aws_api_gateway_deployment" "this" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
   lifecycle {
     create_before_destroy = true
-    replace_triggered_by = [ # TODO: improve this list with all modules
+    replace_triggered_by = [
+      null_resource.force_redeploy.id
     ]
   }
 
@@ -97,6 +105,8 @@ resource "aws_api_gateway_deployment" "this" {
     module.create_team_ms,
     module.delete_team_ms,
     module.update_team_ms,
+    module.update_team_settings_ms,
+    module.get_team_settings_ms,
   ]
 }
 
