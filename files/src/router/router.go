@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/fpgschiba/volleygoals/router/invites"
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
 	teamsettings "github.com/fpgschiba/volleygoals/router/team-settings"
 	"github.com/fpgschiba/volleygoals/router/teams"
@@ -37,7 +38,6 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 			"X-Amzn-Trace-Id": traceHeader,
 		}
 		ctx = otel.GetTextMapPropagator().Extract(ctx, carrier)
-		log.Printf("📍 Extracted X-Ray trace context: %s", traceHeader)
 	}
 
 	h := SelectedHandler
@@ -82,11 +82,34 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	// Self handlers
 	case "GetSelf":
 		response, err = GetSelf(ctx, event)
+	case "UpdateSelf":
+		response, err = UpdateSelf(ctx, event)
 
 	// Team members handlers
-	case "GetTeamMembers":
+	case "ListTeamMembers":
 		response, err = teammembers.ListTeamMembers(ctx, event)
+	case "AddTeamMember":
+		response, err = teammembers.AddTeamMember(ctx, event)
+	case "UpdateTeamMember":
+		response, err = teammembers.UpdateTeamMember(ctx, event)
+	case "RemoveTeamMember":
+		response, err = teammembers.RemoveTeamMember(ctx, event)
+	case "LeaveTeam":
+		response, err = teammembers.LeaveTeam(ctx, event)
 
+	// Invites handlers
+	case "CreateInvite":
+		response, err = invites.CreateInvite(ctx, event)
+	case "AcceptInvite":
+		response, err = invites.AcceptInvite(ctx, event)
+	case "ListInvites":
+		response, err = invites.ListInvites(ctx, event)
+	case "RevokeInvite":
+		response, err = invites.RevokeInvite(ctx, event)
+	case "ResendInvite":
+		response, err = invites.ResendInvite(ctx, event)
+
+	// Unknown handler
 	default:
 		log.Printf("unknown handler selected: %q", h)
 		response, err = utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)

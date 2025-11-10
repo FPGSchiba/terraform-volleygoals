@@ -55,3 +55,24 @@ func GetTeamSettingsByTeamID(ctx context.Context, teamId string) (*models.TeamSe
 	}
 	return &teamSettings, nil
 }
+
+func DeleteTeamSettingsByTeamID(ctx context.Context, teamId string) error {
+	client = GetClient()
+	teamSettings, err := GetTeamSettingsByTeamID(ctx, teamId)
+	if err != nil {
+		return err
+	}
+	if teamSettings == nil {
+		return nil
+	}
+	_, err = client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: aws.String(teamSettingsTableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: teamSettings.Id},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}

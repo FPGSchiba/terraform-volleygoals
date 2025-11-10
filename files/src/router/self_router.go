@@ -17,3 +17,7 @@ func GetSelf(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 	log.Printf("GetSelf: username: %s", username)
 	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
 }
+
+func UpdateSelf(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
+}

@@ -7,15 +7,86 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
 func UpdateTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	}
+	teamId := event.PathParameters["teamId"]
+	if teamId == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	var request UpdateTeamRequest
+	err := json.Unmarshal([]byte(event.Body), &request)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+	}
+	team, err := db.GetTeamByID(ctx, teamId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	if team == nil {
+		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorTeamNotFound, nil)
+	}
+	if request.Name != "" {
+		team.Name = request.Name
+	}
+	if request.Status != "" {
+		team.Status = request.Status
+	}
+	err = db.UpdateTeam(ctx, team)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	return utils.SuccessResponse(http.StatusOK,
+		utils.MsgSuccess,
+		map[string]interface{}{
+			"team": team,
+		})
 }
 
+// ListTeams handles HTTP request, parses query params into db.TeamFilter and returns paginated response.
 func ListTeams(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
+	// authorization example
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	}
+
+	// build TeamFilter (reuses FilterOptions for sorting)
+	filter, err := db.TeamFilterFromQuery(event.QueryStringParameters)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+	}
+
+	items, count, nextCursor, hasMore, err := db.ListTeams(ctx, filter)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	nextToken := ""
+	if nextCursor != nil {
+		nextToken, err = models.EncodeCursor(nextCursor)
+		if err != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+		}
+	}
+
+	resp := models.PaginationResponse{
+		Items:     items,
+		Count:     count,
+		NextToken: nextToken,
+		HasMore:   hasMore,
+	}
+
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+		"items":     resp.Items,
+		"count":     resp.Count,
+		"nextToken": resp.NextToken,
+		"hasMore":   resp.HasMore,
+	})
 }
 
 func GetTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
@@ -41,7 +112,18 @@ func GetTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 }
 
 func DeleteTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	}
+	teamId := event.PathParameters["teamId"]
+	if teamId == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	err := db.DeleteTeamByID(ctx, teamId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccessTeamDeleted, nil)
 }
 
 func CreateTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {

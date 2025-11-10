@@ -11,7 +11,6 @@ import (
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/router"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
-	xraypropagator "go.opentelemetry.io/contrib/propagators/aws/xray"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -36,6 +35,9 @@ func init() {
 	otelaws.AppendMiddlewares(&cfg.APIOptions)
 
 	db.InitClient(&cfg)
+
+	// Initialize OpenTelemetry tracing (sets global tracer provider)
+	SetupTracing(ctx)
 }
 
 func SetupTracing(ctx context.Context) {
@@ -73,7 +75,7 @@ func SetupTracing(ctx context.Context) {
 	)
 
 	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(xraypropagator.Propagator{})
+	otel.SetTextMapPropagator(xray.Propagator{})
 }
 
 func main() {
@@ -81,12 +83,14 @@ func main() {
 		// Handle the request
 		response, err := router.HandleRequest(ctx, event)
 
-		// Force flush with timeout before returning
-		flushCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
+		// Force flush with timeout before returning (guard tp against nil)
+		if tp != nil {
+			flushCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
 
-		if flushErr := tp.ForceFlush(flushCtx); flushErr != nil {
-			log.Printf("⚠️ Failed to flush spans: %v", flushErr)
+			if flushErr := tp.ForceFlush(flushCtx); flushErr != nil {
+				log.Printf("⚠️ Failed to flush spans: %v", flushErr)
+			}
 		}
 
 		return response, err

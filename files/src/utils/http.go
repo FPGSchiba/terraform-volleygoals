@@ -10,6 +10,7 @@ type ResponseMessage string
 
 const (
 	// General errors
+	MsgGeneralError        ResponseMessage = "error.general"
 	MsgInternalServerError ResponseMessage = "error.internalServerError"
 	MsgBadRequest          ResponseMessage = "error.badRequest"
 	MsgErrorForbidden      ResponseMessage = "error.forbidden"
@@ -24,9 +25,12 @@ const (
 	// Team Settings related errors
 	MsgErrorTeamSettingsNotFound ResponseMessage = "error.teamSettings.notFound"
 
-	// Success messages
-	MsgSuccess            ResponseMessage = "success.ok"
+	// General Success messages
+	MsgSuccess ResponseMessage = "success.ok"
+
+	// Team related success messages
 	MsgSuccessTeamCreated ResponseMessage = "success.team.created"
+	MsgSuccessTeamDeleted ResponseMessage = "success.team.deleted"
 )
 
 func Response(status int, body interface{}) (*events.APIGatewayProxyResponse, error) {
