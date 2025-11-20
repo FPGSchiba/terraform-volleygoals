@@ -74,8 +74,6 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = teams.DeleteTeam(ctx, event)
 
 	// Team settings handlers
-	case "GetTeamSettings":
-		response, err = teamsettings.GetTeamSettings(ctx, event)
 	case "UpdateTeamSettings":
 		response, err = teamsettings.UpdateTeamSettings(ctx, event)
 

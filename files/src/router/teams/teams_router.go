@@ -31,11 +31,11 @@ func UpdateTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if team == nil {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorTeamNotFound, nil)
 	}
-	if request.Name != "" {
-		team.Name = request.Name
+	if request.Name != nil {
+		team.Name = *request.Name
 	}
-	if request.Status != "" {
-		team.Status = request.Status
+	if request.Status != nil {
+		team.Status = *request.Status
 	}
 	err = db.UpdateTeam(ctx, team)
 	if err != nil {
@@ -104,10 +104,18 @@ func GetTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 	if team == nil {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorTeamNotFound, nil)
 	}
+	teamSettings, err := db.GetTeamSettingsByTeamID(ctx, teamId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	if teamSettings == nil {
+		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorTeamSettingsNotFound, nil)
+	}
 	return utils.SuccessResponse(http.StatusOK,
 		utils.MsgSuccess,
 		map[string]interface{}{
-			"team": team,
+			"team":         team,
+			"teamSettings": teamSettings,
 		})
 }
 

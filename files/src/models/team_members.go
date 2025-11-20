@@ -24,17 +24,13 @@ const (
 type TeamMember struct {
 	Id         string           `dynamodbav:"id" json:"id"`
 	CognitoSub string           `dynamodbav:"cognitoSub" json:"cognitoSub"`
-	Assignment TeamAssignment   `dynamodbav:"assignment" json:"assignment"`
+	TeamId     string           `dynamodbav:"teamId" json:"teamId"`
+	Role       TeamMemberRole   `dynamodbav:"role" json:"role"`
 	Status     TeamMemberStatus `dynamodbav:"status" json:"status"`
 	CreatedAt  time.Time        `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt  time.Time        `dynamodbav:"updatedAt" json:"updatedAt"`
 	JoinedAt   *time.Time       `dynamodbav:"joinedAt" json:"joinedAt"`
 	LeftAt     *time.Time       `dynamodbav:"leftAt" json:"leftAt"`
-}
-
-type TeamAssignment struct {
-	TeamId string         `dynamodbav:"teamId" json:"teamId"`
-	Role   TeamMemberRole `dynamodbav:"role" json:"role"`
 }
 
 func (tm *TeamMember) ToAttributeValues() map[string]types.AttributeValue {
@@ -46,7 +42,11 @@ func (tm *TeamMember) ToAttributeValues() map[string]types.AttributeValue {
 	if err != nil {
 		return nil
 	}
-	assignment, err := attributevalue.Marshal(tm.Assignment)
+	teamId, err := attributevalue.Marshal(tm.TeamId)
+	if err != nil {
+		return nil
+	}
+	role, err := attributevalue.Marshal(tm.Role)
 	if err != nil {
 		return nil
 	}
@@ -66,7 +66,8 @@ func (tm *TeamMember) ToAttributeValues() map[string]types.AttributeValue {
 	attributeValues := map[string]types.AttributeValue{
 		"id":         id,
 		"cognitoSub": cognitoSub,
-		"assignment": assignment,
+		"teamId":     teamId,
+		"role":       role,
 		"status":     status,
 		"createdAt":  createdAt,
 		"updatedAt":  updatedAt,

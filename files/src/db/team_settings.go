@@ -76,3 +76,16 @@ func DeleteTeamSettingsByTeamID(ctx context.Context, teamId string) error {
 	}
 	return nil
 }
+
+func UpdateTeamSettings(ctx context.Context, teamSettings *models.TeamSettings) error {
+	client = GetClient()
+	teamSettings.UpdatedAt = time.Now()
+	_, err := client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(teamSettingsTableName),
+		Item:      teamSettings.ToAttributeValues(),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}

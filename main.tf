@@ -34,7 +34,6 @@ module "get_self_ms" {
     {
       actions = [
         "dynamodb:Query",
-        "dynamodb:UpdateItem",
       ]
       resources = [
         aws_dynamodb_table.team_settings.arn,
@@ -140,8 +139,6 @@ module "get_teams_ms" {
     }
   ]
 
-
-
   depends_on = [
     aws_api_gateway_rest_api.api,
     aws_api_gateway_resource.teams
@@ -180,6 +177,14 @@ module "get_team_ms" {
       ]
       resources = [
         aws_dynamodb_table.teams.arn
+      ]
+    },
+    {
+      actions = [
+        "dynamodb:Query",
+      ]
+      resources = [
+        "${aws_dynamodb_table.team_settings.arn}/index/teamIdIndex",
       ]
     }
   ]
@@ -316,10 +321,11 @@ module "update_team_ms" {
     {
       actions = [
         "dynamodb:PutItem",
+        "dynamodb:GetItem",
       ]
       resources = [
         aws_dynamodb_table.teams.arn,
-        "${aws_dynamodb_table.team_members.arn}/*",
+        "${aws_dynamodb_table.teams.arn}/*",
       ]
     }
   ]
@@ -337,48 +343,6 @@ resource "aws_api_gateway_resource" "team_settings" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_resource.teams_id.id
   path_part   = "settings"
-}
-
-module "get_team_settings_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.3.9"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  http_methods          = ["GET"]
-  name_overwrite        = "get-team-settings"
-  path_name             = "settings"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_settings.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-
-  go_additional_ldflags = {
-    "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "GetTeamSettings"
-  }
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:Query",
-      ]
-      resources = [
-        "${aws_dynamodb_table.team_settings.arn}/index/teamIdIndex",
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_settings
-  ]
 }
 
 module "update_team_settings_ms" {

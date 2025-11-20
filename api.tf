@@ -106,7 +106,6 @@ resource "aws_api_gateway_deployment" "this" {
     module.delete_team_ms,
     module.update_team_ms,
     module.update_team_settings_ms,
-    module.get_team_settings_ms,
   ]
 }
 

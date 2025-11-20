@@ -7,6 +7,6 @@ type CreateTeamRequest struct {
 }
 
 type UpdateTeamRequest struct {
-	Name   string            `json:"name"`
-	Status models.TeamStatus `json:"status"`
+	Name   *string            `json:"name"`
+	Status *models.TeamStatus `json:"status"`
 }

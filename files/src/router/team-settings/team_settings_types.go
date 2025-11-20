@@ -1,5 +1,7 @@
 package team_settings
 
-type CreateTeamRequest struct {
-	Name string `json:"name"`
+type UpdateTeamSettingsRequest struct {
+	AllowFileUploads            *bool `json:"allowFileUploads"`
+	AllowTeamGoalComments       *bool `json:"allowTeamGoalComments"`
+	AllowIndividualGoalComments *bool `json:"allowIndividualGoalComments"`
 }
