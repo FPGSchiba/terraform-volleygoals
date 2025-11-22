@@ -1,12 +1,17 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 type InviteStatus string
 
 const (
 	InviteStatusPending  InviteStatus = "pending"
 	InviteStatusAccepted InviteStatus = "accepted"
+	InviteStatusDeclined InviteStatus = "declined"
 	InviteStatusRevoked  InviteStatus = "revoked"
 	InviteStatusExpired  InviteStatus = "expired"
 )
@@ -25,4 +30,13 @@ type Invite struct {
 	CreatedAt  time.Time      `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt  time.Time      `dynamodbav:"updatedAt" json:"updatedAt"`
 	AcceptedAt *time.Time     `dynamodbav:"acceptedAt" json:"acceptedAt"`
+	DeclinedAt *time.Time     `dynamodbav:"declinedAt" json:"declinedAt"`
+}
+
+func (inv *Invite) ToAttributeValues() map[string]types.AttributeValue {
+	m, err := ToDynamoMap(inv)
+	if err != nil {
+		return nil
+	}
+	return m
 }

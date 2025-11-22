@@ -15,7 +15,7 @@ This module is designed to be used with Terraform to provision the necessary inf
 
 The following diagram illustrates the database schema for the Volleyball Goal Management application:
 
-```{mermaid}
+```mermaid
 %% Cognito as IdP (no Users table). No Trainings yet. Comments/files simplified as requested.
 erDiagram
   %% Relationships
@@ -156,4 +156,65 @@ erDiagram
     string filename
     datetime createdAt
   }
+```
+## User Invite Flow
+```mermaid
+flowchart TD
+  A[Inviter creates invite] --> B[Backend: create Invite record + token_hash]
+  B --> C[Send single app email with accept link]
+  C --> D[Invitee clicks link => preview page]
+  D --> E{Is there existing Cognito user?}
+  E -->|Yes| F[Attach existing user to Team create TeamMember]
+  E -->|No| G[User sets password -> AdminSetUserPassword; set email_verified]
+  F --> H[Mark invite accepted, return success]
+  G --> H
+```
+
+### Detailed
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Inviter
+  participant Backend
+  participant DB as Database
+  participant Cognito
+  participant Email
+  participant Frontend
+  participant Invitee
+
+  Note over Backend,DB: Invite creation
+  Inviter->>Backend: POST /teams/{teamId}/invites {email, role, message}
+  Backend->>DB: create Invite {id,email,role,token_hash,expiresAt,status=pending}
+  alt create Cognito user at invite time (opt)
+    Backend->>Cognito: AdminCreateUser(email, MessageAction=SUPPRESS)
+  end
+  Backend->>Email: Send single app-controlled email (link: https://app/accept?token=<raw-token>)
+  Backend->>Inviter: 201 {inviteId, expiresAt}
+
+  Note over Invitee,Frontend: Invitee clicks link
+  Invitee->>Frontend: GET /accept?token=<raw-token>
+  Frontend->>Backend: GET /invites/preview?token=<raw-token>  -- show invite details
+  Backend->>DB: find invite by token_hash, validate pending/not expired
+  Backend-->>Frontend: 200 {teamName, invitedBy, role, expiresAt}
+
+  Note over Frontend: User chooses Accept
+  alt invitee is already signed-in as the same email
+    Frontend->>Backend: POST /invites/complete {token} with Authorization
+    Backend->>DB: validate invite, find invite.email
+    Backend->>Cognito: AdminGetUser(email) -> get sub
+    Backend->>DB: create TeamMember {cognitoSub, teamId, role, status=active}
+    Backend->>DB: mark invite accepted
+    Backend-->>Frontend: 200 {teamMember, redirect}
+  else invitee is not signed-in or is new
+    Frontend->>Backend: POST /invites/complete {token, password, displayName?}
+    Backend->>DB: validate invite, find invite.email
+    Backend->>Cognito: AdminGetUser/ensure user exists -> get cognito username
+    Backend->>Cognito: AdminSetUserPassword(username, password, Permanent=true)
+    Backend->>Cognito: AdminUpdateUserAttributes(username, email_verified=true)
+    Backend->>DB: create TeamMember {cognitoSub, teamId, role, status=active}
+    Backend->>DB: mark invite accepted
+    Backend-->>Frontend: 200 {teamMember, tokens? or redirect}
+  end
+
+  Note over Backend,DB: Invite consumed (single-use)
 ```

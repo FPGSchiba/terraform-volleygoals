@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 type SeasonStatus string
 
@@ -20,4 +24,12 @@ type Season struct {
 	Status    SeasonStatus `dynamodbav:"status" json:"status"`
 	CreatedAt time.Time    `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time    `dynamodbav:"updatedAt" json:"updatedAt"`
+}
+
+func (s *Season) ToAttributeValues() map[string]types.AttributeValue {
+	m, err := ToDynamoMap(s)
+	if err != nil {
+		return nil
+	}
+	return m
 }

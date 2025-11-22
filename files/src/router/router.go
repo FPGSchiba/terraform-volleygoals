@@ -2,8 +2,6 @@ package router
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"runtime/debug"
@@ -13,7 +11,9 @@ import (
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
 	teamsettings "github.com/fpgschiba/volleygoals/router/team-settings"
 	"github.com/fpgschiba/volleygoals/router/teams"
+	"github.com/fpgschiba/volleygoals/router/users"
 	"github.com/fpgschiba/volleygoals/utils"
+	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
@@ -24,11 +24,15 @@ import (
 var SelectedHandler string
 var tracer = otel.Tracer("volleygoals/router")
 
+func HandleRequestWithHandler(ctx context.Context, event events.APIGatewayProxyRequest, handler string) (*events.APIGatewayProxyResponse, error) {
+	SelectedHandler = handler
+	return HandleRequest(ctx, event)
+}
+
 func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("PANIC RECOVERED: %v\n", r)
-			fmt.Printf("STACK TRACE:\n%s\n", debug.Stack())
+			log.WithFields(log.Fields{"panic": r, "stack": string(debug.Stack())}).Error("Panic recovered in HandleRequest")
 		}
 	}()
 
@@ -46,7 +50,7 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	}
 
 	// Use a more descriptive span name
-	spanName := fmt.Sprintf("%s %s", event.HTTPMethod, event.Path)
+	spanName := event.HTTPMethod + " " + event.Path
 	ctx, span := tracer.Start(ctx, spanName)
 	defer span.End()
 
@@ -98,8 +102,8 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	// Invites handlers
 	case "CreateInvite":
 		response, err = invites.CreateInvite(ctx, event)
-	case "AcceptInvite":
-		response, err = invites.AcceptInvite(ctx, event)
+	case "CompleteInvite":
+		response, err = invites.CompleteInvite(ctx, event)
 	case "ListInvites":
 		response, err = invites.ListInvites(ctx, event)
 	case "RevokeInvite":
@@ -107,9 +111,17 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	case "ResendInvite":
 		response, err = invites.ResendInvite(ctx, event)
 
+	// Users handlers
+	case "ListUsers":
+		response, err = users.ListUsers(ctx, event)
+	case "GetUser":
+		response, err = users.GetUser(ctx, event)
+	case "DeleteUser":
+		response, err = users.DeleteUser(ctx, event)
+
 	// Unknown handler
 	default:
-		log.Printf("unknown handler selected: %q", h)
+		log.WithField("handler", h).Warn("unknown handler selected")
 		response, err = utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 

@@ -1,15 +1,19 @@
+//go:build !local
+
 package main
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/mail"
 	"github.com/fpgschiba/volleygoals/router"
+	"github.com/fpgschiba/volleygoals/utils"
+	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -24,6 +28,9 @@ import (
 var tp *trace.TracerProvider
 
 func init() {
+	// Ensure logger is configured as early as possible
+	utils.InitLogger()
+
 	ctx := context.Background()
 
 	// Setup AWS SDK
@@ -35,6 +42,7 @@ func init() {
 	otelaws.AppendMiddlewares(&cfg.APIOptions)
 
 	db.InitClient(&cfg)
+	mail.InitClient(&cfg)
 
 	// Initialize OpenTelemetry tracing (sets global tracer provider)
 	SetupTracing(ctx)
@@ -79,7 +87,8 @@ func SetupTracing(ctx context.Context) {
 }
 
 func main() {
-	lambda.Start(func(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	// Create base handler that delegates to router.HandleRequest
+	baseHandler := func(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
 		// Handle the request
 		response, err := router.HandleRequest(ctx, event)
 
@@ -89,10 +98,15 @@ func main() {
 			defer cancel()
 
 			if flushErr := tp.ForceFlush(flushCtx); flushErr != nil {
-				log.Printf("⚠️ Failed to flush spans: %v", flushErr)
+				log.WithError(flushErr).Warn("Failed to flush spans")
 			}
 		}
 
 		return response, err
-	})
+	}
+
+	// Wrap handler with JSONLogLambdaWrapper for consistent logging in Lambda
+	h := utils.JSONLogLambdaWrapper(baseHandler)
+
+	lambda.Start(h)
 }

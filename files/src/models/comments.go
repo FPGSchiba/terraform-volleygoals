@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 type CommentType string
 
@@ -17,4 +21,12 @@ type Comment struct {
 	Content   string      `dynamodbav:"content" json:"content"`
 	CreatedAt time.Time   `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time   `dynamodbav:"updatedAt" json:"updatedAt"`
+}
+
+func (c *Comment) ToAttributeValues() map[string]types.AttributeValue {
+	m, err := ToDynamoMap(c)
+	if err != nil {
+		return nil
+	}
+	return m
 }

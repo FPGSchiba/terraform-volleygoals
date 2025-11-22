@@ -3,7 +3,6 @@ package models
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
@@ -24,42 +23,9 @@ type Team struct {
 }
 
 func (t *Team) ToAttributeValues() map[string]types.AttributeValue {
-	id, err := attributevalue.Marshal(t.Id)
+	m, err := ToDynamoMap(t)
 	if err != nil {
 		return nil
 	}
-	name, err := attributevalue.Marshal(t.Name)
-	if err != nil {
-		return nil
-	}
-	status, err := attributevalue.Marshal(t.Status)
-	if err != nil {
-		return nil
-	}
-	createdAt, err := attributevalue.Marshal(t.CreatedAt.Format(time.RFC3339))
-	if err != nil {
-		return nil
-	}
-	updatedAt, err := attributevalue.Marshal(t.UpdatedAt.Format(time.RFC3339))
-	if err != nil {
-		return nil
-	}
-
-	attributeValues := map[string]types.AttributeValue{
-		"id":        id,
-		"teamName":  name,
-		"status":    status,
-		"createdAt": createdAt,
-		"updatedAt": updatedAt,
-	}
-
-	if t.DeletedAt != nil {
-		deletedAt, err := attributevalue.Marshal(t.DeletedAt.Format(time.RFC3339))
-		if err != nil {
-			return nil
-		}
-		attributeValues["deletedAt"] = deletedAt
-	}
-
-	return attributeValues
+	return m
 }

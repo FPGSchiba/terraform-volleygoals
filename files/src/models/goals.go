@@ -1,9 +1,12 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 type GoalType string
-
 type GoalStatus string
 
 const (
@@ -27,4 +30,12 @@ type Goal struct {
 	CreatedBy   string     `dynamodbav:"createdBy" json:"createdBy"`
 	CreatedAt   time.Time  `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt   time.Time  `dynamodbav:"updatedAt" json:"updatedAt"`
+}
+
+func (g *Goal) ToAttributeValues() map[string]types.AttributeValue {
+	m, err := ToDynamoMap(g)
+	if err != nil {
+		return nil
+	}
+	return m
 }

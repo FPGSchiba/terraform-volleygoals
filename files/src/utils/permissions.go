@@ -1,5 +1,12 @@
 package utils
 
+import (
+	"context"
+
+	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/models"
+)
+
 type UserType string
 
 type AccessLevel string
@@ -73,7 +80,7 @@ func hasUserType(authorizer map[string]interface{}, allowedRoles []UserType) boo
 	return false
 }
 
-func GetUserCognitoUsername(authorizer map[string]interface{}) string {
+func GetCognitoUsername(authorizer map[string]interface{}) string {
 	if authorizer == nil {
 		return ""
 	}
@@ -94,4 +101,21 @@ func GetUserCognitoUsername(authorizer map[string]interface{}) string {
 		return ""
 	}
 	return subStr
+}
+
+func HasOneRoleOnTeam(ctx context.Context, authorizer map[string]interface{}, teamId string, requiredRole []models.TeamMemberRole) bool {
+	if !IsUser(authorizer) {
+		return false
+	}
+	userID := GetCognitoUsername(authorizer)
+	for _, role := range requiredRole {
+		ok, err := db.HasRoleOnTeam(ctx, userID, teamId, role)
+		if err != nil {
+			return false
+		}
+		if ok {
+			return true
+		}
+	}
+	return false
 }
