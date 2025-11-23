@@ -7,14 +7,7 @@ import (
 	"github.com/fpgschiba/volleygoals/models"
 )
 
-type UserType string
-
 type AccessLevel string
-
-const (
-	UserTypeAdmin UserType = "ADMINS"
-	UserTypeUser  UserType = "USERS"
-)
 
 const (
 	AccessLevelRead  AccessLevel = "READ"
@@ -22,14 +15,14 @@ const (
 )
 
 func IsAdmin(authorizer map[string]interface{}) bool {
-	return hasUserType(authorizer, []UserType{UserTypeAdmin})
+	return hasUserType(authorizer, []models.UserType{models.UserTypeAdmin})
 }
 
 func IsUser(authorizer map[string]interface{}) bool {
-	return hasUserType(authorizer, []UserType{UserTypeUser})
+	return hasUserType(authorizer, []models.UserType{models.UserTypeUser})
 }
 
-func hasUserType(authorizer map[string]interface{}, allowedRoles []UserType) bool {
+func hasUserType(authorizer map[string]interface{}, allowedRoles []models.UserType) bool {
 	if authorizer == nil {
 		return false
 	}

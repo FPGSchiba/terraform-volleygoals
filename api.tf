@@ -25,7 +25,7 @@ resource "aws_api_gateway_authorizer" "this" {
   name          = "${var.prefix}-volleygoals"
   rest_api_id   = aws_api_gateway_rest_api.api.id
   type          = "COGNITO_USER_POOLS"
-  provider_arns = var.cognito_user_pool_arns
+  provider_arns = [var.cognito_user_pool_arn]
 }
 
 resource "aws_acm_certificate" "api" {

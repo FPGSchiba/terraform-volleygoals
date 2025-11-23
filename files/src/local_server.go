@@ -12,6 +12,8 @@ import (
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/mail"
 	"github.com/fpgschiba/volleygoals/router"
+	"github.com/fpgschiba/volleygoals/storage"
+	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -161,14 +163,18 @@ func Adapter(handlerName string) gin.HandlerFunc {
 // project's CORS implementation if you have special needs.
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
-		if c.Request.Method == http.MethodOptions {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // allow any origin domain
+		c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PATCH, DELETE, UPDATE, PUT")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Date, Baggage, Sentry-Trace, User-Agent, X-Requested-With, X-Forwarded-For, X-Forwarded-Proto, X-Forwarded-Port, X-Forwarded-Host")
+		c.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
+		} else {
+			c.Next()
 		}
-		c.Next()
 	}
 }
 
@@ -191,24 +197,24 @@ func GetRouter() *gin.Engine {
 
 		selfGroup := apiGroup.Group("/self") // User only
 		{
-			selfGroup.GET("/", Adapter("GetSelf"))
-			selfGroup.PATCH("/", Adapter("UpdateSelf"))
+			selfGroup.GET("", Adapter("GetSelf"))
+			selfGroup.PATCH("", Adapter("UpdateSelf"))
 		}
 		teamsGroup := apiGroup.Group("/teams")
 		{
-			teamsGroup.POST("/", Adapter("CreateTeam")) // Admin only
-			teamsGroup.GET("/", Adapter("ListTeams"))   // Admin only
-			teamGroup := teamsGroup.Group(":teamId")    // Admin or User for specific Team
+			teamsGroup.POST("", Adapter("CreateTeam")) // Admin only
+			teamsGroup.GET("", Adapter("ListTeams"))   // Admin only
+			teamGroup := teamsGroup.Group(":teamId")   // Admin or User for specific Team
 			{
 				teamGroup.PATCH("/settings", Adapter("UpdateTeamSettings")) // Admin or User with Role Trainer on Team
-				teamGroup.DELETE("/", Adapter("DeleteTeam"))                // Admin only
-				teamGroup.GET("/", Adapter("GetTeam"))                      // Admin or User for Team
-				teamGroup.PATCH("/", Adapter("UpdateTeam"))                 // Admin or User with Role Trainer on Team
+				teamGroup.DELETE("", Adapter("DeleteTeam"))                 // Admin only
+				teamGroup.GET("", Adapter("GetTeam"))                       // Admin or User for Team
+				teamGroup.PATCH("", Adapter("UpdateTeam"))                  // Admin or User with Role Trainer on Team
 				membersGroup := teamGroup.Group("/members")
 				{
-					membersGroup.POST("/", Adapter("AddTeamMember"))              // Admin only
-					membersGroup.GET("/", Adapter("ListTeamMembers"))             // Admin or User for Team
-					membersGroup.DELETE("/", Adapter("LeaveTeam"))                // User only and Trainers only if another Trainer exists
+					membersGroup.POST("", Adapter("AddTeamMember"))               // Admin only
+					membersGroup.GET("", Adapter("ListTeamMembers"))              // Admin or User for Team
+					membersGroup.DELETE("", Adapter("LeaveTeam"))                 // User only and Trainers only if another Trainer exists
 					membersGroup.DELETE(":memberId", Adapter("RemoveTeamMember")) // Admin and User with Role Trainer on Team
 					membersGroup.PATCH(":memberId", Adapter("UpdateTeamMember"))  // Admin and User with Role Trainer on Team
 				}
@@ -216,22 +222,22 @@ func GetRouter() *gin.Engine {
 		}
 		invitesGroup := apiGroup.Group("/invites") // Admin or User with Role Trainer on Team
 		{
-			invitesGroup.POST("/", Adapter("CreateInvite"))
-			invitesGroup.GET("/", Adapter("ListInvites"))
+			invitesGroup.POST("", Adapter("CreateInvite"))
+			invitesGroup.GET("", Adapter("ListInvites"))
 			invitesGroup.DELETE(":inviteId", Adapter("RevokeInvite"))
 			invitesGroup.PATCH(":inviteId", Adapter("ResendInvite"))
 		}
 		usersGroup := apiGroup.Group("/users") // Admin only
 		{
-			usersGroup.GET("/", Adapter("ListUsers"))
+			usersGroup.GET("", Adapter("ListUsers"))
 			usersGroup.GET("/:userSub", Adapter("GetUser"))
 			usersGroup.DELETE(":userSub", Adapter("RemoveUser"))
 		}
 	}
 
 	// Configurations for the gin router
-	engine.RemoveExtraSlash = true
-	engine.RedirectTrailingSlash = true
+	engine.RemoveExtraSlash = false
+	engine.RedirectTrailingSlash = false
 	engine.RedirectFixedPath = false
 
 	return engine
@@ -241,6 +247,8 @@ func main() {
 	// Ensure logger is configured early
 	utils.InitLogger()
 
+	gin.SetMode(gin.ReleaseMode)
+
 	r := GetRouter()
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -248,6 +256,8 @@ func main() {
 	}
 	db.InitClient(nil)
 	mail.InitClient(nil)
+	storage.InitClient(nil)
+	users.InitClient(nil)
 	log.Infof("starting volleygoals local server on :%s (use /api/v1/... endpoints)", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("failed to run server: %v", err)

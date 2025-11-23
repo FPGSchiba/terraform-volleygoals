@@ -10,9 +10,9 @@ variable "prefix" {
   default     = "dev"
 }
 
-variable "cognito_user_pool_arns" {
+variable "cognito_user_pool_arn" {
   description = "List of Cognito User Pool ARNs for API Gateway authorizer"
-  type        = list(string)
+  type        = string
 }
 
 variable "dns_zone_id" {

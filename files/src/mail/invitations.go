@@ -9,7 +9,7 @@ import (
 )
 
 func SendInvitationEmail(ctx context.Context, toEmail, inviteToken, baseUrl string) error {
-	client := GetClient()
+	client = GetClient()
 	completeInviteLink := baseUrl + "/accept-invite?token=" + inviteToken
 	result, err := client.SendEmail(ctx, &sesv2.SendEmailInput{
 		Destination: &types.Destination{

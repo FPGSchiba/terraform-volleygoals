@@ -11,7 +11,7 @@ import (
 )
 
 func GetTeamMemberByUserIDAndTeamID(ctx context.Context, userID string, teamID string) (*models.TeamMember, error) {
-	client := GetClient()
+	client = GetClient()
 	result, err := client.Query(ctx, &dynamodb.QueryInput{
 		TableName: &teamMembersTableName,
 		IndexName: aws.String("teamUserIdIndex"),
@@ -61,4 +61,106 @@ func HasRoleOnTeam(ctx context.Context, userID string, teamID string, role model
 		return true, nil
 	}
 	return false, nil
+}
+
+func GetMembershipsByUserID(ctx context.Context, userID string) ([]*models.TeamMember, error) {
+	client = GetClient()
+	result, err := client.Query(ctx, &dynamodb.QueryInput{
+		TableName: &teamMembersTableName,
+		IndexName: aws.String("userIdIndex"),
+		KeyConditions: map[string]types.Condition{
+			"userId": {
+				ComparisonOperator: "EQ",
+				AttributeValueList: []types.AttributeValue{
+					&types.AttributeValueMemberS{Value: userID},
+				},
+			},
+		},
+		FilterExpression: aws.String("#status = :activeStatus"),
+		ExpressionAttributeNames: map[string]string{
+			"#status": "status",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":activeStatus": &types.AttributeValueMemberS{Value: string(models.TeamMemberStatusActive)},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var teamMembers []*models.TeamMember
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &teamMembers)
+	if err != nil {
+		return nil, err
+	}
+	return teamMembers, nil
+}
+
+func DeleteTeamMembershipsByTeamID(ctx context.Context, teamID string) error {
+	memberships, err := GetMembershipsByTeamID(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	for _, membership := range memberships {
+		_, err := client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+			TableName: &teamMembersTableName,
+			Key: map[string]types.AttributeValue{
+				"id": &types.AttributeValueMemberS{Value: membership.Id},
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func DeleteTeamMembershipsByUserID(ctx context.Context, userID string) error {
+	memberships, err := GetMembershipsByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	for _, membership := range memberships {
+		_, err := client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+			TableName: &teamMembersTableName,
+			Key: map[string]types.AttributeValue{
+				"id": &types.AttributeValueMemberS{Value: membership.Id},
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func GetMembershipsByTeamID(ctx context.Context, teamID string) ([]*models.TeamMember, error) {
+	client = GetClient()
+	result, err := client.Query(ctx, &dynamodb.QueryInput{
+		TableName: &teamMembersTableName,
+		IndexName: aws.String("teamIdIndex"),
+		KeyConditions: map[string]types.Condition{
+			"teamId": {
+				ComparisonOperator: "EQ",
+				AttributeValueList: []types.AttributeValue{
+					&types.AttributeValueMemberS{Value: teamID},
+				},
+			},
+		},
+		FilterExpression: aws.String("#status = :activeStatus"),
+		ExpressionAttributeNames: map[string]string{
+			"#status": "status",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":activeStatus": &types.AttributeValueMemberS{Value: string(models.TeamMemberStatusActive)},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var teamMembers []*models.TeamMember
+	err = attributevalue.UnmarshalListOfMaps(result.Items, &teamMembers)
+	if err != nil {
+		return nil, err
+	}
+	return teamMembers, nil
 }

@@ -39,7 +39,7 @@ func findTeamByName(ctx context.Context, name string) (*models.Team, error) {
 
 // ListTeams returns a page of teams according to TeamFilter (which now contains Limit and Cursor).
 func ListTeams(ctx context.Context, filter TeamFilter) ([]*models.Team, int, *models.Cursor, bool, error) {
-	client := GetClient()
+	client = GetClient()
 
 	// ensure sane default limit
 	limit := filter.Limit
@@ -170,7 +170,7 @@ func CreateTeam(ctx context.Context, name string) (*models.Team, error) {
 }
 
 func GetTeamByID(ctx context.Context, teamId string) (*models.Team, error) {
-	client := GetClient() // Now returns the instrumented client
+	client = GetClient() // Now returns the instrumented client
 
 	result, err := client.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(teamsTableName),

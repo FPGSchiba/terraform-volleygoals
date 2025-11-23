@@ -11,7 +11,7 @@ import (
 )
 
 func CreateInvite(ctx context.Context, teamId, email, inviterSub, token string, role models.TeamMemberRole) (*models.Invite, error) {
-	client := GetClient()
+	client = GetClient()
 	invite := models.Invite{
 		Id:        models.GenerateID(),
 		TeamId:    teamId,
@@ -35,7 +35,7 @@ func CreateInvite(ctx context.Context, teamId, email, inviterSub, token string, 
 }
 
 func RemoveInviteById(ctx context.Context, inviteId string) error {
-	client := GetClient()
+	client = GetClient()
 	_, err := client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(invitesTableName),
 		Key: map[string]types.AttributeValue{

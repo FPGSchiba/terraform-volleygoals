@@ -25,6 +25,7 @@ module "get_self_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "GetSelf"
@@ -67,6 +68,7 @@ module "update_self_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "UpdateSelf"
@@ -123,6 +125,7 @@ module "get_teams_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "ListTeams"
@@ -165,6 +168,7 @@ module "get_team_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "GetTeam"
@@ -216,6 +220,7 @@ module "create_team_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "CreateTeam"
@@ -268,6 +273,7 @@ module "delete_team_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "DeleteTeam"
@@ -312,6 +318,7 @@ module "update_team_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "UpdateTeam"
@@ -365,6 +372,7 @@ module "update_team_settings_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "UpdateTeamSettings"
@@ -422,6 +430,7 @@ module "list_team_members_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "ListTeamMembers"
@@ -465,6 +474,7 @@ module "add_team_member_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "AddTeamMember"
@@ -508,6 +518,7 @@ module "update_team_member_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "UpdateTeamMember"
@@ -551,6 +562,7 @@ module "delete_team_member_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "RemoveTeamMember"
@@ -594,6 +606,7 @@ module "leave_team_ms" {
   environment_variables = local.lambda_environment_variables
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
+  json_logging          = true
 
   go_additional_ldflags = {
     "github.com/fpgschiba/volleygoals/router.SelectedHandler" = "LeaveTeam"

@@ -35,6 +35,18 @@ resource "aws_dynamodb_table" "team_members" {
     projection_type = "ALL"
   }
 
+  global_secondary_index {
+    hash_key        = "userId"
+    name            = "userIdIndex"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    hash_key        = "teamId"
+    name            = "teamIdIndex"
+    projection_type = "ALL"
+  }
+
   tags = local.tags
 }
 

@@ -24,6 +24,7 @@ locals {
     "TENANT_NAME"                 = var.ses_tenant_name
     "CONFIGURATION_SET_NAME"      = var.ses_configuration_set_name
     "FRONTEND_BASE_URL"           = "https://${data.aws_route53_zone.this.name}"
+    "USER_POOL_ID"                = element(split("/", element(split(":", var.cognito_user_pool_arn), -1)), -1)
   }
   lambda_layer_arns = [
     "arn:aws:lambda:${data.aws_region.current.region}:901920570463:layer:aws-otel-collector-amd64-ver-0-117-0:1" # Me hates it, as it is hardcoded

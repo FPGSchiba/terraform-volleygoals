@@ -12,6 +12,8 @@ import (
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/mail"
 	"github.com/fpgschiba/volleygoals/router"
+	"github.com/fpgschiba/volleygoals/storage"
+	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
@@ -43,6 +45,8 @@ func init() {
 
 	db.InitClient(&cfg)
 	mail.InitClient(&cfg)
+	storage.InitClient(&cfg)
+	users.InitClient(&cfg)
 
 	// Initialize OpenTelemetry tracing (sets global tracer provider)
 	SetupTracing(ctx)
