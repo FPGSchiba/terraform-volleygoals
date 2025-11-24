@@ -18,7 +18,7 @@ func ListUsers(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 	}
 	filter, err := users.UserFilterFromQuery(event.QueryStringParameters)
 	if err != nil {
-		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
 	var result *users.ListUserResult
 	switch strings.ToLower(strings.TrimSpace(filter.GroupName)) {
@@ -32,7 +32,7 @@ func ListUsers(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 		result, err = users.ListAllUsers(ctx, filter)
 	}
 	if err != nil || result == nil {
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
 		"users":           result.Users,
@@ -51,13 +51,13 @@ func GetUser(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 	user, err := users.GetUserBySub(ctx, userSub)
 	if err != nil {
 		if errors.Is(err, users.ErrUserNotFound) {
-			return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
+			return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, err)
 		}
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 	memberships, err := db.GetMembershipsByUserID(ctx, user.Id)
 	if err != nil {
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
 		"user":        user,
@@ -75,11 +75,11 @@ func DeleteUser(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	}
 	err := users.DeleteUserBySub(ctx, userSub)
 	if err != nil {
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 	err = db.DeleteTeamMembershipsByUserID(ctx, userSub)
 	if err != nil {
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, nil)
 }

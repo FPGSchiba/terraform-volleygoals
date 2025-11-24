@@ -22,7 +22,7 @@ type Invite struct {
 	Email      string         `dynamodbav:"email" json:"email"`
 	Role       TeamMemberRole `dynamodbav:"role" json:"role"`
 	Status     InviteStatus   `dynamodbav:"status" json:"status"`
-	Token      string         `dynamodbav:"token" json:"token"`
+	Token      string         `dynamodbav:"inviteToken" json:"token"`
 	Message    *string        `dynamodbav:"message" json:"message"`
 	InvitedBy  string         `dynamodbav:"invitedBy" json:"invitedBy"`
 	AcceptedBy *string        `dynamodbav:"acceptedBy" json:"acceptedBy"`

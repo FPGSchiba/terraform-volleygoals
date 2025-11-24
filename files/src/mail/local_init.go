@@ -16,6 +16,8 @@ var (
 	EmailSender          = "no-reply@volleygoals-test.schiba-apps.net"
 	TenantName           = "volleygoals"
 	ConfigurationSetName = "volleygoals"
+	FrontendBaseUrl      = "http://localhost:3000"
+	InviteTemplateArn    = "arn:aws:ses:eu-central-1:771805193031:template/dev-invitation"
 )
 
 // InitClient initializes the DynamoDB client for local mode. If awsConfig is

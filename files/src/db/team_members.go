@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -163,4 +164,31 @@ func GetMembershipsByTeamID(ctx context.Context, teamID string) ([]*models.TeamM
 		return nil, err
 	}
 	return teamMembers, nil
+}
+
+func CreateTeamMemberFromInvite(ctx context.Context, invite *models.Invite) (*models.TeamMember, error) {
+	client = GetClient()
+	timeNow := time.Now()
+	teamMember := &models.TeamMember{
+		Id:         models.GenerateID(),
+		TeamId:     invite.TeamId,
+		CognitoSub: *invite.AcceptedBy,
+		Role:       invite.Role,
+		Status:     models.TeamMemberStatusActive,
+		CreatedAt:  timeNow,
+		UpdatedAt:  timeNow,
+		JoinedAt:   &timeNow,
+	}
+	item, err := attributevalue.MarshalMap(teamMember)
+	if err != nil {
+		return nil, err
+	}
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: &teamMembersTableName,
+		Item:      item,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return teamMember, nil
 }

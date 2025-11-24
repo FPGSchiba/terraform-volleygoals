@@ -7,3 +7,9 @@ type CreateInviteRequest struct {
 	TeamId string                `json:"teamId"`
 	Role   models.TeamMemberRole `json:"role"`
 }
+
+type CompleteInviteRequest struct {
+	Token    string `json:"token"`
+	Email    string `json:"email"`
+	Accepted bool   `json:"accepted"`
+}

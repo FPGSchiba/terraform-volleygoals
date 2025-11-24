@@ -169,7 +169,7 @@ func CreateTeam(ctx context.Context, name string) (*models.Team, error) {
 	return team, nil
 }
 
-func GetTeamByID(ctx context.Context, teamId string) (*models.Team, error) {
+func GetTeamById(ctx context.Context, teamId string) (*models.Team, error) {
 	client = GetClient() // Now returns the instrumented client
 
 	result, err := client.GetItem(ctx, &dynamodb.GetItemInput{

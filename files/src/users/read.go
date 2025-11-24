@@ -163,3 +163,36 @@ func GetUserBySub(ctx context.Context, sub string) (*models.User, error) {
 	user := models.UserFromCognito(typesToUserType(result), userType)
 	return user, nil
 }
+
+func GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	client = GetClient()
+	result, err := client.ListUsers(ctx, &cognitoidentityprovider.ListUsersInput{
+		UserPoolId: aws.String(userPoolId),
+		Filter:     aws.String("email = \"" + email + "\""),
+		Limit:      aws.Int32(1),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(result.Users) == 0 {
+		return nil, nil
+	}
+	out, err := client.AdminListGroupsForUser(ctx, &cognitoidentityprovider.AdminListGroupsForUserInput{
+		UserPoolId: aws.String(userPoolId),
+		Username:   result.Users[0].Username,
+		Limit:      aws.Int32(1), // Max 1 group needed to determine type
+	})
+	if err != nil {
+		var notFound *types.UserNotFoundException
+		if errors.As(err, &notFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var userType = models.UserTypeUser
+	if len(out.Groups) > 0 && out.Groups[0].GroupName != nil && *out.Groups[0].GroupName == string(models.UserTypeAdmin) {
+		userType = models.UserTypeAdmin
+	}
+	user := models.UserFromCognito(result.Users[0], userType)
+	return user, nil
+}

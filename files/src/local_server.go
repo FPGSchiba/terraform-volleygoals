@@ -230,7 +230,7 @@ func GetRouter() *gin.Engine {
 		usersGroup := apiGroup.Group("/users") // Admin only
 		{
 			usersGroup.GET("", Adapter("ListUsers"))
-			usersGroup.GET("/:userSub", Adapter("GetUser"))
+			usersGroup.GET(":userSub", Adapter("GetUser"))
 			usersGroup.DELETE(":userSub", Adapter("RemoveUser"))
 		}
 	}

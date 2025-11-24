@@ -24,7 +24,7 @@ func UpdateTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
-	team, err := db.GetTeamByID(ctx, teamId)
+	team, err := db.GetTeamById(ctx, teamId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
@@ -97,7 +97,7 @@ func GetTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 	if teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	team, err := db.GetTeamByID(ctx, teamId)
+	team, err := db.GetTeamById(ctx, teamId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
