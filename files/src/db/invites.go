@@ -135,6 +135,7 @@ func CompleteInvite(ctx context.Context, inviteId, acceptedBy string, accept boo
 		UpdateExpression:          aws.String(updateExpr),
 		ExpressionAttributeValues: exprAttrValues,
 		ExpressionAttributeNames:  exprAttrNames,
+		ReturnValues:              types.ReturnValueAllNew,
 	})
 	if err != nil {
 		return nil, err

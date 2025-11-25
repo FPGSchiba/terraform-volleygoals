@@ -26,8 +26,10 @@ const (
 	MsgErrorTeamSettingsNotFound ResponseMessage = "error.teamSettings.notFound"
 
 	// Invite related errors
-	MsgErrorInviteExists       ResponseMessage = "error.invite.exists"
-	MsgErrorInvalidInviteToken ResponseMessage = "error.invite.invalidToken"
+	MsgErrorInviteExists           ResponseMessage = "error.invite.exists"
+	MsgErrorInvalidInviteToken     ResponseMessage = "error.invite.invalidToken"
+	MsgErrorInviteExpired          ResponseMessage = "error.invite.expired"
+	MsgErrorInviteAlreadyCompleted ResponseMessage = "error.invite.alreadyCompleted"
 
 	// General Success messages
 	MsgSuccess ResponseMessage = "success.ok"

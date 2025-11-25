@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
@@ -23,8 +24,15 @@ func CompleteInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*
 	if resp != nil {
 		return resp, err
 	}
+	if invite == nil {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgErrorInviteAlreadyCompleted, nil)
+	}
 
-	userSub, created, resp, err := getOrCreateUserForInvite(ctx, req, invite)
+	if invite.ExpiresAt.Before(time.Now()) {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgErrorInviteExpired, nil)
+	}
+
+	userSub, tempPassword, created, resp, err := getOrCreateUserForInvite(ctx, req, invite)
 	if resp != nil {
 		return resp, err
 	}
@@ -34,10 +42,16 @@ func CompleteInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*
 		return resp, err
 	}
 
-	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
-		"invite": invite,
-		"member": member,
-	})
+	result := map[string]interface{}{
+		"invite":      invite,
+		"member":      member,
+		"userCreated": created,
+	}
+	if tempPassword != "" {
+		result["temporaryPassword"] = tempPassword
+	}
+
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, result)
 }
 
 func CreateInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
@@ -126,32 +140,32 @@ func fetchAndValidateInvite(ctx context.Context, token string) (*models.Invite, 
 	return invite, nil, nil
 }
 
-func getOrCreateUserForInvite(ctx context.Context, req CompleteInviteRequest, invite *models.Invite) (string, bool, *events.APIGatewayProxyResponse, error) {
+func getOrCreateUserForInvite(ctx context.Context, req CompleteInviteRequest, invite *models.Invite) (string, string, bool, *events.APIGatewayProxyResponse, error) {
 	existingUser, err := users.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		resp, e := utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
-		return "", false, resp, e
+		return "", "", false, resp, e
 	}
 	if existingUser != nil {
-		return existingUser.Id, false, nil, nil
+		return existingUser.Id, "", false, nil, nil
 	}
 
 	// No existing user
 	if !req.Accepted {
 		if _, err := db.CompleteInvite(ctx, invite.Id, "", false); err != nil {
 			resp, e := utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
-			return "", false, resp, e
+			return "", "", false, resp, e
 		}
 		resp, e := utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{"invite": invite})
-		return "", false, resp, e
+		return "", "", false, resp, e
 	}
 
-	createdUser, err := users.CreateUser(ctx, req.Email)
+	createdUser, tempPassword, err := users.CreateUser(ctx, req.Email)
 	if err != nil {
 		resp, e := utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
-		return "", false, resp, e
+		return "", "", false, resp, e
 	}
-	return createdUser.Id, true, nil, nil
+	return createdUser.Id, tempPassword, true, nil, nil
 }
 
 func finalizeInvite(ctx context.Context, invite *models.Invite, userSub string, accepted bool, created bool) (*models.Invite, *models.TeamMember, *events.APIGatewayProxyResponse, error) {

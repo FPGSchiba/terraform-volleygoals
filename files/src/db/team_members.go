@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -9,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/fpgschiba/volleygoals/models"
+	log "github.com/sirupsen/logrus"
 )
 
 func GetTeamMemberByUserIDAndTeamID(ctx context.Context, userID string, teamID string) (*models.TeamMember, error) {
@@ -167,8 +169,12 @@ func GetMembershipsByTeamID(ctx context.Context, teamID string) ([]*models.TeamM
 }
 
 func CreateTeamMemberFromInvite(ctx context.Context, invite *models.Invite) (*models.TeamMember, error) {
+	log.Printf("[DEBUG] CreateTeamMemberFromInvite AcceptedBy: %v", invite.AcceptedBy)
 	client = GetClient()
 	timeNow := time.Now()
+	if invite.AcceptedBy == nil {
+		return nil, fmt.Errorf("CreateTeamMemberFromInvite: invite.AcceptedBy is nil")
+	}
 	teamMember := &models.TeamMember{
 		Id:         models.GenerateID(),
 		TeamId:     invite.TeamId,

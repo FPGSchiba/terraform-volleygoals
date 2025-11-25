@@ -23,7 +23,7 @@ type Invite struct {
 	Role       TeamMemberRole `dynamodbav:"role" json:"role"`
 	Status     InviteStatus   `dynamodbav:"status" json:"status"`
 	Token      string         `dynamodbav:"inviteToken" json:"token"`
-	Message    *string        `dynamodbav:"message" json:"message"`
+	Message    *string        `dynamodbav:"message" json:"message"` // TODO: Actually use this in the mail and creation of the invite
 	InvitedBy  string         `dynamodbav:"invitedBy" json:"invitedBy"`
 	AcceptedBy *string        `dynamodbav:"acceptedBy" json:"acceptedBy"`
 	ExpiresAt  time.Time      `dynamodbav:"expiresAt" json:"expiresAt"`
