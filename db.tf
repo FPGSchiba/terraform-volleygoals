@@ -62,10 +62,20 @@ resource "aws_dynamodb_table" "invites" {
     name = "inviteToken"
     type = "S"
   }
+  attribute {
+    name = "teamId"
+    type = "S"
+  }
 
   global_secondary_index {
     hash_key        = "inviteToken"
     name            = "tokenIndex"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    hash_key        = "teamId"
+    name            = "teamIdIndex"
     projection_type = "ALL"
   }
 

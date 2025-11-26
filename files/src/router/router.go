@@ -110,6 +110,10 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = invites.RevokeInvite(ctx, event)
 	case "ResendInvite":
 		response, err = invites.ResendInvite(ctx, event)
+	case "GetInviteByToken":
+		response, err = invites.GetInviteByToken(ctx, event)
+	case "GetTeamInvites":
+		response, err = invites.GetTeamInvites(ctx, event)
 
 	// Users handlers
 	case "ListUsers":

@@ -2,6 +2,8 @@ package db
 
 import (
 	"context"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -146,4 +148,94 @@ func CompleteInvite(ctx context.Context, inviteId, acceptedBy string, accept boo
 		return nil, err
 	}
 	return &updatedInvite, nil
+}
+
+// GetInvitesByTeamId returns a paginated list of invites for a team honoring TeamInviteFilter (limit, cursor, sorting, and optional filters).
+func GetInvitesByTeamId(ctx context.Context, teamId string, filter TeamInviteFilter) ([]*models.Invite, int, *models.Cursor, bool, error) {
+	client = GetClient()
+
+	// sane default limit
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = defaultPageSize
+	}
+
+	expr, values, names := filter.BuildExpression()
+	// ensure maps exist so we can always add teamId
+	if values == nil {
+		values = map[string]types.AttributeValue{}
+	}
+	if names == nil {
+		names = map[string]string{}
+	}
+	values[":teamId"] = &types.AttributeValueMemberS{Value: teamId}
+	names["#teamId"] = "teamId"
+
+	input := &dynamodb.QueryInput{
+		TableName:                 aws.String(invitesTableName),
+		IndexName:                 aws.String("teamIdIndex"),
+		KeyConditionExpression:    aws.String("#teamId = :teamId"),
+		ExpressionAttributeValues: values,
+		ExpressionAttributeNames:  names,
+		Limit:                     aws.Int32(int32(limit)),
+	}
+
+	// Only set FilterExpression when there's an actual expression
+	if strings.TrimSpace(expr) != "" {
+		input.FilterExpression = aws.String(expr)
+	}
+
+	// Resume from cursor if provided
+	if filter.Cursor != nil && filter.Cursor.LastID != "" {
+		input.ExclusiveStartKey = map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: filter.Cursor.LastID},
+		}
+	}
+
+	result, err := client.Query(ctx, input)
+	if err != nil {
+		return nil, 0, nil, false, err
+	}
+
+	var invites []*models.Invite
+	if err := attributevalue.UnmarshalListOfMaps(result.Items, &invites); err != nil {
+		return nil, 0, nil, false, err
+	}
+
+	// Sorting (in-memory) using embedded FilterOptions
+	if sortBy, sortOrder := filter.NormalizeSort(); sortBy != "" {
+		sortInvites(invites, sortBy, sortOrder)
+	}
+
+	// Build cursor from LastEvaluatedKey
+	nextCursor, hasMore := nextCursorFromLEK(result.LastEvaluatedKey)
+
+	return invites, len(invites), nextCursor, hasMore, nil
+}
+
+func sortInvites(invites []*models.Invite, sortBy, sortOrder string) {
+	desc := strings.ToLower(sortOrder) == "desc"
+	switch sortBy {
+	case "email":
+		sort.Slice(invites, func(i, j int) bool {
+			if desc {
+				return invites[i].Email > invites[j].Email
+			}
+			return invites[i].Email < invites[j].Email
+		})
+	case "status":
+		sort.Slice(invites, func(i, j int) bool {
+			if desc {
+				return invites[i].Status > invites[j].Status
+			}
+			return invites[i].Status < invites[j].Status
+		})
+	case "createdat", "createdAt":
+		sort.Slice(invites, func(i, j int) bool {
+			if desc {
+				return invites[i].CreatedAt.After(invites[j].CreatedAt)
+			}
+			return invites[i].CreatedAt.Before(invites[j].CreatedAt)
+		})
+	}
 }

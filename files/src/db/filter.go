@@ -142,3 +142,78 @@ func TeamFilterFromQuery(q map[string]string) (TeamFilter, error) {
 
 	return t, nil
 }
+
+// TeamInviteFilter combines resource-specific filters for teams with generic sort & pagination options.
+type TeamInviteFilter struct {
+	FilterOptions
+	EmailContains string // partial match against email
+	Status        string // "pending" | "accepted" | "declined" | "revoked" | "expired" | ""
+	Role          string // "member" | "admin" | "trainer" | ""
+	InvitedBy     string // userId of the inviter
+}
+
+// BuildExpression builds a DynamoDB filter expression for team invites.
+func (f *TeamInviteFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.EmailContains) != "" {
+		parts = append(parts, "contains(email, :email)")
+		values[":email"] = &types.AttributeValueMemberS{Value: f.EmailContains}
+	}
+	if strings.TrimSpace(f.Status) != "" {
+		parts = append(parts, "#s = :status")
+		names["#s"] = "status"
+		values[":status"] = &types.AttributeValueMemberS{Value: f.Status}
+	}
+	if strings.TrimSpace(f.Role) != "" {
+		parts = append(parts, "#r = :role")
+		names["#r"] = "role"
+		values[":role"] = &types.AttributeValueMemberS{Value: f.Role}
+	}
+	if strings.TrimSpace(f.InvitedBy) != "" {
+		parts = append(parts, "#ib = :invitedBy")
+		names["#ib"] = "invitedBy"
+		values[":invitedBy"] = &types.AttributeValueMemberS{Value: f.InvitedBy}
+	}
+
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// TeamInviteFilterFromQuery parses team-invite-specific and generic filter params from QueryStringParameters.
+// Returns an error if limit or cursor parsing fails.
+func TeamInviteFilterFromQuery(q map[string]string) (TeamInviteFilter, error) {
+	var t TeamInviteFilter
+
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return t, err
+	}
+	t.FilterOptions = fo
+
+	// email
+	if v, ok := q["email"]; ok && strings.TrimSpace(v) != "" {
+		t.EmailContains = strings.TrimSpace(v)
+	}
+
+	// status
+	if v, ok := q["status"]; ok {
+		t.Status = strings.TrimSpace(v)
+	}
+
+	// role
+	if v, ok := q["role"]; ok {
+		t.Role = strings.TrimSpace(v)
+	}
+
+	// invitedBy
+	if v, ok := q["invitedBy"]; ok {
+		t.InvitedBy = strings.TrimSpace(v)
+	}
+
+	return t, nil
+}

@@ -30,6 +30,7 @@ const (
 	MsgErrorInvalidInviteToken     ResponseMessage = "error.invite.invalidToken"
 	MsgErrorInviteExpired          ResponseMessage = "error.invite.expired"
 	MsgErrorInviteAlreadyCompleted ResponseMessage = "error.invite.alreadyCompleted"
+	MsgErrorUserAlreadyMember      ResponseMessage = "error.invite.userAlreadyMember"
 
 	// General Success messages
 	MsgSuccess ResponseMessage = "success.ok"

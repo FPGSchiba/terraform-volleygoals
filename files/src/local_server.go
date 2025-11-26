@@ -206,9 +206,10 @@ func GetRouter() *gin.Engine {
 			teamsGroup.GET("", Adapter("ListTeams"))   // Admin only
 			teamGroup := teamsGroup.Group(":teamId")   // Admin or User for specific Team
 			{
-				teamGroup.PATCH("/settings", Adapter("UpdateTeamSettings")) // Admin or User with Role Trainer on Team
 				teamGroup.DELETE("", Adapter("DeleteTeam"))                 // Admin only
 				teamGroup.GET("", Adapter("GetTeam"))                       // Admin or User for Team
+				teamGroup.PATCH("/settings", Adapter("UpdateTeamSettings")) // Admin or User with Role Trainer on Team
+				teamGroup.GET("/invites", Adapter("GetTeamInvites"))        // Admin or User with Role Trainer on Team
 				teamGroup.PATCH("", Adapter("UpdateTeam"))                  // Admin or User with Role Trainer on Team
 				membersGroup := teamGroup.Group("/members")
 				{
@@ -218,6 +219,7 @@ func GetRouter() *gin.Engine {
 					membersGroup.DELETE(":memberId", Adapter("RemoveTeamMember")) // Admin and User with Role Trainer on Team
 					membersGroup.PATCH(":memberId", Adapter("UpdateTeamMember"))  // Admin and User with Role Trainer on Team
 				}
+
 			}
 		}
 		invitesGroup := apiGroup.Group("/invites") // Admin or User with Role Trainer on Team
@@ -226,6 +228,7 @@ func GetRouter() *gin.Engine {
 			invitesGroup.GET("", Adapter("ListInvites"))
 			invitesGroup.DELETE(":inviteId", Adapter("RevokeInvite"))
 			invitesGroup.PATCH(":inviteId", Adapter("ResendInvite"))
+			invitesGroup.GET(":inviteToken", Adapter("GetInviteByToken"))
 		}
 		usersGroup := apiGroup.Group("/users") // Admin only
 		{

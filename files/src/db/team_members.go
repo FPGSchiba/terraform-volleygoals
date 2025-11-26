@@ -176,14 +176,14 @@ func CreateTeamMemberFromInvite(ctx context.Context, invite *models.Invite) (*mo
 		return nil, fmt.Errorf("CreateTeamMemberFromInvite: invite.AcceptedBy is nil")
 	}
 	teamMember := &models.TeamMember{
-		Id:         models.GenerateID(),
-		TeamId:     invite.TeamId,
-		CognitoSub: *invite.AcceptedBy,
-		Role:       invite.Role,
-		Status:     models.TeamMemberStatusActive,
-		CreatedAt:  timeNow,
-		UpdatedAt:  timeNow,
-		JoinedAt:   &timeNow,
+		Id:        models.GenerateID(),
+		TeamId:    invite.TeamId,
+		UserId:    *invite.AcceptedBy,
+		Role:      invite.Role,
+		Status:    models.TeamMemberStatusActive,
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+		JoinedAt:  &timeNow,
 	}
 	item, err := attributevalue.MarshalMap(teamMember)
 	if err != nil {
@@ -197,4 +197,12 @@ func CreateTeamMemberFromInvite(ctx context.Context, invite *models.Invite) (*mo
 		return nil, err
 	}
 	return teamMember, nil
+}
+
+func IsUserMemberOfTeam(ctx context.Context, userID string, teamID string) (bool, error) {
+	teamMember, err := GetTeamMemberByUserIDAndTeamID(ctx, userID, teamID)
+	if err != nil {
+		return false, err
+	}
+	return teamMember != nil, nil
 }
