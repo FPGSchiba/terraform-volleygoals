@@ -32,6 +32,12 @@ type TeamMember struct {
 	LeftAt    *time.Time       `dynamodbav:"leftAt" json:"leftAt"`
 }
 
+type TeamAssignment struct {
+	Team   Team             `json:"team"`
+	Role   TeamMemberRole   `json:"role"`
+	Status TeamMemberStatus `json:"status"`
+}
+
 func (t *TeamMember) ToAttributeValues() map[string]types.AttributeValue {
 	m, err := ToDynamoMap(t)
 	if err != nil {

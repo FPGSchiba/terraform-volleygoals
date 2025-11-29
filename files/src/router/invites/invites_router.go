@@ -134,14 +134,17 @@ func GetTeamInvites(ctx context.Context, event events.APIGatewayProxyRequest) (*
 }
 
 func ListInvites(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	// TODO: Implement listing all invites with proper authorization and pagination
 	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
 }
 
 func RevokeInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	// TODO: Implement invite revocation
 	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
 }
 
 func ResendInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	// TODO: Implement invite resending
 	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
 }
 

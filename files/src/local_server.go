@@ -189,16 +189,20 @@ func GetRouter() *gin.Engine {
 	// Public auth endpoints (not under apiGroup to mirror your example)
 	// Invite completion endpoint (no auth)
 	engine.POST("/api/v1/invites/complete", Adapter("CompleteInvite"))
+	engine.POST("/health", Adapter("HealthCheck"))
 
 	apiGroup := engine.Group("/api/v1")
 	{
 		// Apply auth for subsequent routes
 		apiGroup.Use(AuthMiddleware())
 
+		apiGroup.GET("/file", Adapter("GetFile"))
+
 		selfGroup := apiGroup.Group("/self") // User only
 		{
 			selfGroup.GET("", Adapter("GetSelf"))
 			selfGroup.PATCH("", Adapter("UpdateSelf"))
+			selfGroup.GET("/picture/presign", Adapter("UploadSelfPicture"))
 		}
 		teamsGroup := apiGroup.Group("/teams")
 		{
@@ -206,11 +210,12 @@ func GetRouter() *gin.Engine {
 			teamsGroup.GET("", Adapter("ListTeams"))   // Admin only
 			teamGroup := teamsGroup.Group(":teamId")   // Admin or User for specific Team
 			{
-				teamGroup.DELETE("", Adapter("DeleteTeam"))                 // Admin only
-				teamGroup.GET("", Adapter("GetTeam"))                       // Admin or User for Team
-				teamGroup.PATCH("/settings", Adapter("UpdateTeamSettings")) // Admin or User with Role Trainer on Team
-				teamGroup.GET("/invites", Adapter("GetTeamInvites"))        // Admin or User with Role Trainer on Team
-				teamGroup.PATCH("", Adapter("UpdateTeam"))                  // Admin or User with Role Trainer on Team
+				teamGroup.DELETE("", Adapter("DeleteTeam"))                     // Admin only
+				teamGroup.GET("", Adapter("GetTeam"))                           // Admin or User for Team
+				teamGroup.PATCH("/settings", Adapter("UpdateTeamSettings"))     // Admin or User with Role Trainer on Team
+				teamGroup.GET("/invites", Adapter("GetTeamInvites"))            // Admin or User with Role Trainer on Team
+				teamGroup.GET("/picture/presign", Adapter("UploadTeamPicture")) // Admin or User with Role Trainer on Team
+				teamGroup.PATCH("", Adapter("UpdateTeam"))                      // Admin or User with Role Trainer on Team
 				membersGroup := teamGroup.Group("/members")
 				{
 					membersGroup.POST("", Adapter("AddTeamMember"))               // Admin only

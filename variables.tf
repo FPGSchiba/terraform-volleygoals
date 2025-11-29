@@ -25,10 +25,3 @@ variable "ses_tenant_name" {
   type        = string
   default     = "default_tenant"
 }
-
-variable "ses_configuration_set_name" {
-  description = "SES Configuration Set name for email sending"
-  type        = string
-  default     = "default_configuration_set"
-
-}

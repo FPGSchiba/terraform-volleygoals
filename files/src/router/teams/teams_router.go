@@ -157,3 +157,8 @@ func CreateTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 			"team": team,
 		})
 }
+
+func UploadTeamPicture(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	// TODO: implement uploading team picture
+	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
+}

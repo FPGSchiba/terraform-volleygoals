@@ -206,3 +206,28 @@ func IsUserMemberOfTeam(ctx context.Context, userID string, teamID string) (bool
 	}
 	return teamMember != nil, nil
 }
+
+func GetTeamAssignmentsByUserID(ctx context.Context, userID string) ([]*models.TeamAssignment, error) {
+	teamMembers, err := GetMembershipsByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	var teamAssignments []*models.TeamAssignment
+	for _, tm := range teamMembers {
+		team, err := GetTeamById(ctx, tm.TeamId)
+		if err != nil {
+			return nil, err
+		}
+		if team == nil {
+			log.Printf("[WARN] GetTeamAssignmentsByUserID: team not found for teamId %s", tm.TeamId)
+			continue
+		}
+		teamAssignment := &models.TeamAssignment{
+			Team:   *team,
+			Role:   tm.Role,
+			Status: tm.Status,
+		}
+		teamAssignments = append(teamAssignments, teamAssignment)
+	}
+	return teamAssignments, nil
+}

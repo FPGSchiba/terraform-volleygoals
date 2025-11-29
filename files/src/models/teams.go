@@ -17,6 +17,7 @@ type Team struct {
 	Id        string     `dynamodbav:"id" json:"id"`
 	Name      string     `dynamodbav:"teamName" json:"name"`
 	Status    TeamStatus `dynamodbav:"status" json:"status"`
+	Picture   string     `dynamodbav:"picture" json:"picture"`
 	CreatedAt time.Time  `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time  `dynamodbav:"updatedAt" json:"updatedAt"`
 	DeletedAt *time.Time `dynamodbav:"deletedAt" json:"deletedAt"`

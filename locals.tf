@@ -22,10 +22,13 @@ locals {
     "OTEL_RESOURCE_ATTRIBUTES"    = "service.name=volleygoals"
     "EMAIL_SENDER"                = "no-reply@${data.aws_route53_zone.this.name}"
     "TENANT_NAME"                 = var.ses_tenant_name
-    "CONFIGURATION_SET_NAME"      = var.ses_configuration_set_name
+    "CONFIGURATION_SET_NAME"      = aws_sesv2_configuration_set.this.configuration_set_name
     "FRONTEND_BASE_URL"           = "https://${data.aws_route53_zone.this.name}"
+    "BACKEND_BASE_URL"            = "https://api.${data.aws_route53_zone.this.name}/api/v1"
+    "CDN_BASE_URL"                = "https://cdn.${data.aws_route53_zone.this.name}"
     "USER_POOL_ID"                = element(split("/", element(split(":", var.cognito_user_pool_arn), -1)), -1)
     "INVITE_TEMPLATE_ARN"         = aws_ses_template.invitation.arn
+    "S3_BUCKET_NAME"              = aws_s3_bucket.this.bucket
   }
   lambda_layer_arns = [
     "arn:aws:lambda:${data.aws_region.current.region}:901920570463:layer:aws-otel-collector-amd64-ver-0-117-0:1" # Me hates it, as it is hardcoded

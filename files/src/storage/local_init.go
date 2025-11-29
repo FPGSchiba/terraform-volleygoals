@@ -12,6 +12,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	bucketName = "dev-volleygoals-20251129110008477200000001"
+	cdnBaseURL = "https://cdn.volleygoals-test.schiba-apps.net"
+)
+
 // InitClient initializes the S3 client for local mode. If awsConfig is
 // non-nil it will be used. Otherwise this function will attempt to load the
 // AWS config using an explicit profile from the environment. Environment
@@ -53,5 +58,12 @@ func InitClient(awsConfig *aws.Config) {
 
 		cfg = &c
 		client = s3.NewFromConfig(*cfg)
+		initPresignClient(client)
+	})
+}
+
+func initPresignClient(client *s3.Client) {
+	presignClientOnce.Do(func() {
+		presignClient = s3.NewPresignClient(client)
 	})
 }

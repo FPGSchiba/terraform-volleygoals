@@ -55,3 +55,26 @@ func CreateUser(ctx context.Context, email string) (*models.User, string, error)
 	}
 	return models.UserFromCognito(*result.User, models.UserTypeUser), tempPassword, nil
 }
+
+func UpdateUserAttributes(ctx context.Context, sub string, attributes map[string]string) error {
+	if sub == "" {
+		return fmt.Errorf("UpdateUserAttributes: sub is empty")
+	}
+	if len(attributes) == 0 {
+		return fmt.Errorf("UpdateUserAttributes: attributes is empty")
+	}
+	client = GetClient()
+	var cognitoAttributes []types.AttributeType
+	for k, v := range attributes {
+		cognitoAttributes = append(cognitoAttributes, types.AttributeType{
+			Name:  aws.String(k),
+			Value: aws.String(v),
+		})
+	}
+	_, err := client.AdminUpdateUserAttributes(ctx, &cognitoidentityprovider.AdminUpdateUserAttributesInput{
+		UserPoolId:     aws.String(userPoolId),
+		Username:       aws.String(sub),
+		UserAttributes: cognitoAttributes,
+	})
+	return err
+}

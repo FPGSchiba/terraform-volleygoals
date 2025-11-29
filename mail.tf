@@ -1,3 +1,49 @@
+resource "aws_ses_domain_identity" "this" {
+  domain = data.aws_route53_zone.this.name
+}
+
+resource "aws_route53_record" "verification_record" {
+  zone_id = data.aws_route53_zone.this.zone_id
+  name    = "_amazonses.${data.aws_route53_zone.this.name}"
+  type    = "TXT"
+  ttl     = "600"
+  records = [aws_ses_domain_identity.this.verification_token]
+}
+
+resource "aws_ses_domain_identity_verification" "verification" {
+  domain = aws_ses_domain_identity.this.domain
+
+  depends_on = [aws_route53_record.verification_record]
+}
+
+resource "aws_sesv2_configuration_set" "this" {
+  configuration_set_name = "${var.prefix}-volleygoals"
+}
+
+resource "aws_route53_record" "dmarc" {
+  zone_id = data.aws_route53_zone.this.zone_id
+  name    = "_dmarc.${data.aws_route53_zone.this.name}"
+  type    = "TXT"
+  ttl     = "600"
+  records = ["v=DMARC1; p=none; rua=mailto:dmarc-reports@${data.aws_route53_zone.this.name}"]
+}
+
+resource "aws_route53_record" "mail" {
+  zone_id = data.aws_route53_zone.this.zone_id
+  name    = data.aws_route53_zone.this.name
+  type    = "MX"
+  ttl     = "600"
+  records = ["10 inbound-smtp.${data.aws_region.current.region}.amazonaws.com"]
+}
+
+resource "aws_route53_record" "spf" {
+  zone_id = data.aws_route53_zone.this.zone_id
+  name    = data.aws_route53_zone.this.name
+  type    = "TXT"
+  ttl     = "600"
+  records = ["v=spf1 include:amazonses.com ~all"]
+}
+
 resource "aws_ses_template" "invitation" {
   name    = "${var.prefix}-invitation"
   subject = "You're invited to join {{teamName}} on VolleyGoals"

@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/router/invites"
+	"github.com/fpgschiba/volleygoals/router/self"
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
 	teamsettings "github.com/fpgschiba/volleygoals/router/team-settings"
 	"github.com/fpgschiba/volleygoals/router/teams"
@@ -65,6 +66,12 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	var err error
 
 	switch h {
+	// Utilities
+	case "HealthCheck":
+		response, err = HealthCheck(ctx, event)
+	case "GetFile":
+		response, err = GetFile(ctx, event)
+
 	// Teams handlers
 	case "GetTeam":
 		response, err = teams.GetTeam(ctx, event)
@@ -76,6 +83,8 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = teams.UpdateTeam(ctx, event)
 	case "DeleteTeam":
 		response, err = teams.DeleteTeam(ctx, event)
+	case "UploadTeamPicture":
+		response, err = teams.UploadTeamPicture(ctx, event)
 
 	// Team settings handlers
 	case "UpdateTeamSettings":
@@ -83,9 +92,11 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 
 	// Self handlers
 	case "GetSelf":
-		response, err = GetSelf(ctx, event)
+		response, err = self.GetSelf(ctx, event)
 	case "UpdateSelf":
-		response, err = UpdateSelf(ctx, event)
+		response, err = self.UpdateSelf(ctx, event)
+	case "UploadSelfPicture":
+		response, err = self.UploadSelfPicture(ctx, event)
 
 	// Team members handlers
 	case "ListTeamMembers":
