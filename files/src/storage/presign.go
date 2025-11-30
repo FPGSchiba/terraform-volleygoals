@@ -17,8 +17,8 @@ func GeneratePresignedPutURL(ctx context.Context, key, contentType string, expir
 		Bucket:      aws.String(bucketName),
 		Key:         aws.String(key),
 		ContentType: aws.String(contentType),
-	}, func(options *s3.PresignOptions) {
-		options.Expires = time.Duration(expires * 60)
+	}, func(po *s3.PresignOptions) {
+		po.Expires = time.Duration(expires) * time.Minute
 	})
 	if err != nil {
 		return "", err
