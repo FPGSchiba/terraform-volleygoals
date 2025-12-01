@@ -112,3 +112,23 @@ func HasOneRoleOnTeam(ctx context.Context, authorizer map[string]interface{}, te
 	}
 	return false
 }
+
+func IsTeamAdminOrTrainer(ctx context.Context, authorizer map[string]interface{}, teamId string) bool {
+	return IsTeamTrainer(ctx, authorizer, teamId) || IsTeamAdmin(ctx, authorizer, teamId)
+}
+
+func IsTeamAdmin(ctx context.Context, authorizer map[string]interface{}, teamId string) bool {
+	return HasOneRoleOnTeam(ctx, authorizer, teamId, []models.TeamMemberRole{models.TeamMemberRoleAdmin})
+}
+
+func IsTeamTrainer(ctx context.Context, authorizer map[string]interface{}, teamId string) bool {
+	return HasOneRoleOnTeam(ctx, authorizer, teamId, []models.TeamMemberRole{models.TeamMemberRoleTrainer})
+}
+
+func HasTeamAccess(ctx context.Context, authorizer map[string]interface{}, teamId string) bool {
+	return HasOneRoleOnTeam(ctx, authorizer, teamId, []models.TeamMemberRole{models.TeamMemberRoleAdmin, models.TeamMemberRoleTrainer, models.TeamMemberRoleMember})
+}
+
+func IsTeamUser(ctx context.Context, authorizer map[string]interface{}, teamId string) bool {
+	return HasOneRoleOnTeam(ctx, authorizer, teamId, []models.TeamMemberRole{models.TeamMemberRoleMember})
+}

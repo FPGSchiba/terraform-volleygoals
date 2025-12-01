@@ -37,3 +37,39 @@ func GeneratePresignedUploadURLForUserPicture(ctx context.Context, userID, filen
 	}
 	return url, key, nil
 }
+
+func GeneratePresignedUploadURLForTeamPicture(ctx context.Context, teamID, filename, contentType string, expires int) (string, string, error) {
+	presignClient = GetPresignClient()
+	fileExtension := filepath.Ext(filename)
+	newFilename := fmt.Sprintf("%s%s", models.GenerateID(), fileExtension)
+	key := fmt.Sprintf("teams/%s/%s", teamID, newFilename)
+	url, err := GeneratePresignedPutURL(ctx, key, contentType, expires)
+	if err != nil {
+		return "", key, err
+	}
+	return url, key, nil
+}
+
+func GeneratePresignedUploadURLForGoalPicture(ctx context.Context, goalID, filename, contentType string, expires int) (string, string, error) {
+	presignClient = GetPresignClient()
+	fileExtension := filepath.Ext(filename)
+	newFilename := fmt.Sprintf("%s%s", models.GenerateID(), fileExtension)
+	key := fmt.Sprintf("goals/%s/%s", goalID, newFilename)
+	url, err := GeneratePresignedPutURL(ctx, key, contentType, expires)
+	if err != nil {
+		return "", key, err
+	}
+	return url, key, nil
+}
+
+func GeneratePresignedUploadURLForCommentFile(ctx context.Context, commentID, filename, contentType string, expires int) (string, string, error) {
+	presignClient = GetPresignClient()
+	fileExtension := filepath.Ext(filename)
+	newFilename := fmt.Sprintf("%s%s", models.GenerateID(), fileExtension)
+	key := fmt.Sprintf("comments/%s/%s", commentID, newFilename)
+	url, err := GeneratePresignedPutURL(ctx, key, contentType, expires)
+	if err != nil {
+		return "", key, err
+	}
+	return url, key, nil
+}

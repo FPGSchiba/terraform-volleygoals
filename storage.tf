@@ -153,6 +153,63 @@ resource "aws_cloudfront_distribution" "cdn" {
     max_ttl                = 86400
   }
 
+  ordered_cache_behavior {
+    path_pattern     = "teams/*"
+    target_origin_id = "${var.prefix}-s3-origin"
+
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+
+    forwarded_values {
+      query_string = false
+      cookies { forward = "none" }
+      headers = ["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "goals/*"
+    target_origin_id = "${var.prefix}-s3-origin"
+
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+
+    forwarded_values {
+      query_string = false
+      cookies { forward = "none" }
+      headers = ["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "comments/*"
+    target_origin_id = "${var.prefix}-s3-origin"
+
+    allowed_methods = ["GET", "HEAD", "OPTIONS"]
+    cached_methods  = ["GET", "HEAD"]
+
+    forwarded_values {
+      query_string = false
+      cookies { forward = "none" }
+      headers = ["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
+  }
+
   viewer_certificate {
     acm_certificate_arn = aws_acm_certificate.cdn_cert.arn
     ssl_support_method  = "sni-only"

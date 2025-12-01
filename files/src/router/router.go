@@ -69,8 +69,6 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	// Utilities
 	case "HealthCheck":
 		response, err = HealthCheck(ctx, event)
-	case "GetFile":
-		response, err = GetFile(ctx, event)
 
 	// Teams handlers
 	case "GetTeam":

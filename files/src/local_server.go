@@ -196,8 +196,6 @@ func GetRouter() *gin.Engine {
 		// Apply auth for subsequent routes
 		apiGroup.Use(AuthMiddleware())
 
-		apiGroup.GET("/file", Adapter("GetFile"))
-
 		selfGroup := apiGroup.Group("/self") // User only
 		{
 			selfGroup.GET("", Adapter("GetSelf"))

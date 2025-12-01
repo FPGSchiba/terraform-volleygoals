@@ -79,7 +79,6 @@ func UploadSelfPicture(ctx context.Context, event events.APIGatewayProxyRequest)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
-	// TODO: Update user's profile picture URL in the database if needed
 	err = users.UpdateUserAttributes(ctx, username, map[string]string{
 		"picture": storage.GetPublicFileURL(key),
 	})

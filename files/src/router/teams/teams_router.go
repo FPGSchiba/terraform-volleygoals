@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
+	"github.com/fpgschiba/volleygoals/storage"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -159,6 +160,35 @@ func CreateTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 }
 
 func UploadTeamPicture(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	// TODO: implement uploading team picture
-	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
+	teamId, ok := event.PathParameters["teamId"]
+	if !ok || teamId == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	}
+	filename, ok := event.QueryStringParameters["filename"]
+	if !ok || filename == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	contentType, ok := event.QueryStringParameters["contentType"]
+	if !ok || contentType == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	presignedUrl, key, err := storage.GeneratePresignedUploadURLForTeamPicture(ctx, teamId, filename, contentType, 15)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	publicUrl := storage.GetPublicFileURL(key)
+	err = db.UpdateTeamPicture(ctx, teamId, publicUrl)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	return utils.SuccessResponse(http.StatusOK,
+		utils.MsgSuccess,
+		map[string]interface{}{
+			"uploadUrl": presignedUrl,
+			"key":       key,
+			"fileUrl":   publicUrl,
+		})
 }

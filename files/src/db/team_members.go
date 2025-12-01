@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -230,4 +232,134 @@ func GetTeamAssignmentsByUserID(ctx context.Context, userID string) ([]*models.T
 		teamAssignments = append(teamAssignments, teamAssignment)
 	}
 	return teamAssignments, nil
+}
+
+// ListTeamMembers returns a page of team members according to TeamMemberFilter.
+func ListTeamMembers(ctx context.Context, teamId string, filter TeamMemberFilter) ([]*models.TeamMember, int, *models.Cursor, bool, error) {
+	client = GetClient()
+
+	// ensure sane default limit
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = defaultPageSize
+	}
+
+	in := &dynamodb.ScanInput{
+		TableName: &teamMembersTableName,
+		Limit:     aws.Int32(int32(limit)),
+	}
+
+	// Build filter expression using TeamMemberFilter
+	if expr, vals, names := filter.BuildExpression(); expr != "" {
+		in.FilterExpression = aws.String(expr)
+		in.ExpressionAttributeValues = vals
+		if len(names) > 0 {
+			in.ExpressionAttributeNames = names
+		}
+	}
+
+	// Always filter by teamId
+	teamIdFilter := "#teamId = :teamId"
+	if in.FilterExpression != nil && *in.FilterExpression != "" {
+		*in.FilterExpression = *in.FilterExpression + " AND " + teamIdFilter
+	} else {
+		in.FilterExpression = aws.String(teamIdFilter)
+	}
+	if in.ExpressionAttributeNames == nil {
+		in.ExpressionAttributeNames = make(map[string]string)
+	}
+	in.ExpressionAttributeNames["#teamId"] = "teamId"
+	if in.ExpressionAttributeValues == nil {
+		in.ExpressionAttributeValues = make(map[string]types.AttributeValue)
+	}
+	in.ExpressionAttributeValues[":teamId"] = &types.AttributeValueMemberS{Value: teamId}
+
+	// Resume from cursor if provided
+	if filter.Cursor != nil && filter.Cursor.LastID != "" {
+		in.ExclusiveStartKey = map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: filter.Cursor.LastID},
+		}
+	}
+
+	result, err := client.Scan(ctx, in)
+	if err != nil {
+		return nil, 0, nil, false, err
+	}
+
+	var members []*models.TeamMember
+	if err := attributevalue.UnmarshalListOfMaps(result.Items, &members); err != nil {
+		return nil, 0, nil, false, err
+	}
+
+	// Sorting (in-memory) using embedded FilterOptions
+	if sortBy, sortOrder := filter.NormalizeSort(); sortBy != "" {
+		sortTeamMembers(members, sortBy, sortOrder)
+	}
+
+	// Build cursor from LastEvaluatedKey
+	nextCursor, hasMore := nextCursorFromLEK(result.LastEvaluatedKey)
+
+	return members, len(members), nextCursor, hasMore, nil
+}
+
+// sortTeamMembers sorts the slice of TeamMember according to sortBy and sortOrder.
+// Supported sortBy values: "createdAt", "joinedAt", "role", "userId"
+func sortTeamMembers(members []*models.TeamMember, sortBy, sortOrder string) {
+	desc := strings.ToLower(sortOrder) == "desc"
+	switch strings.ToLower(sortBy) {
+	case "joinedat", "joined_at":
+		sortByJoinedAt(members, desc)
+	case "createdat", "created_at":
+		sortByCreatedAt(members, desc)
+	case "role":
+		sortByRole(members, desc)
+	case "userid", "user_id":
+		sortByUserID(members, desc)
+	}
+}
+
+func sortByJoinedAt(members []*models.TeamMember, desc bool) {
+	sort.Slice(members, func(i, j int) bool {
+		a := members[i].JoinedAt
+		b := members[j].JoinedAt
+		var at time.Time
+		if a != nil {
+			at = *a
+		}
+		var bt time.Time
+		if b != nil {
+			bt = *b
+		}
+		if desc {
+			return at.After(bt)
+		}
+		return at.Before(bt)
+	})
+}
+
+func sortByCreatedAt(members []*models.TeamMember, desc bool) {
+	sort.Slice(members, func(i, j int) bool {
+		if desc {
+			return members[i].CreatedAt.After(members[j].CreatedAt)
+		}
+		return members[i].CreatedAt.Before(members[j].CreatedAt)
+	})
+}
+
+func sortByRole(members []*models.TeamMember, desc bool) {
+	sort.Slice(members, func(i, j int) bool {
+		if desc {
+			return members[i].Role > members[j].Role
+		}
+		return members[i].Role < members[j].Role
+	})
+}
+
+func sortByUserID(members []*models.TeamMember, desc bool) {
+	sort.Slice(members, func(i, j int) bool {
+		if desc {
+			return members[i].UserId > members[j].UserId
+		}
+		return members[i].UserId < members[j].UserId
+	})
 }

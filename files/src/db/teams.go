@@ -219,3 +219,19 @@ func DeleteTeamByID(ctx context.Context, teamId string) error {
 	})
 	return err
 }
+
+func UpdateTeamPicture(ctx context.Context, teamId, pictureUrl string) error {
+	client = GetClient()
+	_, err := client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: aws.String(teamsTableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: teamId},
+		},
+		UpdateExpression: aws.String("SET picture = :picture, updatedAt = :updatedAt"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":picture":   &types.AttributeValueMemberS{Value: pictureUrl},
+			":updatedAt": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+		},
+	})
+	return err
+}

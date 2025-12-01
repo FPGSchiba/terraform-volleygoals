@@ -217,3 +217,69 @@ func TeamInviteFilterFromQuery(q map[string]string) (TeamInviteFilter, error) {
 
 	return t, nil
 }
+
+type TeamMemberFilter struct {
+	FilterOptions
+	Role   string // "member" | "admin" | "trainer" | ""
+	UserId string // userId of the team member
+	Status string // "active" | "invited" | "removed" | "left" | ""
+}
+
+// BuildExpression builds a DynamoDB filter expression for team members.
+func (f *TeamMemberFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.Role) != "" {
+		parts = append(parts, "#r = :role")
+		names["#r"] = "role"
+		values[":role"] = &types.AttributeValueMemberS{Value: f.Role}
+	}
+
+	if strings.TrimSpace(f.UserId) != "" {
+		parts = append(parts, "#u = :userId")
+		names["#u"] = "userId"
+		values[":userId"] = &types.AttributeValueMemberS{Value: f.UserId}
+	}
+
+	if strings.TrimSpace(f.Status) != "" {
+		parts = append(parts, "#s = :status")
+		names["#s"] = "status"
+		values[":status"] = &types.AttributeValueMemberS{Value: f.Status}
+	}
+
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// TeamMemberFilterFromQuery parses team-member-specific and generic filter params from QueryStringParameters.
+// Returns an error if limit or cursor parsing fails.
+func TeamMemberFilterFromQuery(q map[string]string) (TeamMemberFilter, error) {
+	var t TeamMemberFilter
+
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return t, err
+	}
+	t.FilterOptions = fo
+
+	// role
+	if v, ok := q["role"]; ok {
+		t.Role = strings.TrimSpace(v)
+	}
+
+	// userId
+	if v, ok := q["userId"]; ok {
+		t.UserId = strings.TrimSpace(v)
+	}
+
+	// status
+	if v, ok := q["status"]; ok {
+		t.Status = strings.TrimSpace(v)
+	}
+
+	return t, nil
+}

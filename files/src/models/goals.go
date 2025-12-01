@@ -24,6 +24,7 @@ type Goal struct {
 	SeasonId    string     `dynamodbav:"seasonId" json:"seasonId"`
 	OwnerId     string     `dynamodbav:"ownerId" json:"ownerId"`
 	Type        GoalType   `dynamodbav:"type" json:"type"`
+	Picture     string     `dynamodbav:"picture" json:"picture"`
 	Title       string     `dynamodbav:"title" json:"title"`
 	Description string     `dynamodbav:"description" json:"description"`
 	Status      GoalStatus `dynamodbav:"status" json:"status"`
