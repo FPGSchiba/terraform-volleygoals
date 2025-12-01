@@ -9,3 +9,5 @@ updates:
     directory: "/"
     patterns: [ "aws" ]
     multi-ecosystem-group: "infrastructure"
+  - package-ecosystem: "golang"
+    directory: "files/src/"
