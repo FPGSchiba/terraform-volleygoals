@@ -18,3 +18,13 @@ type TeamMemberListResult struct {
 	Birthdate         *time.Time              `json:"birthdate"`
 	JoinedAt          *time.Time              `json:"joinedAt,omitempty"`
 }
+
+type AddTeamMemberRequest struct {
+	UserId string                `json:"userId"`
+	Role   models.TeamMemberRole `json:"role"`
+}
+
+type UpdateTeamMemberRequest struct {
+	Role   *models.TeamMemberRole   `json:"role"`
+	Status *models.TeamMemberStatus `json:"status"`
+}

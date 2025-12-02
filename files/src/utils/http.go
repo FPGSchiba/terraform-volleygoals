@@ -25,6 +25,10 @@ const (
 	// Team Settings related errors
 	MsgErrorTeamSettingsNotFound ResponseMessage = "error.teamSettings.notFound"
 
+	// Team Member related errors
+	MsgErrorUserNotFound      ResponseMessage = "error.teamMembers.userNotFound"
+	MsgErrorMemberCannotLeave ResponseMessage = "error.teamMembers.cannotLeave"
+
 	// Invite related errors
 	MsgErrorInviteExists           ResponseMessage = "error.invite.exists"
 	MsgErrorInvalidInviteToken     ResponseMessage = "error.invite.invalidToken"

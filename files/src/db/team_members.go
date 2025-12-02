@@ -363,3 +363,145 @@ func sortByUserID(members []*models.TeamMember, desc bool) {
 		return members[i].UserId < members[j].UserId
 	})
 }
+
+func AddTeamMember(ctx context.Context, teamId, userId string, role models.TeamMemberRole) (*models.TeamMember, error) {
+	client = GetClient()
+	timeNow := time.Now()
+	teamMember := &models.TeamMember{
+		Id:        models.GenerateID(),
+		TeamId:    teamId,
+		UserId:    userId,
+		Role:      role,
+		Status:    models.TeamMemberStatusActive,
+		CreatedAt: timeNow,
+		UpdatedAt: timeNow,
+		JoinedAt:  &timeNow,
+	}
+	item, err := attributevalue.MarshalMap(teamMember)
+	if err != nil {
+		return nil, err
+	}
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: &teamMembersTableName,
+		Item:      item,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return teamMember, nil
+}
+
+func UpdateTeamMember(ctx context.Context, teamMemberId string, role *models.TeamMemberRole, status *models.TeamMemberStatus) (*models.TeamMember, error) {
+	client = GetClient()
+	var updateExpressions []string
+	exprAttrValues := make(map[string]types.AttributeValue)
+	exprAttrNames := make(map[string]string)
+
+	if role != nil {
+		updateExpressions = append(updateExpressions, "#role = :role")
+		exprAttrValues[":role"] = &types.AttributeValueMemberS{Value: string(*role)}
+		exprAttrNames["#role"] = "role"
+	}
+
+	if status != nil {
+		updateExpressions = append(updateExpressions, "#status = :status")
+		exprAttrValues[":status"] = &types.AttributeValueMemberS{Value: string(*status)}
+		exprAttrNames["#status"] = "status"
+	}
+
+	updateExpressions = append(updateExpressions, "#updatedAt = :updatedAt")
+	exprAttrValues[":updatedAt"] = &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)}
+	exprAttrNames["#updatedAt"] = "updatedAt"
+
+	updateExpr := "SET " + strings.Join(updateExpressions, ", ")
+
+	result, err := client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName:                 &teamMembersTableName,
+		Key:                       map[string]types.AttributeValue{"id": &types.AttributeValueMemberS{Value: teamMemberId}},
+		UpdateExpression:          aws.String(updateExpr),
+		ExpressionAttributeValues: exprAttrValues,
+		ExpressionAttributeNames:  exprAttrNames,
+		ReturnValues:              types.ReturnValueAllNew,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var updatedTeamMember models.TeamMember
+	err = attributevalue.UnmarshalMap(result.Attributes, &updatedTeamMember)
+	if err != nil {
+		return nil, err
+	}
+	return &updatedTeamMember, nil
+}
+
+func GetUserRoleOnTeam(ctx context.Context, userID string, teamID string) (*models.TeamMemberRole, error) {
+	teamMember, err := GetTeamMemberByUserIDAndTeamID(ctx, userID, teamID)
+	if err != nil {
+		return nil, err
+	}
+	if teamMember == nil {
+		return nil, nil
+	}
+	return &teamMember.Role, nil
+}
+
+func HasOtherAdminOrTrainer(ctx context.Context, teamID string, excludingUserID string) (bool, error) {
+	teamMembers, err := GetMembershipsByTeamID(ctx, teamID)
+	if err != nil {
+		return false, err
+	}
+	for _, member := range teamMembers {
+		if member.UserId != excludingUserID && (member.Role == models.TeamMemberRoleAdmin || member.Role == models.TeamMemberRoleTrainer) && member.Status == models.TeamMemberStatusActive {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func LeaveTeam(ctx context.Context, teamID string, userID string) error {
+	teamMember, err := GetTeamMemberByUserIDAndTeamID(ctx, userID, teamID)
+	if err != nil {
+		return err
+	}
+	if teamMember == nil {
+		return fmt.Errorf("LeaveTeam: user %s is not a member of team %s", userID, teamID)
+	}
+	// Set status to left and update UpdatedAt and LeftAt
+	timeNow := time.Now()
+	updateExpr := "SET #status = :status, #updatedAt = :updatedAt, #leftAt = :leftAt"
+	_, err = client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: &teamMembersTableName,
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: teamMember.Id},
+		},
+		UpdateExpression: aws.String(updateExpr),
+		ExpressionAttributeNames: map[string]string{
+			"#status":    "status",
+			"#updatedAt": "updatedAt",
+			"#leftAt":    "leftAt",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":status":    &types.AttributeValueMemberS{Value: string(models.TeamMemberStatusLeft)},
+			":updatedAt": &types.AttributeValueMemberS{Value: timeNow.Format(time.RFC3339)},
+			":leftAt":    &types.AttributeValueMemberS{Value: timeNow.Format(time.RFC3339)},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RemoveTeamMember(ctx context.Context, teamMemberId string) error {
+	client = GetClient()
+	_, err := client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: &teamMembersTableName,
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: teamMemberId},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}

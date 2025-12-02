@@ -132,3 +132,11 @@ func HasTeamAccess(ctx context.Context, authorizer map[string]interface{}, teamI
 func IsTeamUser(ctx context.Context, authorizer map[string]interface{}, teamId string) bool {
 	return HasOneRoleOnTeam(ctx, authorizer, teamId, []models.TeamMemberRole{models.TeamMemberRoleMember})
 }
+
+func GetUserRoleOnTeam(ctx context.Context, authorizer map[string]interface{}, teamId string) (*models.TeamMemberRole, error) {
+	if !IsUser(authorizer) {
+		return nil, nil
+	}
+	userID := GetCognitoUsername(authorizer)
+	return db.GetUserRoleOnTeam(ctx, userID, teamId)
+}
