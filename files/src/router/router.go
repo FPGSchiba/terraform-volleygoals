@@ -113,8 +113,6 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = invites.CreateInvite(ctx, event)
 	case "CompleteInvite":
 		response, err = invites.CompleteInvite(ctx, event)
-	case "ListInvites":
-		response, err = invites.ListInvites(ctx, event)
 	case "RevokeInvite":
 		response, err = invites.RevokeInvite(ctx, event)
 	case "ResendInvite":
@@ -131,6 +129,8 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = users.GetUser(ctx, event)
 	case "DeleteUser":
 		response, err = users.DeleteUser(ctx, event)
+	case "UpdateUser":
+		response, err = users.UpdateUser(ctx, event)
 
 	// Unknown handler
 	default:

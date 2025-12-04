@@ -23,14 +23,16 @@ type Invite struct {
 	Role       TeamMemberRole `dynamodbav:"role" json:"role"`
 	Status     InviteStatus   `dynamodbav:"status" json:"status"`
 	Token      string         `dynamodbav:"inviteToken" json:"token"`
-	Message    *string        `dynamodbav:"message" json:"message"` // TODO: Actually use this in the mail and creation of the invite
+	Message    *string        `dynamodbav:"message" json:"message"`
 	InvitedBy  string         `dynamodbav:"invitedBy" json:"invitedBy"`
 	AcceptedBy *string        `dynamodbav:"acceptedBy" json:"acceptedBy"`
+	RevokedBy  *string        `dynamodbav:"revokedBy" json:"revokedBy"`
 	ExpiresAt  time.Time      `dynamodbav:"expiresAt" json:"expiresAt"`
 	CreatedAt  time.Time      `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt  time.Time      `dynamodbav:"updatedAt" json:"updatedAt"`
 	AcceptedAt *time.Time     `dynamodbav:"acceptedAt" json:"acceptedAt"`
 	DeclinedAt *time.Time     `dynamodbav:"declinedAt" json:"declinedAt"`
+	RevokedAt  *time.Time     `dynamodbav:"revokedAt" json:"revokedAt"`
 }
 
 func (inv *Invite) ToAttributeValues() map[string]types.AttributeValue {

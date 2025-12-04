@@ -15,7 +15,7 @@ import (
 
 const InviteExpiresInDays = 7
 
-func CreateInvite(ctx context.Context, teamId, email, inviterSub, token string, role models.TeamMemberRole) (*models.Invite, error) {
+func CreateInvite(ctx context.Context, teamId, email, inviterSub, token string, role models.TeamMemberRole, message *string) (*models.Invite, error) {
 	client = GetClient()
 	invite := models.Invite{
 		Id:        models.GenerateID(),
@@ -25,6 +25,7 @@ func CreateInvite(ctx context.Context, teamId, email, inviterSub, token string, 
 		Status:    models.InviteStatusPending,
 		InvitedBy: inviterSub,
 		Token:     token,
+		Message:   message,
 		ExpiresAt: time.Now().Add(InviteExpiresInDays * 24 * time.Hour), // Expires in 7 days
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -83,11 +84,8 @@ func GetInviteByToken(ctx context.Context, token string) (*models.Invite, error)
 		KeyConditionExpression: aws.String("#inviteToken = :inviteToken"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":inviteToken": &types.AttributeValueMemberS{Value: token},
-			":status":      &types.AttributeValueMemberS{Value: string(models.InviteStatusPending)},
 		},
-		FilterExpression: aws.String("#status = :status"),
 		ExpressionAttributeNames: map[string]string{
-			"#status":      "status",
 			"#inviteToken": "inviteToken",
 		},
 		Limit: aws.Int32(1),
@@ -238,4 +236,163 @@ func sortInvites(invites []*models.Invite, sortBy, sortOrder string) {
 			return invites[i].CreatedAt.Before(invites[j].CreatedAt)
 		})
 	}
+}
+
+func GetInviteById(ctx context.Context, inviteId string) (*models.Invite, error) {
+	client = GetClient()
+	result, err := client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(invitesTableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: inviteId},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result.Item == nil {
+		return nil, nil
+	}
+	var invite models.Invite
+	err = attributevalue.UnmarshalMap(result.Item, &invite)
+	if err != nil {
+		return nil, err
+	}
+	return &invite, nil
+}
+
+func RevokeInviteById(ctx context.Context, inviteId, revokedBy string) (*models.Invite, error) {
+	client = GetClient()
+	response, err := client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: aws.String(invitesTableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: inviteId},
+		},
+		UpdateExpression: aws.String("SET #status = :status, #updatedAt = :updatedAt, #revokedBy = :revokedBy, #revokedAt = :revokedAt"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":status":    &types.AttributeValueMemberS{Value: string(models.InviteStatusRevoked)},
+			":updatedAt": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+			":revokedBy": &types.AttributeValueMemberS{Value: revokedBy},
+			":revokedAt": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+		},
+		ExpressionAttributeNames: map[string]string{
+			"#status":    "status",
+			"#updatedAt": "updatedAt",
+			"#revokedBy": "revokedBy",
+			"#revokedAt": "revokedAt",
+		},
+		ReturnValues: types.ReturnValueAllNew,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var updatedInvite models.Invite
+	err = attributevalue.UnmarshalMap(response.Attributes, &updatedInvite)
+	if err != nil {
+		return nil, err
+	}
+	return &updatedInvite, nil
+}
+
+func ResentInviteEmail(ctx context.Context, inviteId string) error {
+	client = GetClient()
+	_, err := client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: aws.String(invitesTableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: inviteId},
+		},
+		UpdateExpression: aws.String("SET #updatedAt = :updatedAt, #status = :status, #expiresAt = :expiresAt"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":updatedAt": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+			":status":    &types.AttributeValueMemberS{Value: string(models.InviteStatusPending)},
+			":expiresAt": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+		},
+		ExpressionAttributeNames: map[string]string{
+			"#updatedAt": "updatedAt",
+			"#status":    "status",
+			"#expiresAt": "expiresAt",
+		},
+	})
+	return err
+}
+
+func ExpireInvites(ctx context.Context) error { // TODO: think about how this can be triggered from event bridge/lambda
+	client = GetClient()
+	// Scan for invites that are pending and past their expiry date
+	now := time.Now().Format(time.RFC3339)
+	input := &dynamodb.ScanInput{
+		TableName:        aws.String(invitesTableName),
+		FilterExpression: aws.String("#status = :status AND #expiresAt < :now"),
+		ExpressionAttributeNames: map[string]string{
+			"#status":    "status",
+			"#expiresAt": "expiresAt",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":status": &types.AttributeValueMemberS{Value: string(models.InviteStatusPending)},
+			":now":    &types.AttributeValueMemberS{Value: now},
+		},
+	}
+
+	result, err := client.Scan(ctx, input)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range result.Items {
+		var invite models.Invite
+		err := attributevalue.UnmarshalMap(item, &invite)
+		if err != nil {
+			return err
+		}
+
+		// Update invite status to expired
+		_, err = client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+			TableName: aws.String(invitesTableName),
+			Key: map[string]types.AttributeValue{
+				"id": &types.AttributeValueMemberS{Value: invite.Id},
+			},
+			UpdateExpression: aws.String("SET #status = :status, #updatedAt = :updatedAt"),
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":status":    &types.AttributeValueMemberS{Value: string(models.InviteStatusExpired)},
+				":updatedAt": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+			},
+			ExpressionAttributeNames: map[string]string{
+				"#status":    "status",
+				"#updatedAt": "updatedAt",
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func ExpireInviteById(ctx context.Context, inviteId string) (*models.Invite, error) {
+	client = GetClient()
+	response, err := client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName: aws.String(invitesTableName),
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: inviteId},
+		},
+		UpdateExpression: aws.String("SET #status = :status, #updatedAt = :updatedAt"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":status":    &types.AttributeValueMemberS{Value: string(models.InviteStatusExpired)},
+			":updatedAt": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+		},
+		ExpressionAttributeNames: map[string]string{
+			"#status":    "status",
+			"#updatedAt": "updatedAt",
+		},
+		ReturnValues: types.ReturnValueAllNew,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var updatedInvite models.Invite
+	err = attributevalue.UnmarshalMap(response.Attributes, &updatedInvite)
+	if err != nil {
+		return nil, err
+	}
+	return &updatedInvite, nil
 }

@@ -228,7 +228,6 @@ func GetRouter() *gin.Engine {
 		invitesGroup := apiGroup.Group("/invites") // Admin or User with Role Trainer on Team
 		{
 			invitesGroup.POST("", Adapter("CreateInvite"))
-			invitesGroup.GET("", Adapter("ListInvites"))
 			invitesGroup.DELETE(":inviteId", Adapter("RevokeInvite"))
 			invitesGroup.PATCH(":inviteId", Adapter("ResendInvite"))
 			invitesGroup.GET(":inviteToken", Adapter("GetInviteByToken"))
@@ -238,6 +237,7 @@ func GetRouter() *gin.Engine {
 			usersGroup.GET("", Adapter("ListUsers"))
 			usersGroup.GET(":userSub", Adapter("GetUser"))
 			usersGroup.DELETE(":userSub", Adapter("RemoveUser"))
+			usersGroup.PATCH(":userSub", Adapter("UpdateUser"))
 		}
 	}
 

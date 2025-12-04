@@ -133,19 +133,65 @@ func GetTeamInvites(ctx context.Context, event events.APIGatewayProxyRequest) (*
 	})
 }
 
-func ListInvites(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	// TODO: Implement listing all invites with proper authorization and pagination
-	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
-}
-
 func RevokeInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	// TODO: Implement invite revocation
-	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
+	inviteId, ok := event.PathParameters["inviteId"]
+	if !ok || inviteId == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	invite, err := db.GetInviteById(ctx, inviteId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	if invite == nil {
+		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
+	}
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, invite.TeamId) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	}
+	username := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	invite, err = db.RevokeInviteById(ctx, inviteId, username)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+		"invite": invite,
+	})
 }
 
 func ResendInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	// TODO: Implement invite resending
-	return utils.ErrorResponse(http.StatusNotImplemented, utils.MsgNotImplemented, nil)
+	inviteId, ok := event.PathParameters["inviteId"]
+	if !ok || inviteId == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	invite, err := db.GetInviteById(ctx, inviteId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	if invite == nil {
+		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
+	}
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, invite.TeamId) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	}
+	inviter, err := users.GetUserBySub(ctx, invite.InvitedBy)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	team, err := db.GetTeamById(ctx, invite.TeamId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	err = db.ResentInviteEmail(ctx, inviteId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	err = mail.ResendInvitationEmail(ctx, invite, inviter, team)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+		"invite": invite,
+	})
 }
 
 func GetInviteByToken(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
@@ -218,7 +264,7 @@ func checkExistingUserMembership(ctx context.Context, email, teamId string) (*ev
 }
 
 func createInviteAndNotify(ctx context.Context, request CreateInviteRequest, currentUsername, inviteToken string, sendEmail bool) (*models.Invite, *events.APIGatewayProxyResponse, error) {
-	invite, err := db.CreateInvite(ctx, request.TeamId, request.Email, currentUsername, inviteToken, request.Role)
+	invite, err := db.CreateInvite(ctx, request.TeamId, request.Email, currentUsername, inviteToken, request.Role, request.Message)
 	if err != nil {
 		resp, err := utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 		return nil, resp, err
@@ -249,8 +295,15 @@ func createInviteAndNotify(ctx context.Context, request CreateInviteRequest, cur
 		return invite, nil, nil
 	}
 
+	var message string
+	if request.Message != nil {
+		message = *request.Message
+	} else {
+		message = "Welcome to the team!"
+	}
+
 	// Send invitation email
-	err = mail.SendInvitationEmail(ctx, request.Email, inviteToken, team.Name, inviterName, db.InviteExpiresInDays)
+	err = mail.SendInvitationEmail(ctx, request.Email, inviteToken, team.Name, inviterName, message, db.InviteExpiresInDays)
 	if err != nil {
 		_ = db.RemoveInviteById(ctx, invite.Id)
 		resp, err := utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
@@ -279,6 +332,15 @@ func fetchAndValidateInvite(ctx context.Context, token string) (*models.Invite, 
 		resp, e := utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 		return nil, resp, e
 	}
+	if invite.ExpiresAt.Before(time.Now()) {
+		resp, e := utils.ErrorResponse(http.StatusBadRequest, utils.MsgErrorInviteExpired, nil)
+		_, err := db.ExpireInviteById(ctx, invite.Id)
+		if err != nil {
+			return nil, resp, err
+		}
+		return nil, resp, e
+	}
+	
 	if !utils.ValidateInviteToken(token, invite.Email, invite.TeamId, invite.Role) {
 		resp, e := utils.ErrorResponse(http.StatusBadRequest, utils.MsgErrorInvalidInviteToken, nil)
 		return nil, resp, e

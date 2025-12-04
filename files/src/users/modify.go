@@ -78,3 +78,60 @@ func UpdateUserAttributes(ctx context.Context, sub string, attributes map[string
 	})
 	return err
 }
+
+func UpdateUserType(ctx context.Context, sub string, newType models.UserType) error {
+	if sub == "" {
+		return fmt.Errorf("UpdateUserGroup: sub is empty")
+	}
+	client = GetClient()
+	// First, get the current groups of the user
+	groupsResult, err := client.AdminListGroupsForUser(ctx, &cognitoidentityprovider.AdminListGroupsForUserInput{
+		UserPoolId: aws.String(userPoolId),
+		Username:   aws.String(sub),
+	})
+	if err != nil {
+		return err
+	}
+	// Remove user from all current groups
+	for _, group := range groupsResult.Groups {
+		_, err := client.AdminRemoveUserFromGroup(ctx, &cognitoidentityprovider.AdminRemoveUserFromGroupInput{
+			UserPoolId: aws.String(userPoolId),
+			Username:   aws.String(sub),
+			GroupName:  group.GroupName,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	// Add user to the new group
+	_, err = client.AdminAddUserToGroup(ctx, &cognitoidentityprovider.AdminAddUserToGroupInput{
+		UserPoolId: aws.String(userPoolId),
+		Username:   aws.String(sub),
+		GroupName:  aws.String(string(newType)),
+	})
+	return err
+}
+
+func DisableUser(ctx context.Context, sub string) error {
+	if sub == "" {
+		return fmt.Errorf("DisableUser: sub is empty")
+	}
+	client = GetClient()
+	_, err := client.AdminDisableUser(ctx, &cognitoidentityprovider.AdminDisableUserInput{
+		UserPoolId: aws.String(userPoolId),
+		Username:   aws.String(sub),
+	})
+	return err
+}
+
+func EnableUser(ctx context.Context, sub string) error {
+	if sub == "" {
+		return fmt.Errorf("EnableUser: sub is empty")
+	}
+	client = GetClient()
+	_, err := client.AdminEnableUser(ctx, &cognitoidentityprovider.AdminEnableUserInput{
+		UserPoolId: aws.String(userPoolId),
+		Username:   aws.String(sub),
+	})
+	return err
+}

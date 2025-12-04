@@ -7,7 +7,7 @@ type CreateInviteRequest struct {
 	TeamId    string                `json:"teamId"`
 	Role      models.TeamMemberRole `json:"role"`
 	SendEmail bool                  `json:"sendEmail"`
-	Message   *string               `json:"message"` // TODO: Actually use this in the mail and creation of the invite
+	Message   *string               `json:"message"`
 }
 
 type CompleteInviteRequest struct {

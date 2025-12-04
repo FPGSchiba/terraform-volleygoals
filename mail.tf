@@ -86,6 +86,8 @@ resource "aws_ses_template" "invitation" {
           <p style="text-align:center">
             <a class="button" href="{{acceptLink}}" target="_blank" rel="noopener">Accept Invitation</a>
           </p>
+          <p style="margin-top:16px"><strong>Message from {{inviterName}}:</strong></p>
+          <p style="white-space:pre-wrap;margin-top:6px;color:#374151">{{personalMessage}}</p>
           <p>If the button doesn't work, copy and paste this link into your browser:</p>
           <p><a href="{{acceptLink}}" target="_blank" rel="noopener">{{acceptLink}}</a></p>
           <p style="color:#6b7280">This invitation will expire in {{expiryDays}} days.</p>
@@ -101,6 +103,10 @@ resource "aws_ses_template" "invitation" {
     {{inviterName}} invited you to join the "{{teamName}}" team on VolleyGoals to share goals and collaborate.
 
     Accept invitation: {{acceptLink}}
+
+    Message from {{inviterName}}:
+
+    {{personalMessage}}
 
     This invitation will expire in {{expiryDays}} days.
 

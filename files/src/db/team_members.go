@@ -505,3 +505,22 @@ func RemoveTeamMember(ctx context.Context, teamMemberId string) error {
 	}
 	return nil
 }
+
+func RemoveAllTeamMembersForUser(ctx context.Context, userID string) error {
+	memberships, err := GetMembershipsByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	for _, membership := range memberships {
+		_, err := client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+			TableName: &teamMembersTableName,
+			Key: map[string]types.AttributeValue{
+				"id": &types.AttributeValueMemberS{Value: membership.Id},
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
