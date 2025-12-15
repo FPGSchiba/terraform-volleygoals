@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/router/invites"
+	"github.com/fpgschiba/volleygoals/router/seasons"
 	"github.com/fpgschiba/volleygoals/router/self"
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
 	teamsettings "github.com/fpgschiba/volleygoals/router/team-settings"
@@ -131,6 +132,18 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = users.DeleteUser(ctx, event)
 	case "UpdateUser":
 		response, err = users.UpdateUser(ctx, event)
+
+	// Seasons handlers
+	case "CreateSeason":
+		response, err = seasons.CreateSeason(ctx, event)
+	case "GetSeason":
+		response, err = seasons.GetSeason(ctx, event)
+	case "ListSeasons":
+		response, err = seasons.ListSeasons(ctx, event)
+	case "UpdateSeason":
+		response, err = seasons.UpdateSeason(ctx, event)
+	case "DeleteSeason":
+		response, err = seasons.DeleteSeason(ctx, event)
 
 	// Unknown handler
 	default:

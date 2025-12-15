@@ -283,3 +283,64 @@ func TeamMemberFilterFromQuery(q map[string]string) (TeamMemberFilter, error) {
 
 	return t, nil
 }
+
+// SeasonFilter combines season-specific filters with generic sort & pagination options.
+type SeasonFilter struct {
+	FilterOptions
+	TeamId       string // exact match on teamId
+	NameContains string // partial match against name
+	Status       string // season status
+}
+
+// BuildExpression builds a DynamoDB filter expression for seasons.
+func (f *SeasonFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.TeamId) != "" {
+		parts = append(parts, "#teamId = :teamId")
+		names["#teamId"] = "teamId"
+		values[":teamId"] = &types.AttributeValueMemberS{Value: f.TeamId}
+	}
+
+	if strings.TrimSpace(f.NameContains) != "" {
+		parts = append(parts, "contains(#n, :name)")
+		names["#n"] = "name"
+		values[":name"] = &types.AttributeValueMemberS{Value: f.NameContains}
+	}
+
+	if strings.TrimSpace(f.Status) != "" {
+		parts = append(parts, "#s = :status")
+		names["#s"] = "status"
+		values[":status"] = &types.AttributeValueMemberS{Value: f.Status}
+	}
+
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// SeasonFilterFromQuery parses season-specific and generic filter params from QueryStringParameters.
+func SeasonFilterFromQuery(q map[string]string) (SeasonFilter, error) {
+	var s SeasonFilter
+
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return s, err
+	}
+	s.FilterOptions = fo
+
+	if v, ok := q["teamId"]; ok {
+		s.TeamId = strings.TrimSpace(v)
+	}
+	if v, ok := q["name"]; ok && strings.TrimSpace(v) != "" {
+		s.NameContains = strings.TrimSpace(v)
+	}
+	if v, ok := q["status"]; ok {
+		s.Status = strings.TrimSpace(v)
+	}
+
+	return s, nil
+}

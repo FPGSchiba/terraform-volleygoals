@@ -239,6 +239,14 @@ func GetRouter() *gin.Engine {
 			usersGroup.DELETE(":userSub", Adapter("RemoveUser"))
 			usersGroup.PATCH(":userSub", Adapter("UpdateUser"))
 		}
+		seasonsGroup := apiGroup.Group("/seasons") // Admin or User with Role Trainer on Team
+		{
+			seasonsGroup.POST("", Adapter("CreateSeason"))
+			seasonsGroup.GET(":seasonId", Adapter("GetSeason"))
+			seasonsGroup.GET("", Adapter("ListSeasons"))
+			seasonsGroup.PATCH(":seasonId", Adapter("UpdateSeason"))
+			seasonsGroup.DELETE(":seasonId", Adapter("DeleteSeason"))
+		}
 	}
 
 	// Configurations for the gin router

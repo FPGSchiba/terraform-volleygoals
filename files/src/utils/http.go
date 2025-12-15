@@ -36,6 +36,9 @@ const (
 	MsgErrorInviteAlreadyCompleted ResponseMessage = "error.invite.alreadyCompleted"
 	MsgErrorUserAlreadyMember      ResponseMessage = "error.invite.userAlreadyMember"
 
+	// Season related errors
+	MsgErrorSeasonNotFound ResponseMessage = "error.season.notFound"
+
 	// General Success messages
 	MsgSuccess ResponseMessage = "success.ok"
 
