@@ -175,7 +175,7 @@ func UploadTeamPicture(ctx context.Context, event events.APIGatewayProxyRequest)
 	if !ok || contentType == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	presignedUrl, key, err := storage.GeneratePresignedUploadURLForTeamPicture(ctx, teamId, filename, contentType, 15)
+	presignedUrl, key, err := storage.GeneratePresignedUploadURLForTeamPicture(ctx, teamId, filename, contentType, utils.PresignedURLTimeout)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}

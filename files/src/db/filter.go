@@ -344,3 +344,75 @@ func SeasonFilterFromQuery(q map[string]string) (SeasonFilter, error) {
 
 	return s, nil
 }
+
+// GoalFilter combines goal-specific filters with generic sort & pagination options.
+type GoalFilter struct {
+	FilterOptions
+	OwnerId       string // exact match on ownerId
+	GoalType      string // goal type (individual|team)
+	Status        string // goal status
+	TitleContains string // partial match against title
+}
+
+// BuildExpression builds a DynamoDB filter expression for goals.
+func (f *GoalFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.OwnerId) != "" {
+		parts = append(parts, "#ownerId = :ownerId")
+		names["#ownerId"] = "ownerId"
+		values[":ownerId"] = &types.AttributeValueMemberS{Value: f.OwnerId}
+	}
+
+	if strings.TrimSpace(f.GoalType) != "" {
+		parts = append(parts, "#gt = :goalType")
+		names["#gt"] = "goalType"
+		values[":goalType"] = &types.AttributeValueMemberS{Value: f.GoalType}
+	}
+
+	if strings.TrimSpace(f.Status) != "" {
+		parts = append(parts, "#s = :status")
+		names["#s"] = "status"
+		values[":status"] = &types.AttributeValueMemberS{Value: f.Status}
+	}
+
+	if strings.TrimSpace(f.TitleContains) != "" {
+		parts = append(parts, "contains(#t, :title)")
+		names["#t"] = "title"
+		values[":title"] = &types.AttributeValueMemberS{Value: f.TitleContains}
+	}
+
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// GoalFilterFromQuery parses goal-specific and generic filter params from QueryStringParameters.
+// seasonId is required and an error is returned if it's missing.
+func GoalFilterFromQuery(q map[string]string) (GoalFilter, error) {
+	var g GoalFilter
+
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return g, err
+	}
+	g.FilterOptions = fo
+
+	if v, ok := q["ownerId"]; ok {
+		g.OwnerId = strings.TrimSpace(v)
+	}
+	if v, ok := q["goalType"]; ok {
+		g.GoalType = strings.TrimSpace(v)
+	}
+	if v, ok := q["status"]; ok {
+		g.Status = strings.TrimSpace(v)
+	}
+	if v, ok := q["title"]; ok && strings.TrimSpace(v) != "" {
+		g.TitleContains = strings.TrimSpace(v)
+	}
+
+	return g, nil
+}

@@ -14,13 +14,13 @@ const (
 )
 
 type Comment struct {
-	Id        string      `dynamodbav:"id" json:"id"`
-	AuthorId  string      `dynamodbav:"authorId" json:"authorId"`
-	Type      CommentType `dynamodbav:"type" json:"type"`
-	TargetId  string      `dynamodbav:"targetId" json:"targetId"`
-	Content   string      `dynamodbav:"content" json:"content"`
-	CreatedAt time.Time   `dynamodbav:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time   `dynamodbav:"updatedAt" json:"updatedAt"`
+	Id          string      `dynamodbav:"id" json:"id"`
+	AuthorId    string      `dynamodbav:"authorId" json:"authorId"`
+	CommentType CommentType `dynamodbav:"commentType" json:"commentType"`
+	TargetId    string      `dynamodbav:"targetId" json:"targetId"`
+	Content     string      `dynamodbav:"content" json:"content"`
+	CreatedAt   time.Time   `dynamodbav:"createdAt" json:"createdAt"`
+	UpdatedAt   time.Time   `dynamodbav:"updatedAt" json:"updatedAt"`
 }
 
 func (c *Comment) ToAttributeValues() map[string]types.AttributeValue {

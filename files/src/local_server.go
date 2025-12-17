@@ -242,10 +242,39 @@ func GetRouter() *gin.Engine {
 		seasonsGroup := apiGroup.Group("/seasons") // Admin or User with Role Trainer on Team
 		{
 			seasonsGroup.POST("", Adapter("CreateSeason"))
-			seasonsGroup.GET(":seasonId", Adapter("GetSeason"))
 			seasonsGroup.GET("", Adapter("ListSeasons"))
-			seasonsGroup.PATCH(":seasonId", Adapter("UpdateSeason"))
-			seasonsGroup.DELETE(":seasonId", Adapter("DeleteSeason"))
+			seasonGroup := seasonsGroup.Group(":seasonId") // Admin or User with Role Trainer on Team
+			{
+				seasonGroup.GET("", Adapter("GetSeason"))
+				seasonGroup.PATCH("", Adapter("UpdateSeason"))
+				seasonGroup.DELETE("", Adapter("DeleteSeason"))
+				goalsGroup := seasonGroup.Group("/goals")
+				{
+					goalsGroup.POST("", Adapter("CreateGoal")) // Admin or User with Role Trainer on Team
+					goalsGroup.GET(":goalId", Adapter("GetGoal"))
+					goalsGroup.GET("", Adapter("ListGoals"))
+					goalsGroup.PATCH(":goalId", Adapter("UpdateGoal"))  // Admin or User with Role Trainer on Team
+					goalsGroup.DELETE(":goalId", Adapter("DeleteGoal")) // Admin or User with Role Trainer on Team
+					goalsGroup.GET(":goalId/picture/presign", Adapter("UploadGoalFile"))
+				}
+				progressReportGroup := seasonGroup.Group("/progress-reports")
+				{
+					progressReportGroup.POST("", Adapter("CreateProgressReport")) // Admin or User with Role Trainer on Team
+					progressReportGroup.GET(":reportId", Adapter("GetProgressReport"))
+					progressReportGroup.GET("", Adapter("ListProgressReports"))
+					progressReportGroup.PATCH(":reportId", Adapter("UpdateProgressReport"))  // Admin or User with Role Trainer on Team
+					progressReportGroup.DELETE(":reportId", Adapter("DeleteProgressReport")) // Admin or User with Role Trainer on Team
+				}
+			}
+		}
+		commentsGroup := apiGroup.Group("/comments") // Admin or User with Role Trainer on Team
+		{
+			commentsGroup.POST("", Adapter("CreateComment"))
+			commentsGroup.GET(":commentId", Adapter("GetComment"))
+			commentsGroup.GET("", Adapter("ListComments"))
+			commentsGroup.PATCH(":commentId", Adapter("UpdateComment"))  // Admin or User with Role Trainer on Team
+			commentsGroup.DELETE(":commentId", Adapter("DeleteComment")) // Admin or User with Role Trainer on Team
+			commentsGroup.GET(":commentId/file/presign", Adapter("UploadCommentFile"))
 		}
 	}
 

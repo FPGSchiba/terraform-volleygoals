@@ -7,7 +7,10 @@ import (
 	"runtime/debug"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/fpgschiba/volleygoals/router/comments"
+	"github.com/fpgschiba/volleygoals/router/goals"
 	"github.com/fpgschiba/volleygoals/router/invites"
+	progress_reports "github.com/fpgschiba/volleygoals/router/progress-reports"
 	"github.com/fpgschiba/volleygoals/router/seasons"
 	"github.com/fpgschiba/volleygoals/router/self"
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
@@ -144,6 +147,46 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = seasons.UpdateSeason(ctx, event)
 	case "DeleteSeason":
 		response, err = seasons.DeleteSeason(ctx, event)
+
+	// Goals handlers
+	case "CreateGoal":
+		response, err = goals.CreateGoal(ctx, event)
+	case "GetGoal":
+		response, err = goals.GetGoal(ctx, event)
+	case "ListGoals":
+		response, err = goals.ListGoals(ctx, event)
+	case "UpdateGoal":
+		response, err = goals.UpdateGoal(ctx, event)
+	case "DeleteGoal":
+		response, err = goals.DeleteGoal(ctx, event)
+	case "UploadGoalFile":
+		response, err = goals.UploadGoalFile(ctx, event)
+
+	// Progress Report handlers
+	case "CreateProgressReport":
+		response, err = progress_reports.CreateProgressReport(ctx, event)
+	case "GetProgressReport":
+		response, err = progress_reports.GetProgressReport(ctx, event)
+	case "ListProgressReports":
+		response, err = progress_reports.ListProgressReports(ctx, event)
+	case "UpdateProgressReport":
+		response, err = progress_reports.UpdateProgressReport(ctx, event)
+	case "DeleteProgressReport":
+		response, err = progress_reports.DeleteProgressReport(ctx, event)
+
+	// Comments handlers
+	case "CreateComment":
+		response, err = comments.CreateComment(ctx, event)
+	case "GetComment":
+		response, err = comments.GetComment(ctx, event)
+	case "ListComments":
+		response, err = comments.ListComments(ctx, event)
+	case "UpdateComment":
+		response, err = comments.UpdateComment(ctx, event)
+	case "DeleteComment":
+		response, err = comments.DeleteComment(ctx, event)
+	case "UploadCommentFile":
+		response, err = comments.UploadCommentFile(ctx, event)
 
 	// Unknown handler
 	default:

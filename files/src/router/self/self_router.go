@@ -75,7 +75,7 @@ func UploadSelfPicture(ctx context.Context, event events.APIGatewayProxyRequest)
 	if !ok || contentType == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	presignedURL, key, err := storage.GeneratePresignedUploadURLForUserPicture(ctx, username, filename, contentType, 15)
+	presignedURL, key, err := storage.GeneratePresignedUploadURLForUserPicture(ctx, username, filename, contentType, utils.PresignedURLTimeout)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}

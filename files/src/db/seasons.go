@@ -227,3 +227,26 @@ func sortSeasons(seasons []*models.Season, sortBy, sortOrder string) {
 		})
 	}
 }
+
+func GetTeamIdBySeasonId(ctx context.Context, seasonId string) (string, error) {
+	client = GetClient()
+	result, err := client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: &seasonsTableName,
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: seasonId},
+		},
+		ProjectionExpression: aws.String("teamId"),
+	})
+	if err != nil {
+		return "", err
+	}
+	if result.Item == nil {
+		return "", nil
+	}
+	var season models.Season
+	err = attributevalue.UnmarshalMap(result.Item, &season)
+	if err != nil {
+		return "", err
+	}
+	return season.TeamId, nil
+}

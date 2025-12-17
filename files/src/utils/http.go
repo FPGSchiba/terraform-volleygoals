@@ -45,6 +45,9 @@ const (
 	// Team related success messages
 	MsgSuccessTeamCreated ResponseMessage = "success.team.created"
 	MsgSuccessTeamDeleted ResponseMessage = "success.team.deleted"
+
+	// Presinged URL Timeout
+	PresignedURLTimeout = 15 // minutes
 )
 
 func Response(status int, body interface{}) (*events.APIGatewayProxyResponse, error) {
