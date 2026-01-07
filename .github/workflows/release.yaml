@@ -10,16 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - id: bump
         name: Determine version bump
-        uses: zwaldowski/match-label-action@v5
+        uses: zwaldowski/match-label-action@v6
         with:
           allowed: major, minor, patch
 
       - id: tag
-        uses: zwaldowski/semver-release-action@v4
+        uses: zwaldowski/semver-release-action@v5
         name: Create Tag
         with:
           bump: ${{ steps.bump.outputs.match }}
