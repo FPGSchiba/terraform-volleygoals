@@ -39,6 +39,13 @@ const (
 	// Season related errors
 	MsgErrorSeasonNotFound ResponseMessage = "error.season.notFound"
 
+	// Progress Report related errors
+	MsgErrorProgressReportNotFound ResponseMessage = "error.progressReport.notFound"
+
+	// Comment related errors
+	MsgErrorCommentNotFound  ResponseMessage = "error.comment.notFound"
+	MsgErrorCommentsDisabled ResponseMessage = "error.comment.disabled"
+
 	// General Success messages
 	MsgSuccess ResponseMessage = "success.ok"
 

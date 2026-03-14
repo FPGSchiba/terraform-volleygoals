@@ -13,6 +13,7 @@ type ProgressReport struct {
 	Summary   string    `dynamodbav:"summary" json:"summary"`
 	Details   string    `dynamodbav:"details" json:"details"`
 	CreatedAt time.Time `dynamodbav:"createdAt" json:"createdAt"`
+	UpdatedAt time.Time `dynamodbav:"updatedAt" json:"updatedAt"`
 }
 
 func (p *ProgressReport) ToAttributeValues() map[string]types.AttributeValue {

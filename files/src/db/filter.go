@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -415,4 +416,134 @@ func GoalFilterFromQuery(q map[string]string) (GoalFilter, error) {
 	}
 
 	return g, nil
+}
+
+// ProgressReportFilter combines progress-report-specific filters with generic sort & pagination options.
+type ProgressReportFilter struct {
+	FilterOptions
+	SeasonId        string // exact match on seasonId
+	AuthorId        string // exact match on authorId
+	SummaryContains string // contains() match on summary
+}
+
+// BuildExpression builds a DynamoDB filter expression for progress reports.
+func (f *ProgressReportFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.SeasonId) != "" {
+		parts = append(parts, "#seasonId = :seasonId")
+		names["#seasonId"] = "seasonId"
+		values[":seasonId"] = &types.AttributeValueMemberS{Value: f.SeasonId}
+	}
+
+	if strings.TrimSpace(f.AuthorId) != "" {
+		parts = append(parts, "#authorId = :authorId")
+		names["#authorId"] = "authorId"
+		values[":authorId"] = &types.AttributeValueMemberS{Value: f.AuthorId}
+	}
+
+	if strings.TrimSpace(f.SummaryContains) != "" {
+		parts = append(parts, "contains(#summary, :summary)")
+		names["#summary"] = "summary"
+		values[":summary"] = &types.AttributeValueMemberS{Value: f.SummaryContains}
+	}
+
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// ProgressReportFilterFromQuery parses progress-report-specific and generic filter params from QueryStringParameters.
+func ProgressReportFilterFromQuery(q map[string]string) (ProgressReportFilter, error) {
+	var p ProgressReportFilter
+
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return p, err
+	}
+	p.FilterOptions = fo
+
+	if v, ok := q["seasonId"]; ok {
+		p.SeasonId = strings.TrimSpace(v)
+	}
+	if v, ok := q["authorId"]; ok {
+		p.AuthorId = strings.TrimSpace(v)
+	}
+	if v, ok := q["summary"]; ok && strings.TrimSpace(v) != "" {
+		p.SummaryContains = strings.TrimSpace(v)
+	}
+
+	return p, nil
+}
+
+// CommentFilter combines comment-specific filters with generic sort & pagination options.
+// TargetId and CommentType are required.
+type CommentFilter struct {
+	FilterOptions
+	TargetId    string // required exact match on targetId
+	CommentType string // required exact match on commentType ("Goal" | "ProgressReport")
+	AuthorId    string // optional exact match on authorId
+}
+
+// BuildExpression builds a DynamoDB filter expression for comments.
+func (f *CommentFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.TargetId) != "" {
+		parts = append(parts, "#targetId = :targetId")
+		names["#targetId"] = "targetId"
+		values[":targetId"] = &types.AttributeValueMemberS{Value: f.TargetId}
+	}
+
+	if strings.TrimSpace(f.CommentType) != "" {
+		parts = append(parts, "#commentType = :commentType")
+		names["#commentType"] = "commentType"
+		values[":commentType"] = &types.AttributeValueMemberS{Value: f.CommentType}
+	}
+
+	if strings.TrimSpace(f.AuthorId) != "" {
+		parts = append(parts, "#authorId = :authorId")
+		names["#authorId"] = "authorId"
+		values[":authorId"] = &types.AttributeValueMemberS{Value: f.AuthorId}
+	}
+
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// CommentFilterFromQuery parses comment-specific and generic filter params from QueryStringParameters.
+// Returns an error if targetId or commentType are missing.
+func CommentFilterFromQuery(q map[string]string) (CommentFilter, error) {
+	var c CommentFilter
+
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return c, err
+	}
+	c.FilterOptions = fo
+
+	targetId, ok := q["targetId"]
+	if !ok || strings.TrimSpace(targetId) == "" {
+		return c, fmt.Errorf("targetId is required")
+	}
+	c.TargetId = strings.TrimSpace(targetId)
+
+	commentType, ok := q["commentType"]
+	if !ok || strings.TrimSpace(commentType) == "" {
+		return c, fmt.Errorf("commentType is required")
+	}
+	c.CommentType = strings.TrimSpace(commentType)
+
+	if v, ok := q["authorId"]; ok {
+		c.AuthorId = strings.TrimSpace(v)
+	}
+
+	return c, nil
 }

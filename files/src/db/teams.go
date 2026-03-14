@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/fpgschiba/volleygoals/models"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
 
@@ -205,11 +206,74 @@ func UpdateTeam(ctx context.Context, team *models.Team) error {
 }
 
 func DeleteTeamByID(ctx context.Context, teamId string) error {
-	// TODO: Delete related team settings, users, goals, etc.
-	err := DeleteTeamSettingsByTeamID(ctx, teamId)
+	log.Printf("[INFO] DeleteTeamByID: starting cascade delete for team %s", teamId)
+
+	// 1. List all seasons for the team
+	seasons, _, _, _, err := ListSeasons(ctx, SeasonFilter{FilterOptions: FilterOptions{Limit: 1000}, TeamId: teamId})
 	if err != nil {
-		return err
+		log.Printf("[WARN] DeleteTeamByID: failed to list seasons for team %s: %v", teamId, err)
 	}
+
+	for _, season := range seasons {
+		// 2. For each season, delete goals and their comments
+		goals, _, _, _, err := ListGoals(ctx, GoalFilter{FilterOptions: FilterOptions{Limit: 1000}})
+		if err != nil {
+			log.Printf("[WARN] DeleteTeamByID: failed to list goals for season %s: %v", season.Id, err)
+		}
+		for _, goal := range goals {
+			if goal.SeasonId != season.Id {
+				continue
+			}
+			if err := DeleteCommentsForTarget(ctx, goal.Id); err != nil {
+				log.Printf("[WARN] DeleteTeamByID: failed to delete comments for goal %s: %v", goal.Id, err)
+			}
+			if err := DeleteGoal(ctx, goal.Id); err != nil {
+				log.Printf("[WARN] DeleteTeamByID: failed to delete goal %s: %v", goal.Id, err)
+			}
+		}
+
+		// 3. For each season, delete progress reports and their comments/progress entries
+		reports, _, _, _, err := ListProgressReports(ctx, ProgressReportFilter{FilterOptions: FilterOptions{Limit: 1000}, SeasonId: season.Id})
+		if err != nil {
+			log.Printf("[WARN] DeleteTeamByID: failed to list progress reports for season %s: %v", season.Id, err)
+		}
+		for _, report := range reports {
+			if err := DeleteCommentsForTarget(ctx, report.Id); err != nil {
+				log.Printf("[WARN] DeleteTeamByID: failed to delete comments for progress report %s: %v", report.Id, err)
+			}
+			if err := DeleteProgressReport(ctx, report.Id); err != nil {
+				log.Printf("[WARN] DeleteTeamByID: failed to delete progress report %s: %v", report.Id, err)
+			}
+		}
+
+		// 4. Delete the season itself
+		if err := DeleteSeason(ctx, season.Id); err != nil {
+			log.Printf("[WARN] DeleteTeamByID: failed to delete season %s: %v", season.Id, err)
+		}
+	}
+
+	// 5. Delete all team members
+	if err := DeleteTeamMembershipsByTeamID(ctx, teamId); err != nil {
+		log.Printf("[WARN] DeleteTeamByID: failed to delete team memberships for team %s: %v", teamId, err)
+	}
+
+	// 6. Delete all invites
+	invites, _, _, _, err := GetInvitesByTeamId(ctx, teamId, TeamInviteFilter{FilterOptions: FilterOptions{Limit: 1000}})
+	if err != nil {
+		log.Printf("[WARN] DeleteTeamByID: failed to list invites for team %s: %v", teamId, err)
+	}
+	for _, invite := range invites {
+		if err := RemoveInviteById(ctx, invite.Id); err != nil {
+			log.Printf("[WARN] DeleteTeamByID: failed to delete invite %s: %v", invite.Id, err)
+		}
+	}
+
+	// 7. Delete team settings
+	if err := DeleteTeamSettingsByTeamID(ctx, teamId); err != nil {
+		log.Printf("[WARN] DeleteTeamByID: failed to delete team settings for team %s: %v", teamId, err)
+	}
+
+	// 8. Delete the team itself
 	client = GetClient()
 	_, err = client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(teamsTableName),
