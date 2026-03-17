@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -41,6 +42,10 @@ func UpdateTeamSettings(ctx context.Context, event events.APIGatewayProxyRequest
 	if err := db.UpdateTeamSettings(ctx, teamSettings); err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
+
+	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	activity.EmitTeamSettingsUpdated(ctx, teamId, userId)
+
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
 		"teamSettings": teamSettings,
 	})

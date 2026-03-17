@@ -14,5 +14,17 @@ terraform {
       source  = "hashicorp/http"
       version = "~> 3.0"
     }
+    archive = {
+      source  = "hashicorp/archive"
+      version = ">= 2.2"
+    }
+    uname = {
+      source  = "julienlevasseur/uname"
+      version = "0.2.3"
+    }
+    external = {
+      source  = "hashicorp/external"
+      version = ">= 2.0"
+    }
   }
 }

@@ -11,16 +11,19 @@ type CommentType string
 const (
 	CommentTypeProgressReport CommentType = "ProgressReport"
 	CommentTypeGoal           CommentType = "Goal"
+	CommentTypeProgressEntry  CommentType = "ProgressEntry"
 )
 
 type Comment struct {
-	Id          string      `dynamodbav:"id" json:"id"`
-	AuthorId    string      `dynamodbav:"authorId" json:"authorId"`
-	CommentType CommentType `dynamodbav:"commentType" json:"commentType"`
-	TargetId    string      `dynamodbav:"targetId" json:"targetId"`
-	Content     string      `dynamodbav:"content" json:"content"`
-	CreatedAt   time.Time   `dynamodbav:"createdAt" json:"createdAt"`
-	UpdatedAt   time.Time   `dynamodbav:"updatedAt" json:"updatedAt"`
+	Id            string      `dynamodbav:"id" json:"id"`
+	AuthorId      string      `dynamodbav:"authorId" json:"authorId"`
+	AuthorName    *string     `dynamodbav:"authorName,omitempty" json:"authorName,omitempty"`
+	AuthorPicture *string     `dynamodbav:"authorPicture,omitempty" json:"authorPicture,omitempty"`
+	CommentType   CommentType `dynamodbav:"commentType" json:"commentType"`
+	TargetId      string      `dynamodbav:"targetId" json:"targetId"`
+	Content       string      `dynamodbav:"content" json:"content"`
+	CreatedAt     time.Time   `dynamodbav:"createdAt" json:"createdAt"`
+	UpdatedAt     time.Time   `dynamodbav:"updatedAt" json:"updatedAt"`
 }
 
 func (c *Comment) ToAttributeValues() map[string]types.AttributeValue {

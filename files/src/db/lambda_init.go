@@ -21,6 +21,7 @@ var (
 	progressTableName        = os.Getenv("PROGRESS_TABLE_NAME")
 	commentsTableName        = os.Getenv("COMMENTS_TABLE_NAME")
 	commentFilesTableName    = os.Getenv("COMMENT_FILES_TABLE_NAME")
+	activitiesTableName      = os.Getenv("ACTIVITIES_TABLE_NAME")
 )
 
 // InitClient initializes the DynamoDB client with the provided config

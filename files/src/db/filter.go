@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/fpgschiba/volleygoals/models"
@@ -221,9 +222,11 @@ func TeamInviteFilterFromQuery(q map[string]string) (TeamInviteFilter, error) {
 
 type TeamMemberFilter struct {
 	FilterOptions
-	Role   string // "member" | "admin" | "trainer" | ""
-	UserId string // userId of the team member
-	Status string // "active" | "invited" | "removed" | "left" | ""
+	Role         string // "member" | "admin" | "trainer" | ""
+	UserId       string // userId of the team member
+	Status       string // "active" | "invited" | "removed" | "left" | ""
+	NameContains  string // partial match on user name (applied in-memory after enrichment)
+	EmailContains string // partial match on user email (applied in-memory after enrichment)
 }
 
 // BuildExpression builds a DynamoDB filter expression for team members.
@@ -280,6 +283,22 @@ func TeamMemberFilterFromQuery(q map[string]string) (TeamMemberFilter, error) {
 	// status
 	if v, ok := q["status"]; ok {
 		t.Status = strings.TrimSpace(v)
+	}
+
+	// name / name_contains — in-memory filter after user enrichment
+	for _, key := range []string{"name", "name_contains"} {
+		if v, ok := q[key]; ok && strings.TrimSpace(v) != "" {
+			t.NameContains = strings.TrimSpace(v)
+			break
+		}
+	}
+
+	// email / email_contains — in-memory filter after user enrichment
+	for _, key := range []string{"email", "email_contains"} {
+		if v, ok := q[key]; ok && strings.TrimSpace(v) != "" {
+			t.EmailContains = strings.TrimSpace(v)
+			break
+		}
 	}
 
 	return t, nil
@@ -421,9 +440,11 @@ func GoalFilterFromQuery(q map[string]string) (GoalFilter, error) {
 // ProgressReportFilter combines progress-report-specific filters with generic sort & pagination options.
 type ProgressReportFilter struct {
 	FilterOptions
-	SeasonId        string // exact match on seasonId
-	AuthorId        string // exact match on authorId
-	SummaryContains string // contains() match on summary
+	SeasonId        string     // exact match on seasonId
+	AuthorId        string     // exact match on authorId
+	SummaryContains string     // contains() match on summary
+	CreatedAfter    *time.Time // createdAt >= CreatedAfter (inclusive)
+	CreatedBefore   *time.Time // createdAt <= CreatedBefore (inclusive)
 }
 
 // BuildExpression builds a DynamoDB filter expression for progress reports.
@@ -476,7 +497,60 @@ func ProgressReportFilterFromQuery(q map[string]string) (ProgressReportFilter, e
 		p.SummaryContains = strings.TrimSpace(v)
 	}
 
+	if v, ok := q["createdAfter"]; ok && strings.TrimSpace(v) != "" {
+		t, err := time.Parse(time.RFC3339, strings.TrimSpace(v))
+		if err != nil {
+			return p, fmt.Errorf("invalid createdAfter: must be RFC3339 / ISO 8601")
+		}
+		p.CreatedAfter = &t
+	}
+
+	if v, ok := q["createdBefore"]; ok && strings.TrimSpace(v) != "" {
+		t, err := time.Parse(time.RFC3339, strings.TrimSpace(v))
+		if err != nil {
+			return p, fmt.Errorf("invalid createdBefore: must be RFC3339 / ISO 8601")
+		}
+		p.CreatedBefore = &t
+	}
+
 	return p, nil
+}
+
+// ActivityFilter combines activity-specific filters with generic sort & pagination options.
+type ActivityFilter struct {
+	FilterOptions
+	TeamId string // exact match on teamId
+}
+
+// BuildExpression builds a DynamoDB filter expression for activities.
+func (f *ActivityFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.TeamId) != "" {
+		parts = append(parts, "#teamId = :teamId")
+		names["#teamId"] = "teamId"
+		values[":teamId"] = &types.AttributeValueMemberS{Value: f.TeamId}
+	}
+
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// ActivityFilterFromQuery parses activity-specific and generic filter params from QueryStringParameters.
+func ActivityFilterFromQuery(q map[string]string) (ActivityFilter, error) {
+	var a ActivityFilter
+
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return a, err
+	}
+	a.FilterOptions = fo
+
+	return a, nil
 }
 
 // CommentFilter combines comment-specific filters with generic sort & pagination options.
@@ -484,7 +558,7 @@ func ProgressReportFilterFromQuery(q map[string]string) (ProgressReportFilter, e
 type CommentFilter struct {
 	FilterOptions
 	TargetId    string // required exact match on targetId
-	CommentType string // required exact match on commentType ("Goal" | "ProgressReport")
+	CommentType string // required exact match on commentType ("Goal" | "ProgressReport" | "ProgressEntry")
 	AuthorId    string // optional exact match on authorId
 }
 

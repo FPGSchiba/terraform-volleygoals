@@ -43,4 +43,5 @@ terraform.rc
 
 # Built Code
 *.zip
-.claude
+.claude/
+tf_generated/

@@ -222,6 +222,7 @@ func GetRouter() *gin.Engine {
 					membersGroup.DELETE(":memberId", Adapter("RemoveTeamMember")) // Admin and User with Role Trainer on Team
 					membersGroup.PATCH(":memberId", Adapter("UpdateTeamMember"))  // Admin and User with Role Trainer on Team
 				}
+				teamGroup.GET("/activity", Adapter("GetTeamActivity")) // All team members
 
 			}
 		}
@@ -236,7 +237,7 @@ func GetRouter() *gin.Engine {
 		{
 			usersGroup.GET("", Adapter("ListUsers"))
 			usersGroup.GET(":userSub", Adapter("GetUser"))
-			usersGroup.DELETE(":userSub", Adapter("RemoveUser"))
+			usersGroup.DELETE(":userSub", Adapter("DeleteUser"))
 			usersGroup.PATCH(":userSub", Adapter("UpdateUser"))
 		}
 		seasonsGroup := apiGroup.Group("/seasons") // Admin or User with Role Trainer on Team
@@ -248,6 +249,7 @@ func GetRouter() *gin.Engine {
 				seasonGroup.GET("", Adapter("GetSeason"))
 				seasonGroup.PATCH("", Adapter("UpdateSeason"))
 				seasonGroup.DELETE("", Adapter("DeleteSeason"))
+				seasonGroup.GET("/stats", Adapter("GetSeasonStats"))
 				goalsGroup := seasonGroup.Group("/goals")
 				{
 					goalsGroup.POST("", Adapter("CreateGoal")) // Admin or User with Role Trainer on Team
@@ -267,6 +269,8 @@ func GetRouter() *gin.Engine {
 				}
 			}
 		}
+		apiGroup.GET("/search", Adapter("GlobalSearch")) // Any team member
+
 		commentsGroup := apiGroup.Group("/comments") // Admin or User with Role Trainer on Team
 		{
 			commentsGroup.POST("", Adapter("CreateComment"))

@@ -68,6 +68,7 @@ func UpdateGoal(ctx context.Context, goalId string, ownerId *string, title *stri
 	exprAttrValues := map[string]types.AttributeValue{
 		":updatedAt": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
 	}
+	exprAttrNames := map[string]string{}
 
 	if ownerId != nil {
 		updateExpr += ", ownerId = :ownerId"
@@ -87,15 +88,21 @@ func UpdateGoal(ctx context.Context, goalId string, ownerId *string, title *stri
 	if status != nil {
 		updateExpr += ", #st = :status"
 		exprAttrValues[":status"] = &types.AttributeValueMemberS{Value: string(*status)}
+		exprAttrNames["#st"] = "status"
 	}
 
-	result, err := client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+	input := &dynamodb.UpdateItemInput{
 		TableName:                 &goalsTableName,
 		Key:                       map[string]types.AttributeValue{"id": &types.AttributeValueMemberS{Value: goalId}},
 		UpdateExpression:          &updateExpr,
 		ExpressionAttributeValues: exprAttrValues,
 		ReturnValues:              types.ReturnValueAllNew,
-	})
+	}
+	if len(exprAttrNames) > 0 {
+		input.ExpressionAttributeNames = exprAttrNames
+	}
+
+	result, err := client.UpdateItem(ctx, input)
 
 	if err != nil {
 		return nil, err
@@ -188,6 +195,121 @@ func ListGoals(ctx context.Context, filter GoalFilter) ([]*models.Goal, int, *mo
 	nextCursor, hasMore := nextCursorFromLEK(result.LastEvaluatedKey)
 
 	return goals, len(goals), nextCursor, hasMore, nil
+}
+
+func CountGoalsBySeasonId(ctx context.Context, seasonId string) (total int, completed int, open int, inProgress int, err error) {
+	client = GetClient()
+	var lastKey map[string]types.AttributeValue
+	for {
+		in := &dynamodb.ScanInput{
+			TableName:        aws.String(goalsTableName),
+			FilterExpression: aws.String("#sid = :seasonId"),
+			ExpressionAttributeNames: map[string]string{
+				"#sid": "seasonId",
+			},
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":seasonId": &types.AttributeValueMemberS{Value: seasonId},
+			},
+		}
+		if lastKey != nil {
+			in.ExclusiveStartKey = lastKey
+		}
+		result, scanErr := client.Scan(ctx, in)
+		if scanErr != nil {
+			return 0, 0, 0, 0, scanErr
+		}
+		for _, item := range result.Items {
+			sv, ok := item["status"].(*types.AttributeValueMemberS)
+			if !ok {
+				continue
+			}
+			// Archived goals are excluded from all counts
+			if sv.Value == string(models.GoalStatusArchived) {
+				continue
+			}
+			total++
+			switch sv.Value {
+			case string(models.GoalStatusCompleted):
+				completed++
+			case string(models.GoalStatusOpen):
+				open++
+			case string(models.GoalStatusInProgress):
+				inProgress++
+			}
+		}
+		if result.LastEvaluatedKey == nil {
+			break
+		}
+		lastKey = result.LastEvaluatedKey
+	}
+	return total, completed, open, inProgress, nil
+}
+
+// SearchGoalsForTeam scans all goals whose title contains query (case-insensitive)
+// and whose seasonId belongs to the given team. Archived goals are excluded.
+// Returns at most limit results.
+func SearchGoalsForTeam(ctx context.Context, teamId, query string, limit int) ([]*models.Goal, error) {
+	client = GetClient()
+
+	seasonIds, err := GetAllSeasonIdsByTeamId(ctx, teamId)
+	if err != nil {
+		return nil, err
+	}
+	if len(seasonIds) == 0 {
+		return []*models.Goal{}, nil
+	}
+
+	queryLower := strings.ToLower(query)
+	results := make([]*models.Goal, 0, limit)
+	var lastKey map[string]types.AttributeValue
+
+	for {
+		in := &dynamodb.ScanInput{
+			TableName: aws.String(goalsTableName),
+		}
+		if lastKey != nil {
+			in.ExclusiveStartKey = lastKey
+		}
+		result, scanErr := client.Scan(ctx, in)
+		if scanErr != nil {
+			return nil, scanErr
+		}
+		for _, item := range result.Items {
+			if len(results) >= limit {
+				break
+			}
+			// Exclude archived goals
+			if sv, ok := item["status"].(*types.AttributeValueMemberS); ok && sv.Value == string(models.GoalStatusArchived) {
+				continue
+			}
+			// Must belong to the team's seasons
+			sidV, ok := item["seasonId"].(*types.AttributeValueMemberS)
+			if !ok {
+				continue
+			}
+			if _, inTeam := seasonIds[sidV.Value]; !inTeam {
+				continue
+			}
+			// Case-insensitive title match
+			titleV, ok := item["title"].(*types.AttributeValueMemberS)
+			if !ok {
+				continue
+			}
+			if !strings.Contains(strings.ToLower(titleV.Value), queryLower) {
+				continue
+			}
+			var g models.Goal
+			if err := attributevalue.UnmarshalMap(item, &g); err != nil {
+				return nil, err
+			}
+			results = append(results, &g)
+		}
+		if len(results) >= limit || result.LastEvaluatedKey == nil {
+			break
+		}
+		lastKey = result.LastEvaluatedKey
+	}
+	return results, nil
 }
 
 func unmarshalGoals(items []map[string]types.AttributeValue) ([]*models.Goal, error) {

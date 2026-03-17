@@ -24,6 +24,7 @@ var (
 	progressTableName        = "dev-progress"
 	commentsTableName        = "dev-comments"
 	commentFilesTableName    = "dev-comment-files"
+	activitiesTableName      = "dev-activities"
 )
 
 // InitClient initializes the DynamoDB client for local mode. If awsConfig is

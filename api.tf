@@ -85,7 +85,14 @@ resource "aws_route53_record" "api_domain" {
 
 resource "null_resource" "force_redeploy" {
   triggers = {
-    redeploy = timestamp()
+    # Redeploy when Lambda source or route configuration changes.
+    # Using a stable hash prevents unnecessary replacements (and the cycle they cause)
+    # that occurred with the previous timestamp() trigger.
+    src_hash = local.go_src_hash
+    routes_hash = sha1(join("", [
+      for f in sort(fileset(path.module, "routes_*.tf")) :
+      filesha1("${path.module}/${f}")
+    ]))
   }
 }
 
@@ -93,19 +100,76 @@ resource "aws_api_gateway_deployment" "this" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
   lifecycle {
-    create_before_destroy = true
+    # create_before_destroy removed: it creates a deposed-instance ordering constraint
+    # (destroy-old waits for stage update) that cycles back through the lambda modules
+    # when those modules are simultaneously transitioning their build resources.
     replace_triggered_by = [
       null_resource.force_redeploy.id
     ]
   }
 
   depends_on = [
+    # Self
+    module.get_self_ms,
+    module.update_self_ms,
+    module.upload_self_picture_ms,
+    # Teams
     module.get_team_ms,
     module.get_teams_ms,
     module.create_team_ms,
     module.delete_team_ms,
     module.update_team_ms,
     module.update_team_settings_ms,
+    module.get_team_invites_ms,
+    module.upload_team_picture_ms,
+    module.get_team_activity_ms,
+    # Team Members
+    module.list_team_members_ms,
+    module.add_team_member_ms,
+    module.update_team_member_ms,
+    module.delete_team_member_ms,
+    module.leave_team_ms,
+    # Invites
+    module.create_invite_ms,
+    module.complete_invite_ms,
+    module.revoke_invite_ms,
+    module.resend_invite_ms,
+    module.get_invite_by_token_ms,
+    # Users
+    module.list_users_ms,
+    module.get_user_ms,
+    module.delete_user_ms,
+    module.update_user_ms,
+    # Seasons
+    module.create_season_ms,
+    module.list_seasons_ms,
+    module.get_season_ms,
+    module.update_season_ms,
+    module.delete_season_ms,
+    module.get_season_stats_ms,
+    # Goals
+    module.create_goal_ms,
+    module.list_goals_ms,
+    module.get_goal_ms,
+    module.update_goal_ms,
+    module.delete_goal_ms,
+    module.upload_goal_file_ms,
+    # Progress Reports
+    module.create_progress_report_ms,
+    module.list_progress_reports_ms,
+    module.get_progress_report_ms,
+    module.update_progress_report_ms,
+    module.delete_progress_report_ms,
+    # Comments
+    module.create_comment_ms,
+    module.list_comments_ms,
+    module.get_comment_ms,
+    module.update_comment_ms,
+    module.delete_comment_ms,
+    module.upload_comment_file_ms,
+    # Search & Health
+    module.global_search_ms,
+    module.health_check_ms,
   ]
 }
 

@@ -40,6 +40,7 @@ type User struct {
 	UpdatedAt         *time.Time `json:"updatedAt"`
 	CreatedAt         *time.Time `json:"createdAt"`
 	Birthdate         *time.Time `json:"birthdate"`
+	Language          *string    `json:"language,omitempty"`
 }
 
 func UserFromCognito(user types.UserType, userType UserType) *User {
@@ -49,6 +50,7 @@ func UserFromCognito(user types.UserType, userType UserType) *User {
 	var picture *string
 	var preferredUsername *string
 	var birthdate *time.Time
+	var language *string
 
 	for _, attr := range user.Attributes {
 		switch *attr.Name {
@@ -68,6 +70,8 @@ func UserFromCognito(user types.UserType, userType UserType) *User {
 					birthdate = &t
 				}
 			}
+		case "locale":
+			language = attr.Value
 		}
 	}
 
@@ -86,6 +90,7 @@ func UserFromCognito(user types.UserType, userType UserType) *User {
 		CreatedAt:         &createdAt,
 		UpdatedAt:         &updatedAt,
 		Birthdate:         birthdate,
+		Language:          language,
 	}
 }
 

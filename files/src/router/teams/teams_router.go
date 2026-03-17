@@ -91,12 +91,12 @@ func ListTeams(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 }
 
 func GetTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	if !utils.IsAdmin(event.RequestContext.Authorizer) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
 	teamId := event.PathParameters["teamId"]
 	if teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	team, err := db.GetTeamById(ctx, teamId)
 	if err != nil {

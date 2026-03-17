@@ -13,17 +13,19 @@ import (
 	"github.com/fpgschiba/volleygoals/models"
 )
 
-func CreateComment(ctx context.Context, authorId, commentType, targetId, content string) (*models.Comment, error) {
+func CreateComment(ctx context.Context, authorId, commentType, targetId, content string, authorName *string, authorPicture *string) (*models.Comment, error) {
 	client = GetClient()
 	now := time.Now()
 	comment := &models.Comment{
-		Id:          models.GenerateID(),
-		AuthorId:    authorId,
-		CommentType: models.CommentType(commentType),
-		TargetId:    targetId,
-		Content:     content,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Id:            models.GenerateID(),
+		AuthorId:      authorId,
+		AuthorName:    authorName,
+		AuthorPicture: authorPicture,
+		CommentType:   models.CommentType(commentType),
+		TargetId:      targetId,
+		Content:       content,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 
 	_, err := client.PutItem(ctx, &dynamodb.PutItemInput{
@@ -165,6 +167,31 @@ func CreateCommentFile(ctx context.Context, commentId, storageKey string) (*mode
 	}
 
 	return cf, nil
+}
+
+func GetCommentFilesByCommentId(ctx context.Context, commentId string) ([]*models.CommentFile, error) {
+	result, err := client.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(commentFilesTableName),
+		FilterExpression: aws.String("#cid = :commentId"),
+		ExpressionAttributeNames: map[string]string{
+			"#cid": "commentId",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":commentId": &types.AttributeValueMemberS{Value: commentId},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	files := make([]*models.CommentFile, 0, len(result.Items))
+	for _, item := range result.Items {
+		var cf models.CommentFile
+		if err := attributevalue.UnmarshalMap(item, &cf); err != nil {
+			return nil, err
+		}
+		files = append(files, &cf)
+	}
+	return files, nil
 }
 
 func unmarshalComments(items []map[string]types.AttributeValue) ([]*models.Comment, error) {

@@ -228,6 +228,30 @@ func sortSeasons(seasons []*models.Season, sortBy, sortOrder string) {
 	}
 }
 
+// GetAllSeasonIdsByTeamId returns the full set of season IDs belonging to a team.
+// It paginates through all DynamoDB pages so the result is complete.
+func GetAllSeasonIdsByTeamId(ctx context.Context, teamId string) (map[string]struct{}, error) {
+	seasonIds := make(map[string]struct{})
+	var cursor *models.Cursor
+	for {
+		seasons, _, nextCursor, hasMore, err := ListSeasons(ctx, SeasonFilter{
+			FilterOptions: FilterOptions{Limit: 100, Cursor: cursor},
+			TeamId:        teamId,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, s := range seasons {
+			seasonIds[s.Id] = struct{}{}
+		}
+		if !hasMore {
+			break
+		}
+		cursor = nextCursor
+	}
+	return seasonIds, nil
+}
+
 func GetTeamIdBySeasonId(ctx context.Context, seasonId string) (string, error) {
 	client = GetClient()
 	result, err := client.GetItem(ctx, &dynamodb.GetItemInput{

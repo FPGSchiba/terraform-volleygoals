@@ -10,6 +10,7 @@ import (
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/mail"
 	"github.com/fpgschiba/volleygoals/models"
+	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 )
@@ -42,6 +43,10 @@ func CompleteInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*
 		return resp, err
 	}
 
+	if req.Accepted && member != nil {
+		activity.EmitMemberJoined(ctx, invite.TeamId, userSub)
+	}
+
 	result := map[string]interface{}{
 		"invite":      invite,
 		"member":      member,
@@ -65,6 +70,13 @@ func CreateInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	// Authorization
 	if resp, err := authorizeCreateInvite(ctx, event.RequestContext.Authorizer, request.TeamId); resp != nil {
 		return resp, err
+	}
+
+	// Trainers cannot invite with admin role
+	if request.Role == models.TeamMemberRoleAdmin {
+		if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdmin(ctx, event.RequestContext.Authorizer, request.TeamId) {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
 	}
 
 	// Token and existence check

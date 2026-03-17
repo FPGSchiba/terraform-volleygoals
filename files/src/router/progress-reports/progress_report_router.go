@@ -3,11 +3,15 @@ package progress_reports
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
+	"github.com/fpgschiba/volleygoals/router/activity"
+	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -36,15 +40,37 @@ func CreateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 
 	authorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 
-	var entries []db.ProgressEntry
-	for _, p := range request.Progress {
-		entries = append(entries, db.ProgressEntry{GoalId: p.GoalId, Rating: p.Rating})
+	user, uerr := users.GetUserBySub(ctx, authorId)
+	if uerr != nil {
+		log.Printf("CreateProgressReport: failed to fetch user %s: %v", authorId, uerr)
+	}
+	var authorName *string
+	if user != nil {
+		switch {
+		case user.Name != nil && *user.Name != "":
+			authorName = user.Name
+		case user.PreferredUsername != nil && *user.PreferredUsername != "":
+			authorName = user.PreferredUsername
+		default:
+			authorName = aws.String(user.Email)
+		}
+	}
+	var authorPicture *string
+	if user != nil {
+		authorPicture = user.Picture
 	}
 
-	report, err := db.CreateProgressReport(ctx, seasonId, authorId, request.Summary, request.Details, entries)
+	var entries []db.ProgressEntry
+	for _, p := range request.Progress {
+		entries = append(entries, db.ProgressEntry{GoalId: p.GoalId, Rating: p.Rating, Details: p.Details})
+	}
+
+	report, err := db.CreateProgressReport(ctx, seasonId, authorId, request.Summary, request.Details, request.OverallDetails, entries, authorName, authorPicture)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
+
+	activity.EmitProgressReportCreated(ctx, teamId, authorId, report.Id)
 
 	return utils.SuccessResponse(http.StatusCreated, utils.MsgSuccess, map[string]interface{}{
 		"progressReport": report,
@@ -78,8 +104,39 @@ func GetProgressReport(ctx context.Context, event events.APIGatewayProxyRequest)
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorProgressReportNotFound, nil)
 	}
 
+	// Enrich AuthorName/AuthorPicture for legacy records (same logic as ListProgressReports).
+	if report.AuthorName == nil {
+		user, uerr := users.GetUserBySub(ctx, report.AuthorId)
+		if uerr != nil {
+			log.Printf("GetProgressReport: failed to fetch user %s: %v", report.AuthorId, uerr)
+		}
+		if user != nil {
+			switch {
+			case user.Name != nil && *user.Name != "":
+				report.AuthorName = user.Name
+			case user.PreferredUsername != nil && *user.PreferredUsername != "":
+				report.AuthorName = user.PreferredUsername
+			default:
+				name := user.Email
+				report.AuthorName = &name
+			}
+			if report.AuthorPicture == nil {
+				report.AuthorPicture = user.Picture
+			}
+		}
+	}
+
+	entries := make([]*models.Progress, 0)
+	fetchedEntries, err := db.ListProgressEntriesByReportId(ctx, reportId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
+	}
+	if fetchedEntries != nil {
+		entries = fetchedEntries
+	}
+
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
-		"progressReport": report,
+		"progressReport": ProgressReportWithProgress{report, entries},
 	})
 }
 
@@ -112,6 +169,64 @@ func ListProgressReports(ctx context.Context, event events.APIGatewayProxyReques
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 
+	reportIds := make([]string, 0, len(items))
+	for _, r := range items {
+		reportIds = append(reportIds, r.Id)
+	}
+	progressByReport, err := db.ListProgressEntriesByReportIds(ctx, reportIds)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	// Resolve authorName/authorPicture for reports missing them (legacy records).
+	uniqueAuthorIds := make(map[string]struct{})
+	for _, r := range items {
+		if r.AuthorName == nil {
+			uniqueAuthorIds[r.AuthorId] = struct{}{}
+		}
+	}
+	userByAuthorId := make(map[string]*models.User)
+	for authorId := range uniqueAuthorIds {
+		u, uerr := users.GetUserBySub(ctx, authorId)
+		if uerr != nil {
+			log.Printf("ListProgressReports: failed to fetch user %s: %v", authorId, uerr)
+			continue
+		}
+		if u != nil {
+			userByAuthorId[authorId] = u
+		}
+	}
+	for _, r := range items {
+		if r.AuthorName != nil {
+			continue
+		}
+		u, ok := userByAuthorId[r.AuthorId]
+		if !ok {
+			continue
+		}
+		switch {
+		case u.Name != nil && *u.Name != "":
+			r.AuthorName = u.Name
+		case u.PreferredUsername != nil && *u.PreferredUsername != "":
+			r.AuthorName = u.PreferredUsername
+		default:
+			name := u.Email
+			r.AuthorName = &name
+		}
+		if r.AuthorPicture == nil {
+			r.AuthorPicture = u.Picture
+		}
+	}
+
+	enrichedItems := make([]ProgressReportWithProgress, 0, len(items))
+	for _, r := range items {
+		entries := progressByReport[r.Id]
+		if entries == nil {
+			entries = make([]*models.Progress, 0)
+		}
+		enrichedItems = append(enrichedItems, ProgressReportWithProgress{r, entries})
+	}
+
 	nextToken := ""
 	if nextCursor != nil {
 		nextToken, err = models.EncodeCursor(nextCursor)
@@ -121,7 +236,7 @@ func ListProgressReports(ctx context.Context, event events.APIGatewayProxyReques
 	}
 
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
-		"items":     items,
+		"items":     enrichedItems,
 		"count":     count,
 		"nextToken": nextToken,
 		"hasMore":   hasMore,
@@ -167,10 +282,10 @@ func UpdateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 
 	var entries []db.ProgressEntry
 	for _, p := range request.Progress {
-		entries = append(entries, db.ProgressEntry{GoalId: p.GoalId, Rating: p.Rating})
+		entries = append(entries, db.ProgressEntry{GoalId: p.GoalId, Rating: p.Rating, Details: p.Details})
 	}
 
-	updatedReport, err := db.UpdateProgressReport(ctx, reportId, request.Summary, request.Details, entries)
+	updatedReport, err := db.UpdateProgressReport(ctx, reportId, request.Summary, request.Details, request.OverallDetails, entries)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}

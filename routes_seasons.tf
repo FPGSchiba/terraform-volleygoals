@@ -1,215 +1,76 @@
-# Self
-resource "aws_api_gateway_resource" "self" {
+# Seasons
+
+resource "aws_api_gateway_resource" "seasons" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_resource.v1.id
-  path_part   = "self"
+  path_part   = "seasons"
 }
 
-module "get_self_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  http_methods          = ["GET"]
-  name_overwrite        = "get-self"
-  path_name             = "members"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.self.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-
-  handler_name  = "GetSelf"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:Query",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.self,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-module "update_self_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
-  http_methods          = ["PATCH"]
-  name_overwrite        = "update-self"
-  path_name             = "members"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.self.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-
-  handler_name  = "UpdateSelf"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.self,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-# Teams
-resource "aws_api_gateway_resource" "teams" {
+resource "aws_api_gateway_resource" "season_id" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.v1.id
-  path_part   = "teams"
+  parent_id   = aws_api_gateway_resource.seasons.id
+  path_part   = "{seasonId}"
 }
 
-resource "aws_api_gateway_resource" "teams_id" {
+resource "aws_api_gateway_resource" "season_stats" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.teams.id
-  path_part   = "{teamId}"
+  parent_id   = aws_api_gateway_resource.season_id.id
+  path_part   = "stats"
 }
 
-module "get_teams_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+# Goals (nested under seasons)
 
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  http_methods          = ["GET"]
-  name_overwrite        = "list-teams"
-  path_name             = "teams"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.teams.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-
-  handler_name  = "ListTeams"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:Scan",
-      ]
-      resources = [
-        aws_dynamodb_table.teams.arn
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.teams,
-    data.archive_file.shared_lambda_zip,
-  ]
+resource "aws_api_gateway_resource" "season_goals" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.season_id.id
+  path_part   = "goals"
 }
 
-module "get_team_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  http_methods          = ["GET"]
-  name_overwrite        = "get-team"
-  path_name             = "{teamId}"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.teams_id.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-
-  handler_name  = "GetTeam"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:GetItem",
-      ]
-      resources = [
-        aws_dynamodb_table.teams.arn
-      ]
-    },
-    {
-      actions = [
-        "dynamodb:Query",
-      ]
-      resources = [
-        "${aws_dynamodb_table.team_settings.arn}/index/teamIdIndex",
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.teams_id,
-    data.archive_file.shared_lambda_zip,
-  ]
+resource "aws_api_gateway_resource" "goal_id" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.season_goals.id
+  path_part   = "{goalId}"
 }
 
-module "create_team_ms" {
+resource "aws_api_gateway_resource" "goal_picture" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.goal_id.id
+  path_part   = "picture"
+}
+
+resource "aws_api_gateway_resource" "goal_picture_presign" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.goal_picture.id
+  path_part   = "presign"
+}
+
+# Progress Reports (nested under seasons)
+
+resource "aws_api_gateway_resource" "season_progress_reports" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.season_id.id
+  path_part   = "progress-reports"
+}
+
+resource "aws_api_gateway_resource" "progress_report_id" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.season_progress_reports.id
+  path_part   = "{reportId}"
+}
+
+# ─── Season modules ──────────────────────────────────────────────────────────
+
+module "create_season_ms" {
   source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = false
   http_methods          = ["POST"]
-  name_overwrite        = "create-team"
-  path_name             = "teams"
+  name_overwrite        = "create-season"
+  path_name             = "seasons"
   create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.teams.id
+  existing_resource_id  = aws_api_gateway_resource.seasons.id
   prefix                = var.prefix
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
@@ -220,49 +81,34 @@ module "create_team_ms" {
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
   json_logging          = true
-
-  handler_name  = "CreateTeam"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
+  handler_name          = "CreateSeason"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:PutItem",
-        "dynamodb:Scan",
-      ]
-      resources = [
-        aws_dynamodb_table.teams.arn,
-      ]
-    },
-    {
-      actions = [
-        "dynamodb:PutItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
     }
   ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.teams,
-    module.get_teams_ms,
+    aws_api_gateway_resource.seasons,
     data.archive_file.shared_lambda_zip,
   ]
 }
 
-module "delete_team_ms" {
+module "list_seasons_ms" {
   source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
-  http_methods          = ["DELETE"]
-  name_overwrite        = "delete-team"
-  path_name             = "{teamId}"
+  cors_enabled          = true
+  http_methods          = ["GET"]
+  name_overwrite        = "list-seasons"
+  path_name             = "seasons"
   create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.teams_id.id
+  existing_resource_id  = aws_api_gateway_resource.seasons.id
   prefix                = var.prefix
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
@@ -273,41 +119,72 @@ module "delete_team_ms" {
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
   json_logging          = true
-
-  handler_name  = "DeleteTeam"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
+  handler_name          = "ListSeasons"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:PutItem",
-      ]
-      resources = [
-        aws_dynamodb_table.teams.arn,
-        "${aws_dynamodb_table.team_members.arn}/*",
-      ]
+      actions   = ["dynamodb:Scan"]
+      resources = [aws_dynamodb_table.seasons.arn]
     }
   ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.teams_id,
-    module.get_team_ms,
+    aws_api_gateway_resource.seasons,
     data.archive_file.shared_lambda_zip,
   ]
 }
 
-module "update_team_ms" {
+module "get_season_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = true
+  http_methods          = ["GET"]
+  name_overwrite        = "get-season"
+  path_name             = "{seasonId}"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.season_id.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "GetSeason"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.season_id,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "update_season_ms" {
   source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = false
   http_methods          = ["PATCH"]
-  name_overwrite        = "update-team"
-  path_name             = "{teamId}"
+  name_overwrite        = "update-season"
+  path_name             = "{seasonId}"
   create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.teams_id.id
+  existing_resource_id  = aws_api_gateway_resource.season_id.id
   prefix                = var.prefix
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
@@ -318,102 +195,34 @@ module "update_team_ms" {
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
   json_logging          = true
-
-  handler_name  = "UpdateTeam"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:PutItem",
-        "dynamodb:GetItem",
-      ]
-      resources = [
-        aws_dynamodb_table.teams.arn,
-        "${aws_dynamodb_table.teams.arn}/*",
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.teams_id,
-    module.get_team_ms,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-# Team Invites (list invites for a specific team)
-
-resource "aws_api_gateway_resource" "team_invites" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.teams_id.id
-  path_part   = "invites"
-}
-
-module "get_team_invites_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  http_methods          = ["GET"]
-  name_overwrite        = "get-team-invites"
-  path_name             = "invites"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_invites.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-  handler_name          = "GetTeamInvites"
+  handler_name          = "UpdateSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
   additional_iam_statements = [
     {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.invites.arn}/index/teamIdIndex"]
+      actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
     }
   ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_invites,
+    aws_api_gateway_resource.season_id,
     data.archive_file.shared_lambda_zip,
   ]
 }
 
-# Team Picture presign
-
-resource "aws_api_gateway_resource" "team_picture" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.teams_id.id
-  path_part   = "picture"
-}
-
-resource "aws_api_gateway_resource" "team_picture_presign" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.team_picture.id
-  path_part   = "presign"
-}
-
-module "upload_team_picture_ms" {
+module "delete_season_ms" {
   source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  http_methods          = ["GET"]
-  name_overwrite        = "upload-team-picture"
-  path_name             = "presign"
+  cors_enabled          = false
+  http_methods          = ["DELETE"]
+  name_overwrite        = "delete-season"
+  path_name             = "{seasonId}"
   create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_picture_presign.id
+  existing_resource_id  = aws_api_gateway_resource.season_id.id
   prefix                = var.prefix
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
@@ -424,185 +233,303 @@ module "upload_team_picture_ms" {
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
   json_logging          = true
-  handler_name          = "UploadTeamPicture"
+  handler_name          = "DeleteSeason"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Scan", "dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.season_id,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "get_season_stats_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = true
+  http_methods          = ["GET"]
+  name_overwrite        = "get-season-stats"
+  path_name             = "stats"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.season_stats.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "GetSeasonStats"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:GetItem", "dynamodb:Scan", "dynamodb:Query"]
+      resources = [aws_dynamodb_table.seasons.arn, aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.season_stats,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+# ─── Goal modules ─────────────────────────────────────────────────────────────
+
+module "create_goal_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = false
+  http_methods          = ["POST"]
+  name_overwrite        = "create-goal"
+  path_name             = "goals"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.season_goals.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "CreateGoal"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.goals.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.season_goals,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "list_goals_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = true
+  http_methods          = ["GET"]
+  name_overwrite        = "list-goals"
+  path_name             = "goals"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.season_goals.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "ListGoals"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:Scan", "dynamodb:Query"]
+      resources = [aws_dynamodb_table.goals.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.season_goals,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "get_goal_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = true
+  http_methods          = ["GET"]
+  name_overwrite        = "get-goal"
+  path_name             = "{goalId}"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.goal_id.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "GetGoal"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.goals.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.goal_id,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "update_goal_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = false
+  http_methods          = ["PATCH"]
+  name_overwrite        = "update-goal"
+  path_name             = "{goalId}"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.goal_id.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "UpdateGoal"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.goals.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.goal_id,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "delete_goal_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = false
+  http_methods          = ["DELETE"]
+  name_overwrite        = "delete-goal"
+  path_name             = "{goalId}"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.goal_id.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "DeleteGoal"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.goals.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.goal_id,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "upload_goal_file_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = true
+  http_methods          = ["GET"]
+  name_overwrite        = "upload-goal-file"
+  path_name             = "presign"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.goal_picture_presign.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "UploadGoalFile"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
   additional_iam_statements = []
 
   depends_on = [
     aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_picture_presign,
+    aws_api_gateway_resource.goal_picture_presign,
     data.archive_file.shared_lambda_zip,
   ]
 }
 
-# Team Activity
+# ─── Progress Report modules ──────────────────────────────────────────────────
 
-resource "aws_api_gateway_resource" "team_activity" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.teams_id.id
-  path_part   = "activity"
-}
-
-module "get_team_activity_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  http_methods          = ["GET"]
-  name_overwrite        = "get-team-activity"
-  path_name             = "activity"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_activity.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-  handler_name          = "GetTeamActivity"
-  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.activities.arn}/index/teamIdIndex"]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_activity,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-# Team Settings
-
-resource "aws_api_gateway_resource" "team_settings" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.teams_id.id
-  path_part   = "settings"
-}
-
-module "update_team_settings_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
-  http_methods          = ["PATCH"]
-  name_overwrite        = "update-team-settings"
-  path_name             = "settings"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_settings.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-
-  handler_name  = "UpdateTeamSettings"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_settings,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-# Team Members
-
-resource "aws_api_gateway_resource" "team_members" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.teams_id.id
-  path_part   = "members"
-}
-
-resource "aws_api_gateway_resource" "team_member_id" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.team_members.id
-  path_part   = "{memberId}"
-}
-
-module "list_team_members_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  http_methods          = ["GET"]
-  name_overwrite        = "list-team-members"
-  path_name             = "members"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_members.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-
-  handler_name  = "ListTeamMembers"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_members,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-module "add_team_member_ms" {
+module "create_progress_report_ms" {
   source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = false
   http_methods          = ["POST"]
-  name_overwrite        = "add-team-member"
-  path_name             = "members"
+  name_overwrite        = "create-progress-report"
+  path_name             = "progress-reports"
   create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_members.id
+  existing_resource_id  = aws_api_gateway_resource.season_progress_reports.id
   prefix                = var.prefix
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
@@ -613,40 +540,110 @@ module "add_team_member_ms" {
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
   json_logging          = true
-
-  handler_name  = "AddTeamMember"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
+  handler_name          = "CreateProgressReport"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn]
     }
   ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_members,
+    aws_api_gateway_resource.season_progress_reports,
     data.archive_file.shared_lambda_zip,
   ]
 }
 
-module "update_team_member_ms" {
+module "list_progress_reports_ms" {
   source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  http_methods          = ["GET"]
+  name_overwrite        = "list-progress-reports"
+  path_name             = "progress-reports"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.season_progress_reports.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "ListProgressReports"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:Scan", "dynamodb:Query"]
+      resources = [aws_dynamodb_table.progress_reports.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.season_progress_reports,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "get_progress_report_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = true
+  http_methods          = ["GET"]
+  name_overwrite        = "get-progress-report"
+  path_name             = "{reportId}"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.progress_report_id.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "GetProgressReport"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+
+  additional_iam_statements = [
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.progress_reports.arn]
+    }
+  ]
+
+  depends_on = [
+    aws_api_gateway_rest_api.api,
+    aws_api_gateway_resource.progress_report_id,
+    data.archive_file.shared_lambda_zip,
+  ]
+}
+
+module "update_progress_report_ms" {
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = false
   http_methods          = ["PATCH"]
-  name_overwrite        = "update-team-member"
-  path_name             = "members"
+  name_overwrite        = "update-progress-report"
+  path_name             = "{reportId}"
   create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_member_id.id
+  existing_resource_id  = aws_api_gateway_resource.progress_report_id.id
   prefix                = var.prefix
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
@@ -657,40 +654,34 @@ module "update_team_member_ms" {
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
   json_logging          = true
-
-  handler_name  = "UpdateTeamMember"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
+  handler_name          = "UpdateProgressReport"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
+      actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
+      resources = [aws_dynamodb_table.progress_reports.arn]
     }
   ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_settings,
+    aws_api_gateway_resource.progress_report_id,
     data.archive_file.shared_lambda_zip,
   ]
 }
 
-module "delete_team_member_ms" {
+module "delete_progress_report_ms" {
   source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = false
   http_methods          = ["DELETE"]
-  name_overwrite        = "delete-team-member"
-  path_name             = "members"
+  name_overwrite        = "delete-progress-report"
+  path_name             = "{reportId}"
   create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_member_id.id
+  existing_resource_id  = aws_api_gateway_resource.progress_report_id.id
   prefix                = var.prefix
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
@@ -701,69 +692,19 @@ module "delete_team_member_ms" {
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
   json_logging          = true
-
-  handler_name  = "RemoveTeamMember"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
+  handler_name          = "DeleteProgressReport"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
+      actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.progress_reports.arn]
     }
   ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_settings,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-module "leave_team_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
-  http_methods          = ["DELETE"]
-  name_overwrite        = "leave-team"
-  path_name             = "members"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.team_members.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-
-  handler_name  = "LeaveTeam"
-  pre_built_zip = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.team_settings,
+    aws_api_gateway_resource.progress_report_id,
     data.archive_file.shared_lambda_zip,
   ]
 }

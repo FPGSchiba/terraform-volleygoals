@@ -7,10 +7,12 @@ import (
 	"runtime/debug"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/router/comments"
 	"github.com/fpgschiba/volleygoals/router/goals"
 	"github.com/fpgschiba/volleygoals/router/invites"
 	progress_reports "github.com/fpgschiba/volleygoals/router/progress-reports"
+	"github.com/fpgschiba/volleygoals/router/search"
 	"github.com/fpgschiba/volleygoals/router/seasons"
 	"github.com/fpgschiba/volleygoals/router/self"
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
@@ -147,6 +149,8 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = seasons.UpdateSeason(ctx, event)
 	case "DeleteSeason":
 		response, err = seasons.DeleteSeason(ctx, event)
+	case "GetSeasonStats":
+		response, err = seasons.GetSeasonStats(ctx, event)
 
 	// Goals handlers
 	case "CreateGoal":
@@ -187,6 +191,14 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		response, err = comments.DeleteComment(ctx, event)
 	case "UploadCommentFile":
 		response, err = comments.UploadCommentFile(ctx, event)
+
+	// Search handlers
+	case "GlobalSearch":
+		response, err = search.GlobalSearch(ctx, event)
+
+	// Activity handlers
+	case "GetTeamActivity":
+		response, err = activity.GetTeamActivity(ctx, event)
 
 	// Unknown handler
 	default:

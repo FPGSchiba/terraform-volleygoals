@@ -3,12 +3,15 @@ package goals
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
+	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/storage"
+	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -37,7 +40,11 @@ func CreateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		}
 	}
 
-	ownerId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	callerId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	ownerId := callerId
+	if request.OwnerId != nil && utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+		ownerId = *request.OwnerId
+	}
 	goal, err := db.CreateGoal(ctx, seasonId, ownerId, request.Type, request.Title, request.Description)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
@@ -102,6 +109,40 @@ func ListGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 
+	// Deduplicate ownerIds to minimise Cognito calls
+	ownerCache := map[string]*GoalOwner{}
+	for _, g := range items {
+		ownerCache[g.OwnerId] = nil
+	}
+	for sub := range ownerCache {
+		u, uerr := users.GetUserBySub(ctx, sub)
+		if uerr == nil && u != nil {
+			ownerCache[sub] = &GoalOwner{
+				Id:                u.Id,
+				Name:              u.Name,
+				PreferredUsername: u.PreferredUsername,
+				Picture:           u.Picture,
+			}
+		}
+	}
+	goalIds := make([]string, 0, len(items))
+	for _, g := range items {
+		goalIds = append(goalIds, g.Id)
+	}
+	progressByGoal, err := db.ListProgressEntriesByGoalIds(ctx, goalIds)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	enriched := make([]GoalWithOwner, 0, len(items))
+	for _, g := range items {
+		enriched = append(enriched, GoalWithOwner{
+			Goal:                 g,
+			Owner:                ownerCache[g.OwnerId],
+			CompletionPercentage: computeCompletionPercentage(progressByGoal[g.Id]),
+		})
+	}
+
 	nextToken := ""
 	if nextCursor != nil {
 		nextToken, err = models.EncodeCursor(nextCursor)
@@ -110,18 +151,11 @@ func ListGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 		}
 	}
 
-	resp := models.PaginationResponse{
-		Items:     items,
-		Count:     count,
-		NextToken: nextToken,
-		HasMore:   hasMore,
-	}
-
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
-		"items":     resp.Items,
-		"count":     resp.Count,
-		"nextToken": resp.NextToken,
-		"hasMore":   resp.HasMore,
+		"items":     enriched,
+		"count":     count,
+		"nextToken": nextToken,
+		"hasMore":   hasMore,
 	})
 }
 
@@ -161,6 +195,10 @@ func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 
+	if request.Status != nil {
+		activity.EmitGoalStatusChanged(ctx, teamId, userId, updatedGoal.Title, *request.Status, goalId)
+	}
+
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
 		"goal": updatedGoal,
 	})
@@ -198,6 +236,18 @@ func DeleteGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	}
 
 	return utils.SuccessResponse(http.StatusNoContent, utils.MsgSuccess, nil)
+}
+
+func computeCompletionPercentage(entries []*models.Progress) int {
+	if len(entries) == 0 {
+		return 0
+	}
+	var sum float64
+	for _, e := range entries {
+		sum += float64(e.Rating)
+	}
+	avg := sum / float64(len(entries))
+	return int(math.Round((avg / 5.0) * 100))
 }
 
 func UploadGoalFile(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {

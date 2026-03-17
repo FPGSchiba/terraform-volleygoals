@@ -16,6 +16,7 @@ locals {
     "PROGRESS_TABLE_NAME"         = aws_dynamodb_table.progress.name
     "COMMENTS_TABLE_NAME"         = aws_dynamodb_table.comments.name
     "COMMENT_FILES_TABLE_NAME"    = aws_dynamodb_table.comment_files.name
+    "ACTIVITIES_TABLE_NAME"       = aws_dynamodb_table.activities.name
     "OTEL_PROPAGATORS"            = "xray"
     "OTEL_SERVICE_NAME"           = "volleygoals"
     "OTEL_TRACES_SAMPLER"         = "always_on"

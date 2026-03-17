@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
+	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 )
@@ -17,9 +19,14 @@ func ListTeamMembers(ctx context.Context, event events.APIGatewayProxyRequest) (
 	if !ok || teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
+	callerRole, err := utils.GetUserRoleOnTeam(ctx, event.RequestContext.Authorizer, teamId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	isMember := callerRole != nil && *callerRole == models.TeamMemberRoleMember
 	filter, err := db.TeamMemberFilterFromQuery(event.QueryStringParameters)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
@@ -39,11 +46,63 @@ func ListTeamMembers(ctx context.Context, event events.APIGatewayProxyRequest) (
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
+
+	// Apply in-memory name/email filtering (name/email are not stored in DynamoDB).
+	// When either filter is active, cursor pagination is not accurate; all matching
+	// results are returned regardless of the cursor/limit settings.
+	if filter.NameContains != "" || filter.EmailContains != "" {
+		nameLower := strings.ToLower(filter.NameContains)
+		emailLower := strings.ToLower(filter.EmailContains)
+		filteredItems := items[:0]
+		filteredUsers := userItems[:0]
+		for i, u := range userItems {
+			nameVal := ""
+			if u.Name != nil {
+				nameVal = strings.ToLower(*u.Name)
+			}
+			emailVal := strings.ToLower(u.Email)
+			if nameLower != "" && !strings.Contains(nameVal, nameLower) {
+				continue
+			}
+			if emailLower != "" && !strings.Contains(emailVal, emailLower) {
+				continue
+			}
+			filteredItems = append(filteredItems, items[i])
+			filteredUsers = append(filteredUsers, u)
+		}
+		items = filteredItems
+		userItems = filteredUsers
+		count = len(items)
+		nextToken = ""
+		hasMore = false
+	}
+
+	if isMember {
+		publicItems := make([]TeamMemberPublicResult, 0, len(items))
+		for i, item := range items {
+			user := userItems[i]
+			publicItems = append(publicItems, TeamMemberPublicResult{
+				Id:                item.Id,
+				UserId:            item.UserId,
+				Name:              user.Name,
+				PreferredUsername: user.PreferredUsername,
+				Picture:           user.Picture,
+				Email:             user.Email,
+			})
+		}
+		return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+			"items":     publicItems,
+			"count":     count,
+			"nextToken": nextToken,
+			"hasMore":   hasMore,
+		})
+	}
 	var resultItems = make([]TeamMemberListResult, 0, len(items))
 	for i, item := range items {
 		user := userItems[i]
 		resultItems = append(resultItems, TeamMemberListResult{
 			Id:                item.Id,
+			UserId:            item.UserId,
 			Role:              item.Role,
 			Status:            item.Status,
 			UserStatus:        user.UserStatus,
@@ -93,6 +152,9 @@ func AddTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
+
+	activity.EmitMemberJoined(ctx, teamId, request.UserId)
+
 	return utils.SuccessResponse(http.StatusCreated, utils.MsgSuccess, map[string]interface{}{
 		"teamMember": teamMember,
 	})
@@ -115,10 +177,21 @@ func UpdateTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) 
 	if err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
+	if request.Role != nil && *request.Role == models.TeamMemberRoleAdmin {
+		if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdmin(ctx, event.RequestContext.Authorizer, teamId) {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
+	}
 	teamMember, err := db.UpdateTeamMember(ctx, teamMemberId, request.Role, request.Status)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
+
+	if request.Role != nil {
+		userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+		activity.EmitMemberRoleChanged(ctx, teamId, userId, *request.Role, teamMemberId)
+	}
+
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
 		"teamMember": teamMember,
 	})
@@ -140,6 +213,10 @@ func RemoveTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) 
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
+
+	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	activity.EmitMemberRemoved(ctx, teamId, userId, teamMemberId)
+
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, nil)
 }
 

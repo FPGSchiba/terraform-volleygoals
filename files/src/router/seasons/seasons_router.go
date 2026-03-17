@@ -138,6 +138,51 @@ func DeleteSeason(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, nil)
 }
 
+func GetSeasonStats(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	seasonId := event.PathParameters["seasonId"]
+	if seasonId == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+
+	teamId, err := db.GetTeamIdBySeasonId(ctx, seasonId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	if teamId == "" {
+		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
+	}
+
+	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	}
+
+	goalCount, completedGoalCount, openGoalCount, inProgressGoalCount, err := db.CountGoalsBySeasonId(ctx, seasonId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	reportCount, err := db.CountProgressReportsBySeasonId(ctx, seasonId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	members, err := db.GetMembershipsByTeamID(ctx, teamId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+		"stats": map[string]interface{}{
+			"goalCount":           goalCount,
+			"completedGoalCount":  completedGoalCount,
+			"openGoalCount":       openGoalCount,
+			"inProgressGoalCount": inProgressGoalCount,
+			"reportCount":         reportCount,
+			"memberCount":         len(members),
+		},
+	})
+}
+
 func isAuthorizedForSeason(ctx context.Context, authorizer map[string]interface{}, seasonId string, teamUser bool) (bool, bool, error) {
 	season, err := db.GetSeasonById(ctx, seasonId)
 	if err != nil {

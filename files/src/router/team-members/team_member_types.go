@@ -8,6 +8,7 @@ import (
 
 type TeamMemberListResult struct {
 	Id                string                  `json:"id"`
+	UserId            string                  `json:"userId"`
 	Name              *string                 `json:"name"`
 	Email             string                  `json:"email"`
 	Picture           *string                 `json:"picture"`
@@ -17,6 +18,15 @@ type TeamMemberListResult struct {
 	UserStatus        models.UserStatus       `json:"userStatus"`
 	Birthdate         *time.Time              `json:"birthdate"`
 	JoinedAt          *time.Time              `json:"joinedAt,omitempty"`
+}
+
+type TeamMemberPublicResult struct {
+	Id                string  `json:"id"`
+	UserId            string  `json:"userId"`
+	Name              *string `json:"name"`
+	PreferredUsername *string `json:"preferredUsername"`
+	Picture           *string `json:"picture"`
+	Email             string  `json:"email"`
 }
 
 type AddTeamMemberRequest struct {

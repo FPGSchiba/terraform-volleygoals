@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -50,6 +51,15 @@ func init() {
 
 	// Initialize OpenTelemetry tracing (sets global tracer provider)
 	SetupTracing(ctx)
+
+	// Lock in the handler at cold start from the HANDLER env var set by Terraform.
+	// This avoids reading the env var on every invocation and makes misconfigured
+	// deployments (missing HANDLER) fail fast at startup rather than returning 404s.
+	if h := os.Getenv("HANDLER"); h != "" {
+		router.SelectedHandler = h
+	} else {
+		log.Fatal("HANDLER environment variable is not set — Lambda cannot route requests")
+	}
 }
 
 func SetupTracing(ctx context.Context) {

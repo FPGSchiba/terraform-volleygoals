@@ -3,12 +3,15 @@ package comments
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/storage"
+	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -56,7 +59,28 @@ func CreateComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	}
 
 	authorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	comment, err := db.CreateComment(ctx, authorId, string(request.CommentType), request.TargetId, request.Content)
+
+	user, err := users.GetUserBySub(ctx, authorId)
+	if err != nil {
+		log.Printf("CreateComment: failed to fetch user %s: %v", authorId, err)
+	}
+	var authorName *string
+	if user != nil {
+		switch {
+		case user.Name != nil && *user.Name != "":
+			authorName = user.Name
+		case user.PreferredUsername != nil && *user.PreferredUsername != "":
+			authorName = user.PreferredUsername
+		default:
+			authorName = aws.String(user.Email)
+		}
+	}
+	var authorPicture *string
+	if user != nil {
+		authorPicture = user.Picture
+	}
+
+	comment, err := db.CreateComment(ctx, authorId, string(request.CommentType), request.TargetId, request.Content, authorName, authorPicture)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
@@ -88,8 +112,23 @@ func GetComment(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
+	commentFiles, err := db.GetCommentFilesByCommentId(ctx, commentId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
+	}
+	files := make([]CommentFileResult, 0, len(commentFiles))
+	for _, f := range commentFiles {
+		files = append(files, CommentFileResult{
+			Id:         f.Id,
+			CommentId:  f.CommentId,
+			StorageKey: f.StorageKey,
+			FileUrl:    storage.GetPublicFileURL(f.StorageKey),
+		})
+	}
+
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
 		"comment": comment,
+		"files":   files,
 	})
 }
 
@@ -275,6 +314,22 @@ func resolveTeamIdFromTarget(ctx context.Context, commentType models.CommentType
 		return db.GetTeamIdBySeasonId(ctx, goal.SeasonId)
 	case models.CommentTypeProgressReport:
 		report, err := db.GetProgressReportById(ctx, targetId)
+		if err != nil {
+			return "", err
+		}
+		if report == nil {
+			return "", nil
+		}
+		return db.GetTeamIdBySeasonId(ctx, report.SeasonId)
+	case models.CommentTypeProgressEntry:
+		entry, err := db.GetProgressById(ctx, targetId)
+		if err != nil {
+			return "", err
+		}
+		if entry == nil {
+			return "", nil
+		}
+		report, err := db.GetProgressReportById(ctx, entry.ProgressReportId)
 		if err != nil {
 			return "", err
 		}

@@ -7,6 +7,7 @@ type Progress struct {
 	ProgressReportId string `dynamodbav:"progressReportId" json:"progressReportId"`
 	GoalId           string `dynamodbav:"goalId" json:"goalId"`
 	Rating           int8   `dynamodbav:"rating" json:"rating"`
+	Details          string `dynamodbav:"details" json:"details"`
 }
 
 func (p *Progress) ToAttributeValues() map[string]types.AttributeValue {
