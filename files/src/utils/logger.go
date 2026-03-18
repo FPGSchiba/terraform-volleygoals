@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"strings"
 	"time"
@@ -136,6 +137,17 @@ func JSONLogLambdaWrapper(handler func(ctx context.Context, event events.APIGate
 			entry = entry.WithError(err)
 			entry.Error("handler error")
 		} else if status >= 500 {
+			if resp != nil && resp.Body != "" {
+				var body map[string]interface{}
+				if json.Unmarshal([]byte(resp.Body), &body) == nil {
+					if errMsg, ok := body["error"].(string); ok {
+						entry = entry.WithField("error_detail", errMsg)
+					}
+					if msg, ok := body["message"].(string); ok {
+						entry = entry.WithField("error_code", msg)
+					}
+				}
+			}
 			entry.Error("server error")
 		} else if status >= 400 {
 			entry.Warn("client error")

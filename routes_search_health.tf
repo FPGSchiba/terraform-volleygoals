@@ -39,8 +39,9 @@ module "global_search_ms" {
         aws_dynamodb_table.seasons.arn,
         aws_dynamodb_table.goals.arn,
         aws_dynamodb_table.comments.arn,
+        aws_dynamodb_table.progress_reports.arn,
       ]
-    }
+    },
   ]
 
   depends_on = [

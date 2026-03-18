@@ -52,7 +52,22 @@ module "create_comment_ms" {
     {
       actions   = ["dynamodb:PutItem"]
       resources = [aws_dynamodb_table.comments.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn, aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions = ["dynamodb:Query"]
+      resources = [
+        "${aws_dynamodb_table.team_settings.arn}/index/teamIdIndex",
+        "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+      ]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -90,7 +105,15 @@ module "list_comments_ms" {
     {
       actions   = ["dynamodb:Scan", "dynamodb:Query"]
       resources = [aws_dynamodb_table.comments.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn, aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -127,8 +150,16 @@ module "get_comment_ms" {
   additional_iam_statements = [
     {
       actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.comments.arn]
-    }
+      resources = [aws_dynamodb_table.comments.arn, aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn, aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Scan"]
+      resources = [aws_dynamodb_table.comment_files.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -166,7 +197,15 @@ module "update_comment_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
       resources = [aws_dynamodb_table.comments.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn, aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -204,7 +243,19 @@ module "delete_comment_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
       resources = [aws_dynamodb_table.comments.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn, aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Scan", "dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.comment_files.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -242,7 +293,19 @@ module "upload_comment_file_ms" {
     {
       actions   = ["dynamodb:PutItem"]
       resources = [aws_dynamodb_table.comment_files.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.comments.arn, aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn, aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["s3:PutObject"]
+      resources = ["${aws_s3_bucket.this.arn}/comments/*"]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [

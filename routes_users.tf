@@ -38,9 +38,9 @@ module "list_users_ms" {
 
   additional_iam_statements = [
     {
-      actions   = ["cognito-idp:ListUsers"]
+      actions   = ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser", "cognito-idp:ListUsersInGroup"]
       resources = [var.cognito_user_pool_arn]
-    }
+    },
   ]
 
   depends_on = [
@@ -76,9 +76,13 @@ module "get_user_ms" {
 
   additional_iam_statements = [
     {
-      actions   = ["cognito-idp:AdminGetUser"]
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/userIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -156,9 +160,9 @@ module "update_user_ms" {
 
   additional_iam_statements = [
     {
-      actions   = ["cognito-idp:AdminUpdateUserAttributes"]
+      actions   = ["cognito-idp:AdminUpdateUserAttributes", "cognito-idp:AdminGetUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminRemoveUserFromGroup", "cognito-idp:AdminEnableUser", "cognito-idp:AdminDisableUser"]
       resources = [var.cognito_user_pool_arn]
-    }
+    },
   ]
 
   depends_on = [

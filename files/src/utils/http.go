@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/aws/aws-lambda-go/events"
+	log "github.com/sirupsen/logrus"
 )
 
 type ResponseMessage string
@@ -95,6 +96,12 @@ func SuccessResponse(status int, message ResponseMessage, data interface{}) (*ev
 }
 
 func ErrorResponse(status int, message ResponseMessage, err error) (*events.APIGatewayProxyResponse, error) {
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"status":           status,
+			"response_message": string(message),
+		}).Error("handler returned error response")
+	}
 	if err == nil {
 		return Response(status, map[string]interface{}{"message": string(message)})
 	}
