@@ -32,7 +32,7 @@ jobs:
           cache-dependency-path: test/go.mod
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend=false
 
       - name: Terraform Format Check
         run: terraform fmt -check
