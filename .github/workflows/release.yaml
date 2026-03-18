@@ -19,7 +19,7 @@ jobs:
           allowed: major, minor, patch
 
       - id: tag
-        uses: zwaldowski/semver-release-action@v5
+        uses: zwaldowski/semver-release-action@v6
         name: Create Tag
         with:
           bump: ${{ steps.bump.outputs.match }}
