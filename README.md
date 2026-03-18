@@ -1,19 +1,124 @@
 # terraform-volleygoals
 
-This is the application Module for VolleyGoals, a web application for managing volleyball goals and statistics.
-This module is designed to be used with Terraform to provision the necessary infrastructure on AWS.
+Terraform module for **VolleyGoals** — a web application for managing volleyball team goals, seasons, and progress tracking. Provisions the full AWS infrastructure: API Gateway, Lambda (Go), DynamoDB, S3 + CloudFront CDN, SES, Route53, and CloudWatch monitoring.
 
 ## Prerequisites
 
-- Terraform 1.0 or later
+- Terraform >= 1.10
+- Go >= 1.23
 - AWS CLI configured with appropriate credentials
+- An AWS account with an S3 bucket for Terraform state
 
-## Usage
+## Project Structure
 
+```
+.
+├── environments/           # Per-environment configs (committed)
+│   ├── dev/
+│   │   ├── backend.hcl        # S3 state backend for dev
+│   │   └── terraform.tfvars   # Variable values for dev
+│   └── prod/
+│       ├── backend.hcl        # S3 state backend for prod
+│       └── terraform.tfvars   # Variable values for prod
+├── files/src/              # Go source code (shared Lambda binary)
+├── iam/                    # Reference IAM policy documents for OIDC setup
+├── scripts/                # Cross-platform Go build scripts
+├── .github/workflows/      # CI/CD pipelines
+├── *.tf                    # Terraform configuration
+└── README.md
+```
+
+## Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `prefix` | Prefix for all resource names (e.g. `dev`, `prod`) | `"dev"` |
+| `dns_zone_id` | Route53 Hosted Zone ID | *required* |
+| `cognito_user_pool_arn` | Cognito User Pool ARN for API authorization | *required* |
+| `ses_tenant_name` | SES tenant name | `"default_tenant"` |
+| `tags` | Map of tags for all resources | `{}` |
+
+## Local Development
+
+Initialize Terraform with an environment-specific backend:
+
+```bash
+terraform init -backend-config=environments/dev/backend.hcl
+```
+
+Plan and apply with the corresponding tfvars:
+
+```bash
+terraform plan -var-file=environments/dev/terraform.tfvars
+terraform apply -var-file=environments/dev/terraform.tfvars
+```
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions with OIDC-based AWS authentication. Separate AWS accounts are used for dev and prod.
+
+### Branch Strategy
+
+```
+feature/* ──PR──▶ development ──PR──▶ main
+                       │                  │
+                    merge              merge
+                       │                  │
+                       ▼                  ▼
+                  Plan + Apply      Plan + Apply
+                  (dev, auto)      (prod, approval)
+```
+
+| Branch | Environment | AWS Account | Deploy Trigger |
+|--------|-------------|-------------|----------------|
+| `development` | dev | Dev account | Auto on merge |
+| `main` | prod | Prod account | Manual approval required |
+
+### Workflows
+
+| Workflow | Trigger | Description |
+|----------|---------|-------------|
+| `terraform-plan.yml` | PR to `development` or `main` | Runs `terraform plan`, posts output as PR comment |
+| `terraform-deploy.yml` | Push to `development` or `main` | Runs `terraform apply` (prod requires approval) |
+| `test.yaml` | PR | Format check, validate, Go tests |
+
+### Development Flow
+
+1. **Create a feature branch** from `development`
+2. **Open a PR** to `development` — plan runs automatically, plan output posted as comment
+3. **Merge** — auto-deploys to dev environment
+4. **Verify** changes work in dev
+
+### Production Release
+
+5. **Open a PR** from `development` to `main` — plan runs against prod
+6. **Review** the plan carefully in the PR comment
+7. **Merge** — deployment pauses at the GitHub Environment approval gate
+8. **Approve** the deployment in GitHub Actions
+9. Terraform applies to production
+
+### Hotfix
+
+For urgent fixes that can't go through the normal flow:
+
+1. Branch from `main` (e.g. `hotfix/fix-name`)
+2. PR directly to `main` — plan runs against prod
+3. Merge and approve deployment
+4. Back-merge `main` into `development` to keep branches in sync
+
+### AWS OIDC Setup
+
+Each AWS account needs:
+
+1. **IAM OIDC Identity Provider** for `token.actions.githubusercontent.com`
+2. **IAM Role** `github-terraform-deploy` with:
+   - Trust policy from `iam/oidc-trust-policy.json` (scoped to GitHub Environment)
+   - Permissions policy from `iam/deploy-permissions-policy.json`
+3. **GitHub Environments** configured in repo settings:
+   - `development` — no protection rules
+   - `production` — required reviewers enabled
 
 ## Database Diagram
-
-The following diagram illustrates the database schema for the Volleyball Goal Management application:
 
 ```mermaid
 %% Cognito as IdP (no Users table). No Trainings yet. Comments/files simplified as requested.
@@ -157,7 +262,9 @@ erDiagram
     datetime createdAt
   }
 ```
+
 ## User Invite Flow
+
 ```mermaid
 flowchart TD
   A[Inviter creates invite] --> B[Backend: create Invite record + token_hash]
@@ -171,6 +278,7 @@ flowchart TD
 ```
 
 ### Detailed
+
 ```mermaid
 sequenceDiagram
   autonumber
