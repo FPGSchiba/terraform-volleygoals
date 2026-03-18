@@ -19,7 +19,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.10"
 
@@ -31,15 +31,8 @@ jobs:
           cache: true
           cache-dependency-path: test/go.mod
 
-      - name: AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          audience: sts.amazonaws.com
-          aws-region: eu-central-1
-          role-to-assume: arn:aws:iam::867344431996:role/terratest-microservice
-
       - name: Terraform Init
-        run: terraform init -backend-config=environments/dev/backend.hcl
+        run: terraform init
 
       - name: Terraform Format Check
         run: terraform fmt -check
