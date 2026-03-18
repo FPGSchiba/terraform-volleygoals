@@ -8,8 +8,42 @@ permissions:
   contents: read
 
 jobs:
+  plan:
+    name: Plan (${{ github.ref_name == 'main' && 'prod' || 'dev' }})
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: files/src/go.mod
+          cache: true
+
+      - name: AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: eu-central-1
+          role-to-assume: arn:aws:iam::${{ env.ENVIRONMENT == 'prod' && '102582898933' || '771805193031' }}:role/github-terraform-deploy
+
+      - name: Terraform Init
+        run: terraform init -backend-config=environments/${{ env.ENVIRONMENT }}/backend.hcl
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=environments/${{ env.ENVIRONMENT }}/terraform.tfvars -no-color
+
   deploy:
     name: Deploy (${{ github.ref_name == 'main' && 'prod' || 'dev' }})
+    needs: plan
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
     env:
