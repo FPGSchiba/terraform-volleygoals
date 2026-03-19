@@ -20,7 +20,7 @@ terraform {
     }
     uname = {
       source  = "julienlevasseur/uname"
-      version = "0.2.3"
+      version = "0.3.0"
     }
     external = {
       source  = "hashicorp/external"
