@@ -145,6 +145,27 @@ resource "aws_cloudwatch_log_metric_filter" "lambda_errors" {
     value         = "1"
     default_value = "0"
   }
+
+  depends_on = [
+    module.get_self_ms, module.update_self_ms, module.upload_self_picture_ms,
+    module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms,
+    module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms,
+    module.get_team_activity_ms, module.update_team_settings_ms,
+    module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms,
+    module.delete_team_member_ms, module.leave_team_ms,
+    module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms,
+    module.resend_invite_ms, module.get_invite_by_token_ms,
+    module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms,
+    module.create_season_ms, module.list_seasons_ms, module.get_season_ms,
+    module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms,
+    module.create_goal_ms, module.list_goals_ms, module.get_goal_ms,
+    module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms,
+    module.create_progress_report_ms, module.list_progress_reports_ms,
+    module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms,
+    module.create_comment_ms, module.list_comments_ms, module.get_comment_ms,
+    module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms,
+    module.global_search_ms, module.health_check_ms,
+  ]
 }
 
 resource "aws_cloudwatch_log_metric_filter" "lambda_panics" {
@@ -160,6 +181,27 @@ resource "aws_cloudwatch_log_metric_filter" "lambda_panics" {
     value         = "1"
     default_value = "0"
   }
+
+  depends_on = [
+    module.get_self_ms, module.update_self_ms, module.upload_self_picture_ms,
+    module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms,
+    module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms,
+    module.get_team_activity_ms, module.update_team_settings_ms,
+    module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms,
+    module.delete_team_member_ms, module.leave_team_ms,
+    module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms,
+    module.resend_invite_ms, module.get_invite_by_token_ms,
+    module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms,
+    module.create_season_ms, module.list_seasons_ms, module.get_season_ms,
+    module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms,
+    module.create_goal_ms, module.list_goals_ms, module.get_goal_ms,
+    module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms,
+    module.create_progress_report_ms, module.list_progress_reports_ms,
+    module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms,
+    module.create_comment_ms, module.list_comments_ms, module.get_comment_ms,
+    module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms,
+    module.global_search_ms, module.health_check_ms,
+  ]
 }
 
 resource "aws_cloudwatch_log_metric_filter" "lambda_access_denied" {
@@ -175,6 +217,27 @@ resource "aws_cloudwatch_log_metric_filter" "lambda_access_denied" {
     value         = "1"
     default_value = "0"
   }
+
+  depends_on = [
+    module.get_self_ms, module.update_self_ms, module.upload_self_picture_ms,
+    module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms,
+    module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms,
+    module.get_team_activity_ms, module.update_team_settings_ms,
+    module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms,
+    module.delete_team_member_ms, module.leave_team_ms,
+    module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms,
+    module.resend_invite_ms, module.get_invite_by_token_ms,
+    module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms,
+    module.create_season_ms, module.list_seasons_ms, module.get_season_ms,
+    module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms,
+    module.create_goal_ms, module.list_goals_ms, module.get_goal_ms,
+    module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms,
+    module.create_progress_report_ms, module.list_progress_reports_ms,
+    module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms,
+    module.create_comment_ms, module.list_comments_ms, module.get_comment_ms,
+    module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms,
+    module.global_search_ms, module.health_check_ms,
+  ]
 }
 
 # ─── Alarms on Custom Metrics ─────────────────────────────────────────────────
