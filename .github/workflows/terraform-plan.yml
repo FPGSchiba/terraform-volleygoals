@@ -34,7 +34,7 @@ jobs:
         with:
           audience: sts.amazonaws.com
           aws-region: eu-central-1
-          role-to-assume: arn:aws:iam::${{ env.ENVIRONMENT == 'prod' && '102582898933' || '771805193031' }}:role/github-terraform-deploy
+          role-to-assume: arn:aws:iam::${{ env.ENVIRONMENT == 'prod' && '102582898933' || '771805193031' }}:role/github-terraform-plan
 
       - name: Terraform Init
         run: terraform init -backend-config=environments/${{ env.ENVIRONMENT }}/backend.hcl
