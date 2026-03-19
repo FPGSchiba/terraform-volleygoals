@@ -2,6 +2,8 @@
 
 Terraform module for **VolleyGoals** — a web application for managing volleyball team goals, seasons, and progress tracking. Provisions the full AWS infrastructure: API Gateway, Lambda (Go), DynamoDB, S3 + CloudFront CDN, SES, Route53, and CloudWatch monitoring.
 
+Force commit
+
 ## Prerequisites
 
 - Terraform >= 1.10
