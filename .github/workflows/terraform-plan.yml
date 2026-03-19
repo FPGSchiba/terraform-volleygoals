@@ -67,8 +67,9 @@ jobs:
 
             const MAX_LENGTH = 60000;
             if (plan.length > MAX_LENGTH) {
-              const lastLine = plan.trimEnd().split('\n').pop();
-              plan = `Plan output too large to display. Summary:\n\n${lastLine}`;
+              const lines = plan.trimEnd().split('\n');
+              const summaryLine = lines.reverse().find(l => /^Plan:/.test(l) || /^No changes/.test(l));
+              plan = `Plan output too large to display. Summary:\n\n${summaryLine || lines[0]}`;
             }
 
             const status = '${{ steps.plan.outcome }}' === 'success' ? '✅' : '❌';
