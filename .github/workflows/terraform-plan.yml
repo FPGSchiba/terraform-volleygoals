@@ -29,18 +29,12 @@ jobs:
           go-version-file: files/src/go.mod
           cache: true
 
-      - name: Print OIDC Token Claims
-        run: |
-          TOKEN=$(curl -sH "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com")
-          echo $TOKEN | jq -R 'split(".") | .[1] | @base64d | fromjson'
-
       - name: AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           audience: sts.amazonaws.com
           aws-region: eu-central-1
-          role-to-assume: arn:aws:iam::${{ env.ENVIRONMENT == 'prod' && '102582898933' || '771805193031' }}:role/github-terraform-plan
+          role-to-assume: arn:aws:iam::${{ env.ENVIRONMENT == 'prod' && '102582898933' || '771805193031' }}:role/github-terraform-deploy
 
       - name: Terraform Init
         run: terraform init -backend-config=environments/${{ env.ENVIRONMENT }}/backend.hcl
@@ -53,7 +47,9 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file=environments/${{ env.ENVIRONMENT }}/terraform.tfvars -no-color -out=tfplan
+        run: |
+          terraform plan -var-file=environments/${{ env.ENVIRONMENT }}/terraform.tfvars -no-color -out=tfplan 2>&1 | tee plan_output.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       - name: Post Plan to PR
@@ -61,12 +57,27 @@ jobs:
         if: always()
         with:
           script: |
-            const output = `#### Terraform Plan - \`${{ env.ENVIRONMENT }}\` ${{ steps.plan.outcome == 'success' && '✅' || '❌' }}
+            const fs = require('fs');
+            let plan = '';
+            try {
+              plan = fs.readFileSync('plan_output.txt', 'utf8');
+            } catch (e) {
+              plan = 'No plan output available.';
+            }
+
+            const MAX_LENGTH = 60000;
+            if (plan.length > MAX_LENGTH) {
+              const lastLine = plan.trimEnd().split('\n').pop();
+              plan = `Plan output too large to display. Summary:\n\n${lastLine}`;
+            }
+
+            const status = '${{ steps.plan.outcome }}' === 'success' ? '✅' : '❌';
+            const output = `#### Terraform Plan - \`${{ env.ENVIRONMENT }}\` ${status}
 
             <details><summary>Show Plan</summary>
 
             \`\`\`
-            ${{ steps.plan.outputs.stdout }}
+            ${plan}
             \`\`\`
 
             </details>
