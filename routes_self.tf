@@ -36,7 +36,16 @@ module "upload_self_picture_ms" {
   handler_name          = "UploadSelfPicture"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
-  additional_iam_statements = []
+  additional_iam_statements = [
+    {
+      actions   = ["s3:PutObject"]
+      resources = ["${aws_s3_bucket.this.arn}/users/*"]
+    },
+    {
+      actions   = ["cognito-idp:AdminUpdateUserAttributes", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
+  ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,

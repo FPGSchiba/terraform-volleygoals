@@ -32,13 +32,17 @@ module "get_self_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/userIdIndex"]
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.teams.arn]
+    },
   ]
 
   depends_on = [
@@ -75,14 +79,9 @@ module "update_self_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
+      actions   = ["cognito-idp:AdminUpdateUserAttributes", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -175,21 +174,16 @@ module "get_team_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:GetItem",
-      ]
-      resources = [
-        aws_dynamodb_table.teams.arn
-      ]
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.teams.arn]
     },
     {
-      actions = [
-        "dynamodb:Query",
-      ]
+      actions = ["dynamodb:Query"]
       resources = [
         "${aws_dynamodb_table.team_settings.arn}/index/teamIdIndex",
+        "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
       ]
-    }
+    },
   ]
 
   depends_on = [
@@ -216,7 +210,7 @@ module "create_team_ms" {
   enable_tracing        = true
   timeout               = 29
   vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
+  environment_variables = merge(local.lambda_environment_variables, { "LOG_LEVEL" = "debug" })
   tags                  = local.tags
   layer_arns            = local.lambda_layer_arns
   json_logging          = true
@@ -226,22 +220,17 @@ module "create_team_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:PutItem",
-        "dynamodb:Scan",
-      ]
-      resources = [
-        aws_dynamodb_table.teams.arn,
-      ]
+      actions   = ["dynamodb:PutItem", "dynamodb:Scan"]
+      resources = [aws_dynamodb_table.teams.arn]
     },
     {
-      actions = [
-        "dynamodb:PutItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.team_settings.arn, aws_dynamodb_table.team_members.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -279,14 +268,35 @@ module "delete_team_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:PutItem",
-      ]
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["dynamodb:DeleteItem", "dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.teams.arn]
+    },
+    {
+      actions = ["dynamodb:Scan", "dynamodb:DeleteItem"]
       resources = [
-        aws_dynamodb_table.teams.arn,
-        "${aws_dynamodb_table.team_members.arn}/*",
+        aws_dynamodb_table.seasons.arn,
+        aws_dynamodb_table.goals.arn,
+        aws_dynamodb_table.progress_reports.arn,
+        aws_dynamodb_table.progress.arn,
+        aws_dynamodb_table.comments.arn,
+        aws_dynamodb_table.comment_files.arn,
       ]
-    }
+    },
+    {
+      actions = ["dynamodb:Query", "dynamodb:DeleteItem"]
+      resources = [
+        aws_dynamodb_table.team_members.arn,
+        "${aws_dynamodb_table.team_members.arn}/index/teamIdIndex",
+        aws_dynamodb_table.invites.arn,
+        "${aws_dynamodb_table.invites.arn}/index/teamIdIndex",
+        aws_dynamodb_table.team_settings.arn,
+        "${aws_dynamodb_table.team_settings.arn}/index/teamIdIndex",
+      ]
+    },
   ]
 
   depends_on = [
@@ -324,15 +334,21 @@ module "update_team_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:PutItem",
-        "dynamodb:GetItem",
-      ]
-      resources = [
-        aws_dynamodb_table.teams.arn,
-        "${aws_dynamodb_table.teams.arn}/*",
-      ]
-    }
+      actions   = ["dynamodb:PutItem", "dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.teams.arn]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -377,9 +393,12 @@ module "get_team_invites_ms" {
 
   additional_iam_statements = [
     {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.invites.arn}/index/teamIdIndex"]
-    }
+      actions = ["dynamodb:Query"]
+      resources = [
+        "${aws_dynamodb_table.invites.arn}/index/teamIdIndex",
+        "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+      ]
+    },
   ]
 
   depends_on = [
@@ -427,7 +446,20 @@ module "upload_team_picture_ms" {
   handler_name          = "UploadTeamPicture"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
-  additional_iam_statements = []
+  additional_iam_statements = [
+    {
+      actions   = ["s3:PutObject"]
+      resources = ["${aws_s3_bucket.this.arn}/teams/*"]
+    },
+    {
+      actions   = ["dynamodb:UpdateItem"]
+      resources = [aws_dynamodb_table.teams.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+  ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,
@@ -470,9 +502,13 @@ module "get_team_activity_ms" {
 
   additional_iam_statements = [
     {
+      actions   = ["dynamodb:Scan"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
       actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.activities.arn}/index/teamIdIndex"]
-    }
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -517,14 +553,24 @@ module "update_team_settings_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
+      actions = ["dynamodb:Query", "dynamodb:PutItem"]
       resources = [
         aws_dynamodb_table.team_settings.arn,
+        "${aws_dynamodb_table.team_settings.arn}/index/teamIdIndex",
       ]
-    }
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -575,14 +621,16 @@ module "list_team_members_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
+      actions = ["dynamodb:Scan", "dynamodb:Query"]
       resources = [
-        aws_dynamodb_table.team_settings.arn,
+        aws_dynamodb_table.team_members.arn,
+        "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
       ]
-    }
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -619,14 +667,21 @@ module "add_team_member_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.team_members.arn]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -663,14 +718,21 @@ module "update_team_member_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["dynamodb:UpdateItem"]
+      resources = [aws_dynamodb_table.team_members.arn]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -707,14 +769,21 @@ module "delete_team_member_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
-      resources = [
-        aws_dynamodb_table.team_settings.arn,
-      ]
-    }
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.team_members.arn]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -751,14 +820,13 @@ module "leave_team_ms" {
 
   additional_iam_statements = [
     {
-      actions = [
-        "dynamodb:Query",
-        "dynamodb:UpdateItem",
-      ]
+      actions = ["dynamodb:Query", "dynamodb:UpdateItem"]
       resources = [
-        aws_dynamodb_table.team_settings.arn,
+        aws_dynamodb_table.team_members.arn,
+        "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+        "${aws_dynamodb_table.team_members.arn}/index/teamIdIndex",
       ]
-    }
+    },
   ]
 
   depends_on = [

@@ -88,7 +88,11 @@ module "create_season_ms" {
     {
       actions   = ["dynamodb:PutItem"]
       resources = [aws_dynamodb_table.seasons.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -126,7 +130,11 @@ module "list_seasons_ms" {
     {
       actions   = ["dynamodb:Scan"]
       resources = [aws_dynamodb_table.seasons.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -164,7 +172,11 @@ module "get_season_ms" {
     {
       actions   = ["dynamodb:GetItem"]
       resources = [aws_dynamodb_table.seasons.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -202,7 +214,11 @@ module "update_season_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
       resources = [aws_dynamodb_table.seasons.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -242,9 +258,19 @@ module "delete_season_ms" {
       resources = [aws_dynamodb_table.seasons.arn]
     },
     {
-      actions   = ["dynamodb:Scan", "dynamodb:DeleteItem"]
-      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn]
-    }
+      actions = ["dynamodb:Scan", "dynamodb:DeleteItem"]
+      resources = [
+        aws_dynamodb_table.goals.arn,
+        aws_dynamodb_table.progress_reports.arn,
+        aws_dynamodb_table.progress.arn,
+        aws_dynamodb_table.comments.arn,
+        aws_dynamodb_table.comment_files.arn,
+      ]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -282,7 +308,14 @@ module "get_season_stats_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:Scan", "dynamodb:Query"]
       resources = [aws_dynamodb_table.seasons.arn, aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn]
-    }
+    },
+    {
+      actions = ["dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.team_members.arn,
+        "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+      ]
+    },
   ]
 
   depends_on = [
@@ -322,7 +355,23 @@ module "create_goal_ms" {
     {
       actions   = ["dynamodb:PutItem"]
       resources = [aws_dynamodb_table.goals.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -360,7 +409,23 @@ module "list_goals_ms" {
     {
       actions   = ["dynamodb:Scan", "dynamodb:Query"]
       resources = [aws_dynamodb_table.goals.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Scan"]
+      resources = [aws_dynamodb_table.progress.arn]
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -397,8 +462,12 @@ module "get_goal_ms" {
   additional_iam_statements = [
     {
       actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.goals.arn]
-    }
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -436,7 +505,23 @@ module "update_goal_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
       resources = [aws_dynamodb_table.goals.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -474,7 +559,15 @@ module "delete_goal_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
       resources = [aws_dynamodb_table.goals.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -508,7 +601,24 @@ module "upload_goal_file_ms" {
   handler_name          = "UploadGoalFile"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
-  additional_iam_statements = []
+  additional_iam_statements = [
+    {
+      actions   = ["s3:PutObject"]
+      resources = ["${aws_s3_bucket.this.arn}/goals/*"]
+    },
+    {
+      actions   = ["dynamodb:UpdateItem"]
+      resources = [aws_dynamodb_table.goals.arn]
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+  ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,
@@ -547,7 +657,23 @@ module "create_progress_report_ms" {
     {
       actions   = ["dynamodb:PutItem"]
       resources = [aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -585,7 +711,23 @@ module "list_progress_reports_ms" {
     {
       actions   = ["dynamodb:Scan", "dynamodb:Query"]
       resources = [aws_dynamodb_table.progress_reports.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Scan"]
+      resources = [aws_dynamodb_table.progress.arn]
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -622,8 +764,20 @@ module "get_progress_report_ms" {
   additional_iam_statements = [
     {
       actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.progress_reports.arn]
-    }
+      resources = [aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Scan"]
+      resources = [aws_dynamodb_table.progress.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -661,7 +815,19 @@ module "update_progress_report_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
       resources = [aws_dynamodb_table.progress_reports.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:DeleteItem", "dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.progress.arn]
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -699,7 +865,19 @@ module "delete_progress_report_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
       resources = [aws_dynamodb_table.progress_reports.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Scan", "dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.progress.arn]
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.seasons.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [

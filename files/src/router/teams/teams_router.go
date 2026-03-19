@@ -2,10 +2,13 @@ package teams
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/storage"
@@ -139,8 +142,28 @@ func CreateTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
+
+	bodyPreview := event.Body
+	if len(bodyPreview) > 200 {
+		bodyPreview = bodyPreview[:200]
+	}
+	log.WithFields(log.Fields{
+		"body_preview": bodyPreview,
+		"is_base64":    event.IsBase64Encoded,
+		"content_type": event.Headers["Content-Type"],
+	}).Debug("CreateTeam: incoming request")
+
+	body := event.Body
+	if event.IsBase64Encoded {
+		decoded, err := base64.StdEncoding.DecodeString(event.Body)
+		if err != nil {
+			return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+		}
+		body = string(decoded)
+	}
+
 	var request CreateTeamRequest
-	err := json.Unmarshal([]byte(event.Body), &request)
+	err := json.Unmarshal([]byte(body), &request)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}

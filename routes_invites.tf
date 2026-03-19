@@ -45,13 +45,29 @@ module "create_invite_ms" {
 
   additional_iam_statements = [
     {
-      actions   = ["dynamodb:PutItem"]
+      actions   = ["dynamodb:PutItem", "dynamodb:DeleteItem"]
       resources = [aws_dynamodb_table.invites.arn]
     },
     {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamIdIndex"]
-    }
+      actions = ["dynamodb:Query"]
+      resources = [
+        "${aws_dynamodb_table.invites.arn}/index/tokenIndex",
+        "${aws_dynamodb_table.team_members.arn}/index/teamIdIndex",
+        "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+      ]
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.teams.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser", "cognito-idp:ListUsers"]
+      resources = [var.cognito_user_pool_arn]
+    },
+    {
+      actions   = ["ses:SendEmail", "ses:SendTemplatedEmail"]
+      resources = ["*"]
+    },
   ]
 
   depends_on = [
@@ -91,9 +107,13 @@ module "complete_invite_ms" {
       resources = [aws_dynamodb_table.invites.arn, "${aws_dynamodb_table.invites.arn}/index/tokenIndex"]
     },
     {
-      actions   = ["dynamodb:PutItem", "dynamodb:UpdateItem"]
-      resources = [aws_dynamodb_table.team_members.arn, aws_dynamodb_table.team_settings.arn]
-    }
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.team_members.arn, aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminCreateUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminDeleteUser", "cognito-idp:ListUsers"]
+      resources = [var.cognito_user_pool_arn]
+    },
   ]
 
   depends_on = [
@@ -131,7 +151,11 @@ module "revoke_invite_ms" {
     {
       actions   = ["dynamodb:UpdateItem", "dynamodb:GetItem"]
       resources = [aws_dynamodb_table.invites.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
   ]
 
   depends_on = [
@@ -167,9 +191,25 @@ module "resend_invite_ms" {
 
   additional_iam_statements = [
     {
-      actions   = ["dynamodb:GetItem", "dynamodb:Query"]
+      actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
       resources = [aws_dynamodb_table.invites.arn]
-    }
+    },
+    {
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.teams.arn]
+    },
+    {
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
+    {
+      actions   = ["ses:SendEmail", "ses:SendTemplatedEmail"]
+      resources = ["*"]
+    },
   ]
 
   depends_on = [
@@ -204,9 +244,12 @@ module "get_invite_by_token_ms" {
 
   additional_iam_statements = [
     {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.invites.arn}/index/tokenIndex"]
-    }
+      actions = ["dynamodb:Query"]
+      resources = [
+        "${aws_dynamodb_table.invites.arn}/index/tokenIndex",
+        "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+      ]
+    },
   ]
 
   depends_on = [

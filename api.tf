@@ -100,9 +100,7 @@ resource "aws_api_gateway_deployment" "this" {
   rest_api_id = aws_api_gateway_rest_api.api.id
 
   lifecycle {
-    # create_before_destroy removed: it creates a deposed-instance ordering constraint
-    # (destroy-old waits for stage update) that cycles back through the lambda modules
-    # when those modules are simultaneously transitioning their build resources.
+    create_before_destroy = true
     replace_triggered_by = [
       null_resource.force_redeploy.id
     ]
@@ -179,7 +177,25 @@ resource "aws_api_gateway_stage" "this" {
   stage_name           = "api"
   xray_tracing_enabled = true
 
-  depends_on = [aws_cloudwatch_log_group.api]
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_access_logs.arn
+    format = jsonencode({
+      requestId          = "$context.requestId"
+      ip                 = "$context.identity.sourceIp"
+      caller             = "$context.identity.caller"
+      user               = "$context.identity.user"
+      requestTime        = "$context.requestTime"
+      httpMethod         = "$context.httpMethod"
+      resourcePath       = "$context.resourcePath"
+      status             = "$context.status"
+      protocol           = "$context.protocol"
+      responseLength     = "$context.responseLength"
+      integrationLatency = "$context.integrationLatency"
+      authorizer_error   = "$context.authorizer.error"
+    })
+  }
+
+  depends_on = [aws_cloudwatch_log_group.api, aws_cloudwatch_log_group.api_access_logs]
 }
 
 resource "aws_api_gateway_method_settings" "this" {

@@ -12,8 +12,8 @@ import (
 // Table Names
 var (
 	teamsTableName           = os.Getenv("TEAMS_TABLE_NAME")
-	invitesTableName         = os.Getenv("TEAM_MEMBERS_TABLE_NAME")
-	teamMembersTableName     = os.Getenv("INVITE_TABLE_NAME")
+	invitesTableName         = os.Getenv("INVITE_TABLE_NAME")
+	teamMembersTableName     = os.Getenv("TEAM_MEMBERS_TABLE_NAME")
 	teamSettingsTableName    = os.Getenv("TEAM_SETTINGS_TABLE_NAME")
 	seasonsTableName         = os.Getenv("SEASONS_TABLE_NAME")
 	goalsTableName           = os.Getenv("GOALS_TABLE_NAME")

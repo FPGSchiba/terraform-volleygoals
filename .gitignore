@@ -45,3 +45,6 @@ terraform.rc
 *.zip
 .claude/
 tf_generated/
+
+# Un-ignore environment-specific tfvars (no secrets in these)
+!environments/*/terraform.tfvars

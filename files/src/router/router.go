@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"runtime/debug"
@@ -36,10 +37,11 @@ func HandleRequestWithHandler(ctx context.Context, event events.APIGatewayProxyR
 	return HandleRequest(ctx, event)
 }
 
-func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (response *events.APIGatewayProxyResponse, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.WithFields(log.Fields{"panic": r, "stack": string(debug.Stack())}).Error("Panic recovered in HandleRequest")
+			response, _ = utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, fmt.Errorf("panic: %v", r))
 		}
 	}()
 
@@ -67,9 +69,6 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		attribute.String("http.route", event.Resource),
 		attribute.String("handler", h),
 	)
-
-	var response *events.APIGatewayProxyResponse
-	var err error
 
 	switch h {
 	// Utilities
