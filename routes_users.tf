@@ -18,6 +18,7 @@ module "list_users_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "list-users"
   path_name             = "users"
@@ -56,6 +57,7 @@ module "get_user_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-user"
   path_name             = "{userSub}"
@@ -97,7 +99,8 @@ module "delete_user_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-user"
   path_name             = "{userSub}"
@@ -139,7 +142,8 @@ module "update_user_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-user"
   path_name             = "{userSub}"

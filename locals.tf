@@ -1,4 +1,6 @@
 locals {
+  cors_allowed_origin = "https://${data.aws_route53_zone.this.name}"
+
   tags = merge(
     {
       "Application" = "volleygoals"

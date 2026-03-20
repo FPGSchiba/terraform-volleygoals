@@ -29,7 +29,8 @@ module "create_comment_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "create-comment"
   path_name             = "comments"
@@ -83,6 +84,7 @@ module "list_comments_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "list-comments"
   path_name             = "comments"
@@ -129,6 +131,7 @@ module "get_comment_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-comment"
   path_name             = "{commentId}"
@@ -174,7 +177,8 @@ module "update_comment_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-comment"
   path_name             = "{commentId}"
@@ -220,7 +224,8 @@ module "delete_comment_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-comment"
   path_name             = "{commentId}"
@@ -271,6 +276,7 @@ module "upload_comment_file_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "upload-comment-file"
   path_name             = "presign"

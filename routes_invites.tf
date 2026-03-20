@@ -24,7 +24,8 @@ module "create_invite_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "create-invite"
   path_name             = "invites"
@@ -83,7 +84,8 @@ module "complete_invite_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "complete-invite"
   path_name             = "complete"
@@ -128,7 +130,8 @@ module "revoke_invite_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "revoke-invite"
   path_name             = "{inviteId}"
@@ -170,7 +173,8 @@ module "resend_invite_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "resend-invite"
   path_name             = "{inviteId}"
@@ -225,6 +229,7 @@ module "get_invite_by_token_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-invite-by-token"
   path_name             = "{inviteId}"

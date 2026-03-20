@@ -65,7 +65,8 @@ module "create_season_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "create-season"
   path_name             = "seasons"
@@ -108,6 +109,7 @@ module "list_seasons_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "list-seasons"
   path_name             = "seasons"
@@ -150,6 +152,7 @@ module "get_season_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-season"
   path_name             = "{seasonId}"
@@ -191,7 +194,8 @@ module "update_season_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-season"
   path_name             = "{seasonId}"
@@ -233,7 +237,8 @@ module "delete_season_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-season"
   path_name             = "{seasonId}"
@@ -286,6 +291,7 @@ module "get_season_stats_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-season-stats"
   path_name             = "stats"
@@ -332,7 +338,8 @@ module "create_goal_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "create-goal"
   path_name             = "goals"
@@ -387,6 +394,7 @@ module "list_goals_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "list-goals"
   path_name             = "goals"
@@ -441,6 +449,7 @@ module "get_goal_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-goal"
   path_name             = "{goalId}"
@@ -482,7 +491,8 @@ module "update_goal_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-goal"
   path_name             = "{goalId}"
@@ -536,7 +546,8 @@ module "delete_goal_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-goal"
   path_name             = "{goalId}"
@@ -583,6 +594,7 @@ module "upload_goal_file_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "upload-goal-file"
   path_name             = "presign"
@@ -634,7 +646,8 @@ module "create_progress_report_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "create-progress-report"
   path_name             = "progress-reports"
@@ -689,6 +702,7 @@ module "list_progress_reports_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "list-progress-reports"
   path_name             = "progress-reports"
@@ -743,6 +757,7 @@ module "get_progress_report_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-progress-report"
   path_name             = "{reportId}"
@@ -792,7 +807,8 @@ module "update_progress_report_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-progress-report"
   path_name             = "{reportId}"
@@ -842,7 +858,8 @@ module "delete_progress_report_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-progress-report"
   path_name             = "{reportId}"
