@@ -16,25 +16,25 @@ jobs:
       ENVIRONMENT: ${{ github.base_ref == 'main' && 'prod' || 'dev' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.10"
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: files/src/go.mod
           cache: true
 
       - name: AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           audience: sts.amazonaws.com
           aws-region: eu-central-1
-          role-to-assume: arn:aws:iam::${{ env.ENVIRONMENT == 'prod' && '102582898933' || '771805193031' }}:role/github-terraform-deploy
+          role-to-assume: arn:aws:iam::${{ env.ENVIRONMENT == 'prod' && '102582898933' || '771805193031' }}:role/github-terraform-plan
 
       - name: Terraform Init
         run: terraform init -backend-config=environments/${{ env.ENVIRONMENT }}/backend.hcl
@@ -47,20 +47,38 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -var-file=environments/${{ env.ENVIRONMENT }}/terraform.tfvars -no-color -out=tfplan
+        run: |
+          terraform plan -var-file=environments/${{ env.ENVIRONMENT }}/terraform.tfvars -no-color -out=tfplan 2>&1 | tee plan_output.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       - name: Post Plan to PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: always()
         with:
           script: |
-            const output = `#### Terraform Plan - \`${{ env.ENVIRONMENT }}\` ${{ steps.plan.outcome == 'success' && '✅' || '❌' }}
+            const fs = require('fs');
+            let plan = '';
+            try {
+              plan = fs.readFileSync('plan_output.txt', 'utf8');
+            } catch (e) {
+              plan = 'No plan output available.';
+            }
+
+            const MAX_LENGTH = 60000;
+            if (plan.length > MAX_LENGTH) {
+              const lines = plan.trimEnd().split('\n');
+              const summaryLine = lines.reverse().find(l => /^Plan:/.test(l) || /^No changes/.test(l));
+              plan = `Plan output too large to display. Summary:\n\n${summaryLine || lines[0]}`;
+            }
+
+            const status = '${{ steps.plan.outcome }}' === 'success' ? '✅' : '❌';
+            const output = `#### Terraform Plan - \`${{ env.ENVIRONMENT }}\` ${status}
 
             <details><summary>Show Plan</summary>
 
             \`\`\`
-            ${{ steps.plan.outputs.stdout }}
+            ${plan}
             \`\`\`
 
             </details>
