@@ -12,6 +12,7 @@ module "global_search_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "global-search"
   path_name             = "search"
@@ -64,7 +65,8 @@ module "health_check_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "health-check"
   path_name             = "health"

@@ -1,4 +1,7 @@
 locals {
+  frontend_base_url   = "https://${data.aws_route53_zone.this.name}"
+  cors_allowed_origin = local.frontend_base_url
+
   tags = merge(
     {
       "Application" = "volleygoals"
@@ -24,7 +27,7 @@ locals {
     "EMAIL_SENDER"                = "no-reply@${data.aws_route53_zone.this.name}"
     "TENANT_NAME"                 = var.ses_tenant_name
     "CONFIGURATION_SET_NAME"      = aws_sesv2_configuration_set.this.configuration_set_name
-    "FRONTEND_BASE_URL"           = "https://${data.aws_route53_zone.this.name}"
+    "FRONTEND_BASE_URL"           = local.frontend_base_url
     "BACKEND_BASE_URL"            = "https://api.${data.aws_route53_zone.this.name}/api/v1"
     "CDN_BASE_URL"                = "https://cdn.${data.aws_route53_zone.this.name}"
     "USER_POOL_ID"                = element(split("/", element(split(":", var.cognito_user_pool_arn), -1)), -1)

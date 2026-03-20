@@ -11,6 +11,7 @@ module "get_self_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-self"
   path_name             = "members"
@@ -57,7 +58,8 @@ module "update_self_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-self"
   path_name             = "members"
@@ -110,6 +112,7 @@ module "get_teams_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "list-teams"
   path_name             = "teams"
@@ -153,6 +156,7 @@ module "get_team_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-team"
   path_name             = "{teamId}"
@@ -198,7 +202,8 @@ module "create_team_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "create-team"
   path_name             = "teams"
@@ -246,7 +251,8 @@ module "delete_team_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-team"
   path_name             = "{teamId}"
@@ -312,7 +318,8 @@ module "update_team_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-team"
   path_name             = "{teamId}"
@@ -373,6 +380,7 @@ module "get_team_invites_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-team-invites"
   path_name             = "invites"
@@ -428,6 +436,7 @@ module "upload_team_picture_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "upload-team-picture"
   path_name             = "presign"
@@ -482,6 +491,7 @@ module "get_team_activity_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "get-team-activity"
   path_name             = "activity"
@@ -531,7 +541,8 @@ module "update_team_settings_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-team-settings"
   path_name             = "settings"
@@ -600,6 +611,7 @@ module "list_team_members_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["GET"]
   name_overwrite        = "list-team-members"
   path_name             = "members"
@@ -645,7 +657,8 @@ module "add_team_member_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["POST"]
   name_overwrite        = "add-team-member"
   path_name             = "members"
@@ -697,6 +710,7 @@ module "update_team_member_ms" {
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["PATCH"]
   name_overwrite        = "update-team-member"
   path_name             = "members"
@@ -747,7 +761,8 @@ module "delete_team_member_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-team-member"
   path_name             = "members"
@@ -798,7 +813,8 @@ module "leave_team_ms" {
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
-  cors_enabled          = false
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
   http_methods          = ["DELETE"]
   name_overwrite        = "leave-team"
   path_name             = "members"
