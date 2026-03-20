@@ -132,6 +132,7 @@ module "revoke_invite_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["DELETE"]
   name_overwrite        = "revoke-invite"
   path_name             = "{inviteId}"
@@ -175,7 +176,6 @@ module "resend_invite_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
   http_methods          = ["PATCH"]
   name_overwrite        = "resend-invite"
   path_name             = "{inviteId}"

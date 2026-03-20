@@ -67,6 +67,7 @@ module "create_season_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["POST"]
   name_overwrite        = "create-season"
   path_name             = "seasons"
@@ -110,7 +111,6 @@ module "list_seasons_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
   http_methods          = ["GET"]
   name_overwrite        = "list-seasons"
   path_name             = "seasons"
@@ -343,6 +343,7 @@ module "create_goal_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["POST"]
   name_overwrite        = "create-goal"
   path_name             = "goals"
@@ -398,7 +399,6 @@ module "list_goals_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
   http_methods          = ["GET"]
   name_overwrite        = "list-goals"
   path_name             = "goals"
@@ -654,6 +654,7 @@ module "create_progress_report_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["POST"]
   name_overwrite        = "create-progress-report"
   path_name             = "progress-reports"
@@ -709,7 +710,6 @@ module "list_progress_reports_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
   http_methods          = ["GET"]
   name_overwrite        = "list-progress-reports"
   path_name             = "progress-reports"

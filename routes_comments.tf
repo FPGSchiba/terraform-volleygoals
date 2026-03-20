@@ -31,6 +31,7 @@ module "create_comment_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["POST"]
   name_overwrite        = "create-comment"
   path_name             = "comments"
@@ -85,7 +86,6 @@ module "list_comments_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
   http_methods          = ["GET"]
   name_overwrite        = "list-comments"
   path_name             = "comments"
