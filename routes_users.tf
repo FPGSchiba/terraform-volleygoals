@@ -13,7 +13,7 @@ resource "aws_api_gateway_resource" "user_id" {
 }
 
 module "list_users_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -52,7 +52,7 @@ module "list_users_ms" {
 }
 
 module "get_user_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -95,12 +95,13 @@ module "get_user_ms" {
 }
 
 module "delete_user_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-user"
   path_name             = "{userSub}"
@@ -138,12 +139,13 @@ module "delete_user_ms" {
 }
 
 module "update_user_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["PATCH"]
   name_overwrite        = "update-user"
   path_name             = "{userSub}"
