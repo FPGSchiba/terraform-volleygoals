@@ -20,7 +20,7 @@ resource "aws_api_gateway_resource" "invite_id" {
 }
 
 module "create_invite_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -79,7 +79,7 @@ module "create_invite_ms" {
 
 # POST /invites/complete — no Cognito auth (public endpoint)
 module "complete_invite_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -124,7 +124,7 @@ module "complete_invite_ms" {
 }
 
 module "revoke_invite_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -166,7 +166,7 @@ module "revoke_invite_ms" {
 }
 
 module "resend_invite_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -220,7 +220,7 @@ module "resend_invite_ms" {
 }
 
 module "get_invite_by_token_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.0"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
