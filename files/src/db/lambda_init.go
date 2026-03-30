@@ -22,6 +22,11 @@ var (
 	commentsTableName        = os.Getenv("COMMENTS_TABLE_NAME")
 	commentFilesTableName    = os.Getenv("COMMENT_FILES_TABLE_NAME")
 	activitiesTableName      = os.Getenv("ACTIVITIES_TABLE_NAME")
+
+	tenantsTableName          = os.Getenv("TENANTS_TABLE_NAME")
+	tenantMembersTableName    = os.Getenv("TENANT_MEMBERS_TABLE_NAME")
+	roleDefinitionsTableName  = os.Getenv("ROLE_DEFINITIONS_TABLE_NAME")
+	ownershipPoliciesTableName = os.Getenv("OWNERSHIP_POLICIES_TABLE_NAME")
 )
 
 // InitClient initializes the DynamoDB client with the provided config
