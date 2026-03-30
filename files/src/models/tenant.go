@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 type TenantMemberRole   string
 type TenantMemberStatus string
@@ -29,4 +33,20 @@ type TenantMember struct {
 	Status    TenantMemberStatus `dynamodbav:"status" json:"status"`
 	CreatedAt time.Time          `dynamodbav:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time          `dynamodbav:"updatedAt" json:"updatedAt"`
+}
+
+func (t *Tenant) ToAttributeValues() map[string]types.AttributeValue {
+	m, err := ToDynamoMap(t)
+	if err != nil {
+		return nil
+	}
+	return m
+}
+
+func (tm *TenantMember) ToAttributeValues() map[string]types.AttributeValue {
+	m, err := ToDynamoMap(tm)
+	if err != nil {
+		return nil
+	}
+	return m
 }

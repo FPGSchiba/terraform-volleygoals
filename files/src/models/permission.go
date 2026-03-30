@@ -1,5 +1,9 @@
 package models
 
+// TenantIDGlobal is the sentinel tenantId value for global default policies.
+// DynamoDB cannot index null values, so "global" is used instead of an empty string.
+const TenantIDGlobal = "global"
+
 // Permission constants — resource:action pairs used in RoleDefinition.Permissions
 // and OwnershipPolicy.OwnerPermissions.
 const (
@@ -40,7 +44,7 @@ const (
 	PermActivitiesRead = "activities:read"
 )
 
-// ResourceTypeGoals etc. are the resource type strings passed to CheckPermission.
+// Resource type constants passed to CheckPermission.
 const (
 	ResourceTypeTeams           = "teams"
 	ResourceTypeTeamSettings    = "team_settings"
