@@ -45,7 +45,7 @@ type Resource struct {
 
 Evaluation order (first match wins):
 
-1. Load the actor's `TeamMember` record → get role name.
+1. Load the actor's `TeamMember` record → get role name. Load the `Team` record to resolve `tenantId` (used in steps 2–5).
 2. **Ownership check (direct):** if `resource.OwnedBy == actorId`, load `OwnershipPolicy` for `(tenantId, resourceType)`. If `action ∈ ownerPermissions` → **ALLOW**.
 3. **Ownership check (parent):** if `resource.ParentOwnedBy == actorId`, load `OwnershipPolicy` for `(tenantId, resourceType)`. If `action ∈ parentOwnerPermissions` → **ALLOW**.
 4. **Role check (tenant-specific):** load `RoleDefinition` for `(tenantId, roleName)`. If `action ∈ permissions` → **ALLOW**.
@@ -172,15 +172,15 @@ Global default `OwnershipPolicy` records (`tenantId = null`) seeded at deploy ti
 
 ## New API Endpoints
 
-### Tenant Management (global `ADMINS` Cognito group only)
+### Tenant Management
 
 ```
-POST   /v1/tenants                                         CreateTenant
-GET    /v1/tenants/{tenantId}                              GetTenant
-PATCH  /v1/tenants/{tenantId}                              UpdateTenant
-DELETE /v1/tenants/{tenantId}                              DeleteTenant
-POST   /v1/tenants/{tenantId}/members                      AddTenantMember
-DELETE /v1/tenants/{tenantId}/members/{memberId}           RemoveTenantMember
+POST   /v1/tenants                                         CreateTenant          (global ADMINS only)
+GET    /v1/tenants/{tenantId}                              GetTenant             (global ADMINS or tenant member)
+PATCH  /v1/tenants/{tenantId}                              UpdateTenant          (global ADMINS or tenant admin)
+DELETE /v1/tenants/{tenantId}                              DeleteTenant          (global ADMINS only)
+POST   /v1/tenants/{tenantId}/members                      AddTenantMember       (global ADMINS or tenant admin)
+DELETE /v1/tenants/{tenantId}/members/{memberId}           RemoveTenantMember    (global ADMINS or tenant admin)
 ```
 
 ### Role Definitions (tenant admin only)
