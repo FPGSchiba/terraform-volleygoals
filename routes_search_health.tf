@@ -43,6 +43,17 @@ module "global_search_ms" {
         aws_dynamodb_table.progress_reports.arn,
       ]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+      ]
+    },
   ]
 
   depends_on = [
@@ -84,7 +95,20 @@ module "health_check_ms" {
   handler_name          = "HealthCheck"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
 
-  additional_iam_statements = []
+  additional_iam_statements = [
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
+  ]
 
   depends_on = [
     aws_api_gateway_rest_api.api,

@@ -69,6 +69,17 @@ module "create_invite_ms" {
       actions   = ["ses:SendEmail", "ses:SendTemplatedEmail"]
       resources = ["*"]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+      ]
+    },
   ]
 
   depends_on = [
@@ -116,6 +127,18 @@ module "complete_invite_ms" {
       actions   = ["cognito-idp:AdminCreateUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminDeleteUser", "cognito-idp:ListUsers"]
       resources = [var.cognito_user_pool_arn]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -159,6 +182,18 @@ module "revoke_invite_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
     },
   ]
 
@@ -216,6 +251,17 @@ module "resend_invite_ms" {
       actions   = ["ses:SendEmail", "ses:SendTemplatedEmail"]
       resources = ["*"]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+      ]
+    },
   ]
 
   depends_on = [
@@ -256,6 +302,18 @@ module "get_invite_by_token_ms" {
       resources = [
         "${aws_dynamodb_table.invites.arn}/index/tokenIndex",
         "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+      ]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
       ]
     },
   ]
