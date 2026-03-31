@@ -132,3 +132,36 @@ func IsTenantAdmin(ctx context.Context, userId, tenantId string) (bool, error) {
 	}
 	return member != nil && member.Role == models.TenantMemberRoleAdmin && member.Status == models.TenantMemberStatusActive, nil
 }
+
+func UpdateTenant(ctx context.Context, tenant *models.Tenant) error {
+	client = GetClient()
+	tenant.UpdatedAt = time.Now()
+	item, err := attributevalue.MarshalMap(tenant)
+	if err != nil {
+		return err
+	}
+	_, err = client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: &tenantsTableName,
+		Item:      item,
+	})
+	return err
+}
+
+func GetTenantMemberById(ctx context.Context, memberId string) (*models.TenantMember, error) {
+	client = GetClient()
+	result, err := client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: &tenantMembersTableName,
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: memberId},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result.Item == nil {
+		return nil, nil
+	}
+	var member models.TenantMember
+	err = attributevalue.UnmarshalMap(result.Item, &member)
+	return &member, err
+}

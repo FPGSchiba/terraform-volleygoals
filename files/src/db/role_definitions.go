@@ -128,3 +128,22 @@ func DeleteRoleDefinition(ctx context.Context, roleId string) error {
 	})
 	return err
 }
+
+func GetRoleDefinitionById(ctx context.Context, roleId string) (*models.RoleDefinition, error) {
+	client = GetClient()
+	result, err := client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: &roleDefinitionsTableName,
+		Key: map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: roleId},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if result.Item == nil {
+		return nil, nil
+	}
+	var def models.RoleDefinition
+	err = attributevalue.UnmarshalMap(result.Item, &def)
+	return &def, err
+}
