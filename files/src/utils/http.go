@@ -47,6 +47,18 @@ const (
 	MsgErrorCommentNotFound  ResponseMessage = "error.comment.notFound"
 	MsgErrorCommentsDisabled ResponseMessage = "error.comment.disabled"
 
+	// Tenant related errors
+	MsgErrorTenantNotFound       ResponseMessage = "error.tenant.notFound"
+	MsgErrorTenantMemberNotFound ResponseMessage = "error.tenant.memberNotFound"
+	MsgErrorNotTenantAdmin       ResponseMessage = "error.tenant.notAdmin"
+
+	// Role definition errors
+	MsgErrorRoleNotFound  ResponseMessage = "error.role.notFound"
+	MsgErrorRoleIsDefault ResponseMessage = "error.role.isDefault"
+
+	// Ownership policy errors
+	MsgErrorOwnershipPolicyNotFound ResponseMessage = "error.ownershipPolicy.notFound"
+
 	// General Success messages
 	MsgSuccess ResponseMessage = "success.ok"
 
