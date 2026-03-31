@@ -93,10 +93,25 @@ func AddTenantMember(ctx context.Context, tenantId, userId string, role models.T
 
 func RemoveTenantMember(ctx context.Context, memberId string) error {
 	client = GetClient()
-	_, err := client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+
+	now := time.Now()
+	updatedAtAttr, err := attributevalue.Marshal(now)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
 		TableName: &tenantMembersTableName,
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{Value: memberId},
+		},
+		UpdateExpression: aws.String("SET #S = :status, updatedAt = :updatedAt"),
+		ExpressionAttributeNames: map[string]string{
+			"#S": "status",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":status":   &types.AttributeValueMemberS{Value: string(models.TenantMemberStatusRemoved)},
+			":updatedAt": updatedAtAttr,
 		},
 	})
 	return err
