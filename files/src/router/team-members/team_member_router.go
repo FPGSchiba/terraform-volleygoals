@@ -19,7 +19,7 @@ func ListTeamMembers(ctx context.Context, event events.APIGatewayProxyRequest) (
 	if !ok || teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeMembers}, models.PermMembersRead) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	callerRole, err := utils.GetUserRoleOnTeam(ctx, event.RequestContext.Authorizer, teamId)
@@ -133,7 +133,7 @@ func AddTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	if !ok || teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeMembers}, models.PermMembersWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	var request AddTeamMemberRequest
@@ -169,7 +169,7 @@ func UpdateTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) 
 	if !ok || teamMemberId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeMembers}, models.PermMembersWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	var request UpdateTeamMemberRequest
@@ -178,7 +178,7 @@ func UpdateTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) 
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
 	if request.Role != nil && *request.Role == models.TeamMemberRoleAdmin {
-		if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdmin(ctx, event.RequestContext.Authorizer, teamId) {
+		if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeMembers}, models.PermMembersDelete) {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
 	}
@@ -206,7 +206,7 @@ func RemoveTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) 
 	if !ok || teamMemberId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeMembers}, models.PermMembersWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	err := db.RemoveTeamMember(ctx, teamMemberId)

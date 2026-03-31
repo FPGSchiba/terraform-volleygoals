@@ -29,7 +29,7 @@ func CreateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeProgressReports}, models.PermProgressReportsWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -92,16 +92,20 @@ func GetProgressReport(ctx context.Context, event events.APIGatewayProxyRequest)
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
 	report, err := db.GetProgressReportById(ctx, reportId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 	if report == nil || report.SeasonId != seasonId {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorProgressReportNotFound, nil)
+	}
+
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+		models.Resource{Type: models.ResourceTypeProgressReports, OwnedBy: report.AuthorId},
+		models.PermProgressReportsRead)
+	if err != nil || !allowed {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
 	// Enrich AuthorName/AuthorPicture for legacy records (same logic as ListProgressReports).
@@ -154,7 +158,7 @@ func ListProgressReports(ctx context.Context, event events.APIGatewayProxyReques
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeProgressReports}, models.PermProgressReportsRead) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -258,10 +262,6 @@ func UpdateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
 	report, err := db.GetProgressReportById(ctx, reportId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
@@ -270,8 +270,11 @@ func UpdateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorProgressReportNotFound, nil)
 	}
 
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	if report.AuthorId != userId && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+		models.Resource{Type: models.ResourceTypeProgressReports, OwnedBy: report.AuthorId},
+		models.PermProgressReportsWrite)
+	if err != nil || !allowed {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -310,10 +313,6 @@ func DeleteProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
 	report, err := db.GetProgressReportById(ctx, reportId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
@@ -322,8 +321,11 @@ func DeleteProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorProgressReportNotFound, nil)
 	}
 
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	if report.AuthorId != userId && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+		models.Resource{Type: models.ResourceTypeProgressReports, OwnedBy: report.AuthorId},
+		models.PermProgressReportsDelete)
+	if err != nil || !allowed {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 

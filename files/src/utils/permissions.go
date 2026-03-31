@@ -140,3 +140,18 @@ func GetUserRoleOnTeam(ctx context.Context, authorizer map[string]interface{}, t
 	userID := GetCognitoUsername(authorizer)
 	return db.GetUserRoleOnTeam(ctx, userID, teamId)
 }
+
+// HasTeamPermission is a convenience wrapper around CheckPermission that
+// extracts the actorId from the Cognito authorizer context.
+// Use this in handlers to replace the old IsTeamAdmin / IsTeamTrainer / HasTeamAccess calls.
+func HasTeamPermission(ctx context.Context, authorizer map[string]interface{}, teamId string, resource models.Resource, action string) bool {
+	actorId := GetCognitoUsername(authorizer)
+	if actorId == "" {
+		return false
+	}
+	allowed, err := CheckPermission(ctx, actorId, teamId, resource, action)
+	if err != nil {
+		return false
+	}
+	return allowed
+}

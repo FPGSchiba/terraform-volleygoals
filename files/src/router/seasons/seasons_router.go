@@ -17,7 +17,7 @@ func CreateSeason(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	if err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
-	if !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, body.TeamId) {
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, body.TeamId, models.Resource{Type: models.ResourceTypeSeasons}, models.PermSeasonsWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	season, err := db.CreateSeason(ctx, body.TeamId, body.Name, body.StartDate, body.EndDate)
@@ -58,7 +58,7 @@ func ListSeasons(ctx context.Context, event events.APIGatewayProxyRequest) (*eve
 
 	if filter.TeamId != "" {
 		// Authorization: all team users can list seasons
-		if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, filter.TeamId) {
+		if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, filter.TeamId, models.Resource{Type: models.ResourceTypeSeasons}, models.PermSeasonsRead) {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
 	} else {
@@ -152,7 +152,7 @@ func GetSeasonStats(ctx context.Context, event events.APIGatewayProxyRequest) (*
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeSeasons}, models.PermSeasonsRead) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -193,11 +193,11 @@ func isAuthorizedForSeason(ctx context.Context, authorizer map[string]interface{
 	}
 	// Authorization: only admins or team admins/trainers can access season details
 	if teamUser {
-		if !utils.HasTeamAccess(ctx, authorizer, season.TeamId) {
+		if !utils.HasTeamPermission(ctx, authorizer, season.TeamId, models.Resource{Type: models.ResourceTypeSeasons}, models.PermSeasonsRead) {
 			return false, true, nil
 		}
 	} else {
-		if !utils.IsTeamAdminOrTrainer(ctx, authorizer, season.TeamId) {
+		if !utils.HasTeamPermission(ctx, authorizer, season.TeamId, models.Resource{Type: models.ResourceTypeSeasons}, models.PermSeasonsWrite) {
 			return false, true, nil
 		}
 	}

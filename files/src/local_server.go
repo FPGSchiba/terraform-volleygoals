@@ -12,6 +12,7 @@ import (
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/mail"
 	"github.com/fpgschiba/volleygoals/router"
+	"github.com/fpgschiba/volleygoals/router/seed"
 	"github.com/fpgschiba/volleygoals/storage"
 	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
@@ -196,7 +197,7 @@ func GetRouter() *gin.Engine {
 		// Apply auth for subsequent routes
 		apiGroup.Use(AuthMiddleware())
 
-		selfGroup := apiGroup.Group("/self") // User only
+		selfGroup := apiGroup.Group("/self")
 		{
 			selfGroup.GET("", Adapter("GetSelf"))
 			selfGroup.PATCH("", Adapter("UpdateSelf"))
@@ -204,29 +205,29 @@ func GetRouter() *gin.Engine {
 		}
 		teamsGroup := apiGroup.Group("/teams")
 		{
-			teamsGroup.POST("", Adapter("CreateTeam")) // Admin only
-			teamsGroup.GET("", Adapter("ListTeams"))   // Admin only
-			teamGroup := teamsGroup.Group(":teamId")   // Admin or User for specific Team
+			teamsGroup.POST("", Adapter("CreateTeam"))
+			teamsGroup.GET("", Adapter("ListTeams"))
+			teamGroup := teamsGroup.Group(":teamId")
 			{
-				teamGroup.DELETE("", Adapter("DeleteTeam"))                     // Admin only
-				teamGroup.GET("", Adapter("GetTeam"))                           // Admin or User for Team
-				teamGroup.PATCH("/settings", Adapter("UpdateTeamSettings"))     // Admin or User with Role Trainer on Team
-				teamGroup.GET("/invites", Adapter("GetTeamInvites"))            // Admin or User with Role Trainer on Team
-				teamGroup.GET("/picture/presign", Adapter("UploadTeamPicture")) // Admin or User with Role Trainer on Team
-				teamGroup.PATCH("", Adapter("UpdateTeam"))                      // Admin or User with Role Trainer on Team
+				teamGroup.DELETE("", Adapter("DeleteTeam"))
+				teamGroup.GET("", Adapter("GetTeam"))
+				teamGroup.PATCH("/settings", Adapter("UpdateTeamSettings"))
+				teamGroup.GET("/invites", Adapter("GetTeamInvites"))
+				teamGroup.GET("/picture/presign", Adapter("UploadTeamPicture"))
+				teamGroup.PATCH("", Adapter("UpdateTeam"))
 				membersGroup := teamGroup.Group("/members")
 				{
-					membersGroup.POST("", Adapter("AddTeamMember"))               // Admin only
-					membersGroup.GET("", Adapter("ListTeamMembers"))              // Admin or User for Team
-					membersGroup.DELETE("", Adapter("LeaveTeam"))                 // User only and Trainers only if another Trainer exists
-					membersGroup.DELETE(":memberId", Adapter("RemoveTeamMember")) // Admin and User with Role Trainer on Team
-					membersGroup.PATCH(":memberId", Adapter("UpdateTeamMember"))  // Admin and User with Role Trainer on Team
+					membersGroup.POST("", Adapter("AddTeamMember"))
+					membersGroup.GET("", Adapter("ListTeamMembers"))
+					membersGroup.DELETE("", Adapter("LeaveTeam"))
+					membersGroup.DELETE(":memberId", Adapter("RemoveTeamMember"))
+					membersGroup.PATCH(":memberId", Adapter("UpdateTeamMember"))
 				}
-				teamGroup.GET("/activity", Adapter("GetTeamActivity")) // All team members
+				teamGroup.GET("/activity", Adapter("GetTeamActivity"))
 
 			}
 		}
-		invitesGroup := apiGroup.Group("/invites") // Admin or User with Role Trainer on Team
+		invitesGroup := apiGroup.Group("/invites")
 		{
 			invitesGroup.POST("", Adapter("CreateInvite"))
 			invitesGroup.DELETE(":inviteId", Adapter("RevokeInvite"))
@@ -240,11 +241,11 @@ func GetRouter() *gin.Engine {
 			usersGroup.DELETE(":userSub", Adapter("DeleteUser"))
 			usersGroup.PATCH(":userSub", Adapter("UpdateUser"))
 		}
-		seasonsGroup := apiGroup.Group("/seasons") // Admin or User with Role Trainer on Team
+		seasonsGroup := apiGroup.Group("/seasons")
 		{
 			seasonsGroup.POST("", Adapter("CreateSeason"))
 			seasonsGroup.GET("", Adapter("ListSeasons"))
-			seasonGroup := seasonsGroup.Group(":seasonId") // Admin or User with Role Trainer on Team
+			seasonGroup := seasonsGroup.Group(":seasonId")
 			{
 				seasonGroup.GET("", Adapter("GetSeason"))
 				seasonGroup.PATCH("", Adapter("UpdateSeason"))
@@ -252,32 +253,32 @@ func GetRouter() *gin.Engine {
 				seasonGroup.GET("/stats", Adapter("GetSeasonStats"))
 				goalsGroup := seasonGroup.Group("/goals")
 				{
-					goalsGroup.POST("", Adapter("CreateGoal")) // Admin or User with Role Trainer on Team
+					goalsGroup.POST("", Adapter("CreateGoal"))
 					goalsGroup.GET(":goalId", Adapter("GetGoal"))
 					goalsGroup.GET("", Adapter("ListGoals"))
-					goalsGroup.PATCH(":goalId", Adapter("UpdateGoal"))  // Admin or User with Role Trainer on Team
-					goalsGroup.DELETE(":goalId", Adapter("DeleteGoal")) // Admin or User with Role Trainer on Team
+					goalsGroup.PATCH(":goalId", Adapter("UpdateGoal"))
+					goalsGroup.DELETE(":goalId", Adapter("DeleteGoal"))
 					goalsGroup.GET(":goalId/picture/presign", Adapter("UploadGoalFile"))
 				}
 				progressReportGroup := seasonGroup.Group("/progress-reports")
 				{
-					progressReportGroup.POST("", Adapter("CreateProgressReport")) // Admin or User with Role Trainer on Team
+					progressReportGroup.POST("", Adapter("CreateProgressReport"))
 					progressReportGroup.GET(":reportId", Adapter("GetProgressReport"))
 					progressReportGroup.GET("", Adapter("ListProgressReports"))
-					progressReportGroup.PATCH(":reportId", Adapter("UpdateProgressReport"))  // Admin or User with Role Trainer on Team
-					progressReportGroup.DELETE(":reportId", Adapter("DeleteProgressReport")) // Admin or User with Role Trainer on Team
+					progressReportGroup.PATCH(":reportId", Adapter("UpdateProgressReport"))
+					progressReportGroup.DELETE(":reportId", Adapter("DeleteProgressReport"))
 				}
 			}
 		}
-		apiGroup.GET("/search", Adapter("GlobalSearch")) // Any team member
+		apiGroup.GET("/search", Adapter("GlobalSearch"))
 
-		commentsGroup := apiGroup.Group("/comments") // Admin or User with Role Trainer on Team
+		commentsGroup := apiGroup.Group("/comments")
 		{
 			commentsGroup.POST("", Adapter("CreateComment"))
 			commentsGroup.GET(":commentId", Adapter("GetComment"))
 			commentsGroup.GET("", Adapter("ListComments"))
-			commentsGroup.PATCH(":commentId", Adapter("UpdateComment"))  // Admin or User with Role Trainer on Team
-			commentsGroup.DELETE(":commentId", Adapter("DeleteComment")) // Admin or User with Role Trainer on Team
+			commentsGroup.PATCH(":commentId", Adapter("UpdateComment"))
+			commentsGroup.DELETE(":commentId", Adapter("DeleteComment"))
 			commentsGroup.GET(":commentId/file/presign", Adapter("UploadCommentFile"))
 		}
 	}
@@ -305,6 +306,19 @@ func main() {
 	mail.InitClient(nil)
 	storage.InitClient(nil)
 	users.InitClient(nil)
+
+	// Optionally seed default data when explicitly requested via env var.
+	// This avoids mutating infrastructure state on every local server startup.
+	if os.Getenv("ENABLE_LOCAL_SEED_DEFAULTS") == "1" || os.Getenv("ENABLE_LOCAL_SEED_DEFAULTS") == "true" {
+		response, err := seed.SeedDefaults(context.Background(), events.APIGatewayProxyRequest{})
+		if err != nil {
+			log.WithError(err).Error("seed default failed")
+			return
+		}
+		log.Infof("seed default response: %+v", response)
+	} else {
+		log.Infof("skipping seed defaults; set ENABLE_LOCAL_SEED_DEFAULTS=1 to enable")
+	}
 	log.Infof("starting volleygoals local server on :%s (use /api/v1/... endpoints)", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("failed to run server: %v", err)

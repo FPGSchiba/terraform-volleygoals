@@ -7,15 +7,16 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
 func UpdateTeamSettings(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+	teamId := event.PathParameters["teamId"]
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeTeamSettings}, models.PermTeamSettingsWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
-	teamId := event.PathParameters["teamId"]
 	if teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}

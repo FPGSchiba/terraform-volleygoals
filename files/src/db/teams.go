@@ -284,6 +284,24 @@ func DeleteTeamByID(ctx context.Context, teamId string) error {
 	return err
 }
 
+func CreateTeamWithTenant(ctx context.Context, name, tenantId string) (*models.Team, error) {
+	client = GetClient()
+	now := time.Now()
+	team := &models.Team{
+		Id:        models.GenerateID(),
+		Name:      name,
+		Status:    models.TeamStatusActive,
+		TenantId:  &tenantId,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	_, err := client.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(teamsTableName),
+		Item:      team.ToAttributeValues(),
+	})
+	return team, err
+}
+
 func UpdateTeamPicture(ctx context.Context, teamId, pictureUrl string) error {
 	client = GetClient()
 	_, err := client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
