@@ -8,6 +8,16 @@ resource "aws_dynamodb_table" "teams" {
     name = "id"
     type = "S"
   }
+  attribute {
+    name = "tenantId"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "tenantIdIndex"
+    hash_key        = "tenantId"
+    projection_type = "ALL"
+  }
 
   tags = local.tags
 }

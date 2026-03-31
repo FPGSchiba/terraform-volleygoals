@@ -19,7 +19,11 @@ locals {
     "PROGRESS_TABLE_NAME"         = aws_dynamodb_table.progress.name
     "COMMENTS_TABLE_NAME"         = aws_dynamodb_table.comments.name
     "COMMENT_FILES_TABLE_NAME"    = aws_dynamodb_table.comment_files.name
-    "ACTIVITIES_TABLE_NAME"       = aws_dynamodb_table.activities.name
+    "ACTIVITIES_TABLE_NAME"           = aws_dynamodb_table.activities.name
+    "TENANTS_TABLE_NAME"              = aws_dynamodb_table.tenants.name
+    "TENANT_MEMBERS_TABLE_NAME"       = aws_dynamodb_table.tenant_members.name
+    "ROLE_DEFINITIONS_TABLE_NAME"     = aws_dynamodb_table.role_definitions.name
+    "OWNERSHIP_POLICIES_TABLE_NAME"   = aws_dynamodb_table.ownership_policies.name
     "OTEL_PROPAGATORS"            = "xray"
     "OTEL_SERVICE_NAME"           = "volleygoals"
     "OTEL_TRACES_SAMPLER"         = "always_on"
