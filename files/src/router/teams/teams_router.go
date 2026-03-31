@@ -98,7 +98,7 @@ func GetTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 	if teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeTeams}, models.PermTeamsRead) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	team, err := db.GetTeamById(ctx, teamId)
@@ -187,7 +187,7 @@ func UploadTeamPicture(ctx context.Context, event events.APIGatewayProxyRequest)
 	if !ok || teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeTeams}, models.PermTeamsWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	filename, ok := event.QueryStringParameters["filename"]

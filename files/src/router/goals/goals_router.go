@@ -28,21 +28,13 @@ func CreateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	}
 
 	// Authentication and Authorization
-	if request.Type == models.GoalTypeTeam {
-		// Verify if the requester is a team admin or trainer
-		if !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
-			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-		}
-	} else {
-		// For individual goals, verify the user has team access
-		if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-		}
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeGoals}, models.PermGoalsWrite) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
 	callerId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	ownerId := callerId
-	if request.OwnerId != nil && utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	if request.OwnerId != nil && utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeGoals}, models.PermGoalsWrite) {
 		ownerId = *request.OwnerId
 	}
 	goal, err := db.CreateGoal(ctx, seasonId, ownerId, request.Type, request.Title, request.Description)
@@ -62,17 +54,23 @@ func GetGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
-	// Authentication and Authorization
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
 	goal, err := db.GetGoalById(ctx, goalId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 	if goal == nil || goal.SeasonId != seasonId {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
+	}
+
+	// Authentication and Authorization
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
+			models.PermGoalsRead)
+		if err != nil || !allowed {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
 	}
 
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
@@ -100,7 +98,7 @@ func ListGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 	if teamId == "" {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeTeams}, models.PermTeamsRead) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -173,9 +171,6 @@ func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
 	goal, err := db.GetGoalById(ctx, goalId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
@@ -184,12 +179,17 @@ func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	// Only the owner or team admin/trainer can update the goal
-	if goal.OwnerId != userId && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
+			models.PermGoalsWrite)
+		if err != nil || !allowed {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
 	}
 
+	userId := actorId
 	updatedGoal, err := db.UpdateGoal(ctx, goalId, request.OwnerId, request.Title, request.Description, request.Status)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
@@ -212,10 +212,6 @@ func DeleteGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
 	goal, err := db.GetGoalById(ctx, goalId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
@@ -224,10 +220,14 @@ func DeleteGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	// Only the owner or team admin/trainer can delete the goal
-	if goal.OwnerId != userId && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
+			models.PermGoalsDelete)
+		if err != nil || !allowed {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
 	}
 
 	err = db.DeleteGoal(ctx, goalId)
@@ -267,11 +267,6 @@ func UploadGoalFile(ctx context.Context, event events.APIGatewayProxyRequest) (*
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
-	// Authentication and Authorization
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
 	goal, err := db.GetGoalById(ctx, goalId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
@@ -280,10 +275,15 @@ func UploadGoalFile(ctx context.Context, event events.APIGatewayProxyRequest) (*
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	// Only the owner or team admin/trainer can upload files to the goal
-	if goal.OwnerId != userId && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	// Authentication and Authorization
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
+			models.PermGoalsWrite)
+		if err != nil || !allowed {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
 	}
 
 	presignedUrl, key, err := storage.GeneratePresignedUploadURLForGoalPicture(ctx, goalId, filename, contentType, utils.PresignedURLTimeout)

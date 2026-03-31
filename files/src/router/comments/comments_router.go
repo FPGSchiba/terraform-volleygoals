@@ -34,7 +34,7 @@ func CreateComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeComments}, models.PermCommentsWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -108,7 +108,11 @@ func GetComment(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+		models.Resource{Type: models.ResourceTypeComments, OwnedBy: comment.AuthorId},
+		models.PermCommentsRead)
+	if err != nil || !allowed {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -146,7 +150,7 @@ func ListComments(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeComments}, models.PermCommentsRead) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -189,12 +193,11 @@ func UpdateComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	if comment.AuthorId != userId && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+		models.Resource{Type: models.ResourceTypeComments, OwnedBy: comment.AuthorId},
+		models.PermCommentsWrite)
+	if err != nil || !allowed {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -231,12 +234,11 @@ func DeleteComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	if comment.AuthorId != userId && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+		models.Resource{Type: models.ResourceTypeComments, OwnedBy: comment.AuthorId},
+		models.PermCommentsDelete)
+	if err != nil || !allowed {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -274,12 +276,11 @@ func UploadCommentFile(ctx context.Context, event events.APIGatewayProxyRequest)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-	if !utils.HasTeamAccess(ctx, event.RequestContext.Authorizer, teamId) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-	}
-
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	if comment.AuthorId != userId && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, teamId) {
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
+		models.Resource{Type: models.ResourceTypeComments, OwnedBy: comment.AuthorId},
+		models.PermCommentsWrite)
+	if err != nil || !allowed {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
