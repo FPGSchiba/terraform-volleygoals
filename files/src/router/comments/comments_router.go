@@ -122,13 +122,14 @@ func GetComment(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-		models.Resource{
-			Type:          models.ResourceTypeComments,
-			OwnedBy:       comment.AuthorId,
-			ParentOwnedBy: comment.ParentOwnedBy,
-		},
-		models.PermCommentsRead)
+	resource, err := db.GetResourceFromCommentId(ctx, commentId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
+	}
+	if resource == nil {
+		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorCommentNotFound, nil)
+	}
+	allowed, err := utils.CheckPermission(ctx, actorId, teamId, *resource, models.PermCommentsRead)
 	if err != nil || !allowed {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
