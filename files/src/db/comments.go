@@ -293,3 +293,63 @@ func DeleteCommentsForTarget(ctx context.Context, targetId string) error {
 	}
 	return nil
 }
+
+func GetResourceFromCommentId(ctx context.Context, commentId string) (*models.Resource, error) {
+	comment, err := GetCommentById(ctx, commentId)
+	if err != nil {
+		return nil, err
+	}
+	if comment == nil {
+		return nil, nil
+	}
+
+	var resourceType string
+	var parentOwnedBy string
+	switch comment.CommentType {
+	case models.CommentTypeProgressReport:
+		resourceType = models.ResourceTypeProgressReports
+		report, err := GetProgressReportById(ctx, comment.TargetId)
+		if err != nil {
+			return nil, err
+		}
+		if report == nil {
+			return nil, nil
+		}
+		parentOwnedBy = report.AuthorId
+	case models.CommentTypeGoal:
+		resourceType = models.ResourceTypeGoals
+		goal, err := GetGoalById(ctx, comment.TargetId)
+		if err != nil {
+			return nil, err
+		}
+		if goal == nil {
+			return nil, nil
+		}
+		parentOwnedBy = comment.AuthorId
+	case models.CommentTypeProgressEntry:
+		resourceType = models.ResourceTypeProgress
+		progress, err := GetProgressById(ctx, comment.TargetId)
+		if err != nil {
+			return nil, err
+		}
+		if progress == nil {
+			return nil, nil
+		}
+		report, err := GetProgressReportById(ctx, progress.ProgressReportId)
+		if err != nil {
+			return nil, err
+		}
+		if report == nil {
+			return nil, nil
+		}
+		parentOwnedBy = report.AuthorId
+	default:
+		return nil, nil
+	}
+
+	return &models.Resource{
+		Type:          resourceType,
+		OwnedBy:       comment.AuthorId,
+		ParentOwnedBy: parentOwnedBy,
+	}, nil
+}
