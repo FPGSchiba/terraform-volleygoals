@@ -14,6 +14,7 @@ import (
 	"github.com/fpgschiba/volleygoals/router/invites"
 	progress_reports "github.com/fpgschiba/volleygoals/router/progress-reports"
 	"github.com/fpgschiba/volleygoals/router/search"
+	"github.com/fpgschiba/volleygoals/router/seed"
 	"github.com/fpgschiba/volleygoals/router/seasons"
 	"github.com/fpgschiba/volleygoals/router/self"
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
@@ -198,6 +199,10 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (re
 	// Activity handlers
 	case "GetTeamActivity":
 		response, err = activity.GetTeamActivity(ctx, event)
+
+	// Seed handlers
+	case "SeedDefaults":
+		response, err = seed.SeedDefaults(ctx, event)
 
 	// Unknown handler
 	default:
