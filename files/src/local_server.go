@@ -315,7 +315,12 @@ func main() {
 			log.WithError(err).Error("seed default failed")
 			return
 		}
-		log.Infof("seed default response: %+v", response)
+		if response.StatusCode != http.StatusOK {
+			log.WithFields(log.Fields{
+				"status_code": response.StatusCode,
+				"body":        response.Body,
+			}).Error("seed default failed")
+		}
 	} else {
 		log.Infof("skipping seed defaults; set ENABLE_LOCAL_SEED_DEFAULTS=1 to enable")
 	}
