@@ -306,12 +306,19 @@ func main() {
 	mail.InitClient(nil)
 	storage.InitClient(nil)
 	users.InitClient(nil)
-	response, err := seed.SeedDefaults(context.Background(), events.APIGatewayProxyRequest{})
-	if err != nil {
-		log.WithError(err).Error("seed default failed")
-		return
+
+	// Optionally seed default data when explicitly requested via env var.
+	// This avoids mutating infrastructure state on every local server startup.
+	if os.Getenv("ENABLE_LOCAL_SEED_DEFAULTS") == "1" || os.Getenv("ENABLE_LOCAL_SEED_DEFAULTS") == "true" {
+		response, err := seed.SeedDefaults(context.Background(), events.APIGatewayProxyRequest{})
+		if err != nil {
+			log.WithError(err).Error("seed default failed")
+			return
+		}
+		log.Infof("seed default response: %+v", response)
+	} else {
+		log.Infof("skipping seed defaults; set ENABLE_LOCAL_SEED_DEFAULTS=1 to enable")
 	}
-	log.Infof("seed default response: %+v", response)
 	log.Infof("starting volleygoals local server on :%s (use /api/v1/... endpoints)", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("failed to run server: %v", err)
