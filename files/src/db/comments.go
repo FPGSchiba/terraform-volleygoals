@@ -303,11 +303,9 @@ func GetResourceFromCommentId(ctx context.Context, commentId string) (*models.Re
 		return nil, nil
 	}
 
-	var resourceType string
 	var parentOwnedBy string
 	switch comment.CommentType {
 	case models.CommentTypeProgressReport:
-		resourceType = models.ResourceTypeProgressReports
 		report, err := GetProgressReportById(ctx, comment.TargetId)
 		if err != nil {
 			return nil, err
@@ -317,7 +315,6 @@ func GetResourceFromCommentId(ctx context.Context, commentId string) (*models.Re
 		}
 		parentOwnedBy = report.AuthorId
 	case models.CommentTypeGoal:
-		resourceType = models.ResourceTypeGoals
 		goal, err := GetGoalById(ctx, comment.TargetId)
 		if err != nil {
 			return nil, err
@@ -327,7 +324,6 @@ func GetResourceFromCommentId(ctx context.Context, commentId string) (*models.Re
 		}
 		parentOwnedBy = goal.OwnerId
 	case models.CommentTypeProgressEntry:
-		resourceType = models.ResourceTypeProgress
 		progress, err := GetProgressById(ctx, comment.TargetId)
 		if err != nil {
 			return nil, err
@@ -348,7 +344,7 @@ func GetResourceFromCommentId(ctx context.Context, commentId string) (*models.Re
 	}
 
 	return &models.Resource{
-		Type:          resourceType,
+		Type:          models.ResourceTypeComments,
 		OwnedBy:       comment.AuthorId,
 		ParentOwnedBy: parentOwnedBy,
 	}, nil
