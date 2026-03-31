@@ -325,7 +325,7 @@ func GetResourceFromCommentId(ctx context.Context, commentId string) (*models.Re
 		if goal == nil {
 			return nil, nil
 		}
-		parentOwnedBy = comment.AuthorId
+		parentOwnedBy = goal.OwnerId
 	case models.CommentTypeProgressEntry:
 		resourceType = models.ResourceTypeProgress
 		progress, err := GetProgressById(ctx, comment.TargetId)
