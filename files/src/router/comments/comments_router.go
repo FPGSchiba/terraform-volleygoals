@@ -34,7 +34,20 @@ func CreateComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeComments}, models.PermCommentsWrite) {
+	// Authorize comment creation against the target resource (e.g., goal/report),
+	// so that ownership-based permissions on the parent resource are honored.
+	var targetResource models.Resource
+	switch request.CommentType {
+	case models.CommentTypeGoal:
+		targetResource = models.Resource{Type: models.ResourceTypeGoals}
+	case models.CommentTypeProgressReport:
+		targetResource = models.Resource{Type: models.ResourceTypeProgressReports}
+	default:
+		// Fallback to comments resource type if no specific target type matches.
+		targetResource = models.Resource{Type: models.ResourceTypeComments}
+	}
+
+	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, targetResource, models.PermCommentsWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
