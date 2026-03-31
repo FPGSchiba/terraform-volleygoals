@@ -98,8 +98,17 @@ func ListGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 	if teamId == "" {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
-	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeTeams}, models.PermTeamsRead) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		// Non-admins must have goals:read on their own goals and can only list their own goals.
+		filter.OwnerId = actorId
+		allowed, aerr := utils.CheckPermission(ctx, actorId, teamId,
+			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: actorId},
+			models.PermGoalsRead)
+		if aerr != nil || !allowed {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
 	}
 
 	items, count, nextCursor, hasMore, err := db.ListGoals(ctx, filter)
