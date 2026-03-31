@@ -18,6 +18,7 @@ import (
 	"github.com/fpgschiba/volleygoals/router/seasons"
 	"github.com/fpgschiba/volleygoals/router/self"
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
+	"github.com/fpgschiba/volleygoals/router/tenants"
 	teamsettings "github.com/fpgschiba/volleygoals/router/team-settings"
 	"github.com/fpgschiba/volleygoals/router/teams"
 	"github.com/fpgschiba/volleygoals/router/users"
@@ -203,6 +204,40 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (re
 	// Seed handlers
 	case "SeedDefaults":
 		response, err = seed.SeedDefaults(ctx, event)
+
+	// Tenant management handlers
+	case "CreateTenant":
+		response, err = tenants.CreateTenant(ctx, event)
+	case "GetTenant":
+		response, err = tenants.GetTenant(ctx, event)
+	case "UpdateTenant":
+		response, err = tenants.UpdateTenant(ctx, event)
+	case "DeleteTenant":
+		response, err = tenants.DeleteTenant(ctx, event)
+	case "AddTenantMember":
+		response, err = tenants.AddTenantMember(ctx, event)
+	case "RemoveTenantMember":
+		response, err = tenants.RemoveTenantMember(ctx, event)
+
+	// Role definition handlers
+	case "ListRoleDefinitions":
+		response, err = tenants.ListRoleDefinitions(ctx, event)
+	case "CreateRoleDefinition":
+		response, err = tenants.CreateRoleDefinition(ctx, event)
+	case "UpdateRoleDefinition":
+		response, err = tenants.UpdateRoleDefinition(ctx, event)
+	case "DeleteRoleDefinition":
+		response, err = tenants.DeleteRoleDefinition(ctx, event)
+
+	// Ownership policy handlers
+	case "ListOwnershipPolicies":
+		response, err = tenants.ListOwnershipPolicies(ctx, event)
+	case "UpdateOwnershipPolicy":
+		response, err = tenants.UpdateOwnershipPolicy(ctx, event)
+
+	// Tenanted team handlers
+	case "CreateTenantedTeam":
+		response, err = tenants.CreateTenantedTeam(ctx, event)
 
 	// Unknown handler
 	default:
