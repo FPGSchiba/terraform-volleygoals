@@ -74,7 +74,7 @@ func CreateInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 
 	// Trainers cannot invite with admin role
 	if request.Role == models.TeamMemberRoleAdmin {
-		if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdmin(ctx, event.RequestContext.Authorizer, request.TeamId) {
+		if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, request.TeamId, models.Resource{Type: models.ResourceTypeInvites}, models.PermInvitesWrite) {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
 	}
@@ -108,7 +108,7 @@ func GetTeamInvites(ctx context.Context, event events.APIGatewayProxyRequest) (*
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 	// Authorization
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasOneRoleOnTeam(ctx, event.RequestContext.Authorizer, teamId, []models.TeamMemberRole{models.TeamMemberRoleAdmin, models.TeamMemberRoleTrainer}) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeInvites}, models.PermInvitesWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
@@ -157,7 +157,7 @@ func RevokeInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	if invite == nil {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, invite.TeamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, invite.TeamId, models.Resource{Type: models.ResourceTypeInvites}, models.PermInvitesWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	username := utils.GetCognitoUsername(event.RequestContext.Authorizer)
@@ -182,7 +182,7 @@ func ResendInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	if invite == nil {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
-	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdminOrTrainer(ctx, event.RequestContext.Authorizer, invite.TeamId) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, invite.TeamId, models.Resource{Type: models.ResourceTypeInvites}, models.PermInvitesWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	inviter, err := users.GetUserBySub(ctx, invite.InvitedBy)
@@ -241,7 +241,7 @@ func parseCreateInviteRequest(body string) (CreateInviteRequest, *events.APIGate
 }
 
 func authorizeCreateInvite(ctx context.Context, authorizer map[string]interface{}, teamId string) (*events.APIGatewayProxyResponse, error) {
-	if !utils.IsAdmin(authorizer) && !utils.HasOneRoleOnTeam(ctx, authorizer, teamId, []models.TeamMemberRole{models.TeamMemberRoleAdmin, models.TeamMemberRoleTrainer}) {
+	if !utils.IsAdmin(authorizer) && !utils.HasTeamPermission(ctx, authorizer, teamId, models.Resource{Type: models.ResourceTypeInvites}, models.PermInvitesWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 	return nil, nil

@@ -95,6 +95,18 @@ module "create_season_ms" {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -139,6 +151,18 @@ module "list_seasons_ms" {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -181,6 +205,18 @@ module "get_season_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
     },
   ]
 
@@ -225,6 +261,18 @@ module "update_season_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
     },
   ]
 
@@ -280,6 +328,18 @@ module "delete_season_ms" {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -324,6 +384,18 @@ module "get_season_stats_ms" {
       resources = [
         aws_dynamodb_table.team_members.arn,
         "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+      ]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
       ]
     },
   ]
@@ -384,6 +456,18 @@ module "create_goal_ms" {
       actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -440,6 +524,18 @@ module "list_goals_ms" {
       actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -482,6 +578,18 @@ module "get_goal_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
     },
   ]
 
@@ -539,6 +647,18 @@ module "update_goal_ms" {
       actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -586,6 +706,18 @@ module "delete_goal_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
     },
   ]
 
@@ -637,6 +769,18 @@ module "upload_goal_file_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
     },
   ]
 
@@ -696,6 +840,18 @@ module "create_progress_report_ms" {
       actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -752,6 +908,18 @@ module "list_progress_reports_ms" {
       actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -802,6 +970,18 @@ module "get_progress_report_ms" {
     {
       actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
     },
   ]
 
@@ -855,6 +1035,18 @@ module "update_progress_report_ms" {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [
@@ -906,6 +1098,18 @@ module "delete_progress_report_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
     },
   ]
 

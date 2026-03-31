@@ -46,6 +46,18 @@ module "upload_self_picture_ms" {
       actions   = ["cognito-idp:AdminUpdateUserAttributes", "cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
     },
+    {
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.role_definitions.arn,
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+        aws_dynamodb_table.ownership_policies.arn,
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+        aws_dynamodb_table.teams.arn,
+      ]
+    },
   ]
 
   depends_on = [

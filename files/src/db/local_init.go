@@ -25,6 +25,11 @@ var (
 	commentsTableName        = "dev-comments"
 	commentFilesTableName    = "dev-comment-files"
 	activitiesTableName      = "dev-activities"
+
+	tenantsTableName          = "dev-tenants"
+	tenantMembersTableName    = "dev-tenant-members"
+	roleDefinitionsTableName  = "dev-role-definitions"
+	ownershipPoliciesTableName = "dev-ownership-policies"
 )
 
 // InitClient initializes the DynamoDB client for local mode. If awsConfig is
