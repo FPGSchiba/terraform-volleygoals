@@ -123,7 +123,11 @@ func GetComment(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	}
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-		models.Resource{Type: models.ResourceTypeComments, OwnedBy: comment.AuthorId},
+		models.Resource{
+			Type:          models.ResourceTypeComments,
+			OwnedBy:       comment.AuthorId,
+			ParentOwnedBy: comment.ParentOwnedBy,
+		},
 		models.PermCommentsRead)
 	if err != nil || !allowed {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
