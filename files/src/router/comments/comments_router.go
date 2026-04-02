@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/db/instrumented"
 	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/storage"
 	"github.com/fpgschiba/volleygoals/users"
@@ -93,7 +94,21 @@ func CreateComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		authorPicture = user.Picture
 	}
 
-	comment, err := db.CreateComment(ctx, authorId, string(request.CommentType), request.TargetId, request.Content, authorName, authorPicture)
+	var targetOwnerId string
+	switch request.CommentType {
+	case models.CommentTypeGoal:
+		g, _ := db.GetGoalById(ctx, request.TargetId)
+		if g != nil {
+			targetOwnerId = g.OwnerId
+		}
+	case models.CommentTypeProgressReport:
+		r, _ := db.GetProgressReportById(ctx, request.TargetId)
+		if r != nil {
+			targetOwnerId = r.AuthorId
+		}
+	}
+
+	comment, err := instrumented.CreateComment(ctx, teamId, authorId, string(request.CommentType), request.TargetId, request.Content, authorName, authorPicture, targetOwnerId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
@@ -224,7 +239,21 @@ func UpdateComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
-	updatedComment, err := db.UpdateComment(ctx, commentId, request.Content)
+	var updateTargetOwnerId string
+	switch comment.CommentType {
+	case models.CommentTypeGoal:
+		g, _ := db.GetGoalById(ctx, comment.TargetId)
+		if g != nil {
+			updateTargetOwnerId = g.OwnerId
+		}
+	case models.CommentTypeProgressReport:
+		r, _ := db.GetProgressReportById(ctx, comment.TargetId)
+		if r != nil {
+			updateTargetOwnerId = r.AuthorId
+		}
+	}
+
+	updatedComment, err := instrumented.UpdateComment(ctx, teamId, actorId, commentId, request.Content, updateTargetOwnerId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
@@ -260,7 +289,21 @@ func DeleteComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
-	if err := db.DeleteComment(ctx, commentId); err != nil {
+	var deleteTargetOwnerId string
+	switch comment.CommentType {
+	case models.CommentTypeGoal:
+		g, _ := db.GetGoalById(ctx, comment.TargetId)
+		if g != nil {
+			deleteTargetOwnerId = g.OwnerId
+		}
+	case models.CommentTypeProgressReport:
+		r, _ := db.GetProgressReportById(ctx, comment.TargetId)
+		if r != nil {
+			deleteTargetOwnerId = r.AuthorId
+		}
+	}
+
+	if err := instrumented.DeleteComment(ctx, teamId, actorId, commentId, deleteTargetOwnerId); err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 

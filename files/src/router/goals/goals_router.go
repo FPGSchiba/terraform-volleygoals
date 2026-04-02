@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/db/instrumented"
 	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/storage"
@@ -30,11 +31,7 @@ func CreateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	}
 
 	callerId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	ownerId := callerId
-	if request.OwnerId != nil && utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeGoals}, models.PermGoalsWrite) {
-		ownerId = *request.OwnerId
-	}
-	goal, err := db.CreateGoal(ctx, teamId, ownerId, request.Type, request.Title, request.Description)
+	goal, err := instrumented.CreateGoal(ctx, teamId, callerId, request.Type, request.Title, request.Description)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
@@ -233,7 +230,7 @@ func DeleteGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		}
 	}
 
-	if err := db.DeleteGoal(ctx, goalId); err != nil {
+	if err := instrumented.DeleteGoal(ctx, teamId, actorId, goalId, goal.Title, goal.OwnerId); err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 	return utils.SuccessResponse(http.StatusNoContent, utils.MsgSuccess, nil)

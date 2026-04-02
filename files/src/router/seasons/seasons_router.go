@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/db/instrumented"
 	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/utils"
 )
@@ -20,7 +21,8 @@ func CreateSeason(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, body.TeamId, models.Resource{Type: models.ResourceTypeSeasons}, models.PermSeasonsWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
-	season, err := db.CreateSeason(ctx, body.TeamId, body.Name, body.StartDate, body.EndDate)
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	season, err := instrumented.CreateSeason(ctx, body.TeamId, actorId, body.Name, body.StartDate, body.EndDate)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
@@ -110,7 +112,12 @@ func UpdateSeason(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	if err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
-	season, err := db.UpdateSeason(ctx, seasonId, body.Name, body.StartDate, body.EndDate, body.Status)
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	existingSeason, err := db.GetSeasonById(ctx, seasonId)
+	if err != nil || existingSeason == nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	season, err := instrumented.UpdateSeason(ctx, existingSeason.TeamId, actorId, seasonId, body.Name, body.StartDate, body.EndDate, body.Status)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
@@ -131,7 +138,12 @@ func DeleteSeason(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	if !authorized {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
-	err = db.DeleteSeason(ctx, seasonId)
+	deleteSeason, err := db.GetSeasonById(ctx, seasonId)
+	if err != nil || deleteSeason == nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	deleteActorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	err = instrumented.DeleteSeason(ctx, deleteSeason.TeamId, deleteActorId, seasonId, deleteSeason.Name)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
