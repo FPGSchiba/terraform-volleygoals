@@ -221,4 +221,37 @@ resource "aws_dynamodb_table" "activities" {
   tags = local.tags
 }
 
+resource "aws_dynamodb_table" "goal_seasons" {
+  name         = "${var.prefix}-goal-seasons"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+  attribute {
+    name = "goalId"
+    type = "S"
+  }
+  attribute {
+    name = "seasonId"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "goalIdIndex"
+    hash_key        = "goalId"
+    projection_type = "ALL"
+  }
+
+  global_secondary_index {
+    name            = "seasonIdIndex"
+    hash_key        = "seasonId"
+    projection_type = "ALL"
+  }
+
+  tags = local.tags
+}
+
 # Parameter Store
