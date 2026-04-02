@@ -34,17 +34,15 @@ func GetTeamActivity(ctx context.Context, event events.APIGatewayProxyRequest) (
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 
-	// Members only see "all"-visibility events
-	callerRole, err := utils.GetUserRoleOnTeam(ctx, event.RequestContext.Authorizer, teamId)
-	if err != nil {
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
-	}
-	isMember := !utils.IsAdmin(event.RequestContext.Authorizer) &&
-		(callerRole == nil || *callerRole == models.TeamMemberRoleMember)
-	if isMember {
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		pd, perr := utils.PreloadPermissions(ctx, actorId, teamId)
+		if perr != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, perr)
+		}
 		filtered := items[:0]
 		for _, a := range items {
-			if a.Visibility == models.ActivityVisibilityAll {
+			if pd.CanReadActivity(actorId, a) {
 				filtered = append(filtered, a)
 			}
 		}
