@@ -41,6 +41,10 @@ All endpoints are under `/v1/tenants`.
 }
 ```
 
+**Notes**
+
+- After the tenant is created, the calling admin is automatically added as a `tenant_admin` member of the new tenant. This ensures the creator always has administrative access without a separate `POST /v1/tenants/{tenantId}/members` call.
+
 **Error Responses**
 
 | Status | Description |
