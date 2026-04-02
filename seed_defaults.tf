@@ -49,7 +49,7 @@ resource "aws_lambda_function" "seed_defaults" {
   filename         = data.archive_file.shared_lambda_zip.output_path
   source_code_hash = data.archive_file.shared_lambda_zip.output_base64sha256
   handler          = "bootstrap"
-  runtime          = "provided.al2"
+  runtime          = local.lambda_runtime
   timeout          = 60
 
   environment {

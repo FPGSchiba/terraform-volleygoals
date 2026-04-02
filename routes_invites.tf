@@ -43,6 +43,7 @@ module "create_invite_ms" {
   json_logging          = true
   handler_name          = "CreateInvite"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -113,6 +114,7 @@ module "complete_invite_ms" {
   json_logging          = true
   handler_name          = "CompleteInvite"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -173,6 +175,7 @@ module "revoke_invite_ms" {
   json_logging          = true
   handler_name          = "RevokeInvite"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -229,6 +232,7 @@ module "resend_invite_ms" {
   json_logging          = true
   handler_name          = "ResendInvite"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -295,6 +299,7 @@ module "get_invite_by_token_ms" {
   json_logging          = true
   handler_name          = "GetInviteByToken"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {

@@ -97,6 +97,7 @@ module "create_tenant_ms" {
   json_logging         = true
   handler_name         = "CreateTenant"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -135,6 +136,7 @@ module "get_tenant_ms" {
   json_logging         = true
   handler_name         = "GetTenant"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -177,6 +179,7 @@ module "update_tenant_ms" {
   json_logging         = true
   handler_name         = "UpdateTenant"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -219,6 +222,7 @@ module "delete_tenant_ms" {
   json_logging         = true
   handler_name         = "DeleteTenant"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -257,6 +261,7 @@ module "add_tenant_member_ms" {
   json_logging         = true
   handler_name         = "AddTenantMember"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -299,6 +304,7 @@ module "remove_tenant_member_ms" {
   json_logging         = true
   handler_name         = "RemoveTenantMember"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -341,6 +347,7 @@ module "list_role_definitions_ms" {
   json_logging         = true
   handler_name         = "ListRoleDefinitions"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -383,6 +390,7 @@ module "create_role_definition_ms" {
   json_logging         = true
   handler_name         = "CreateRoleDefinition"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -425,6 +433,7 @@ module "update_role_definition_ms" {
   json_logging         = true
   handler_name         = "UpdateRoleDefinition"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -467,6 +476,7 @@ module "delete_role_definition_ms" {
   json_logging         = true
   handler_name         = "DeleteRoleDefinition"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -509,6 +519,7 @@ module "list_ownership_policies_ms" {
   json_logging         = true
   handler_name         = "ListOwnershipPolicies"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -551,6 +562,7 @@ module "update_ownership_policy_ms" {
   json_logging         = true
   handler_name         = "UpdateOwnershipPolicy"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -597,6 +609,7 @@ module "create_tenanted_team_ms" {
   json_logging         = true
   handler_name         = "CreateTenantedTeam"
   pre_built_zip        = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {

@@ -41,4 +41,5 @@ locals {
   lambda_layer_arns = [
     "arn:aws:lambda:${data.aws_region.current.region}:901920570463:layer:aws-otel-collector-amd64-ver-0-117-0:1" # Me hates it, as it is hardcoded
   ]
+  lambda_runtime = "provided.al2023"
 }

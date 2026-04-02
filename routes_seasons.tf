@@ -85,6 +85,7 @@ module "create_season_ms" {
   json_logging          = true
   handler_name          = "CreateSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -141,6 +142,7 @@ module "list_seasons_ms" {
   json_logging          = true
   handler_name          = "ListSeasons"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -196,6 +198,7 @@ module "get_season_ms" {
   json_logging          = true
   handler_name          = "GetSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -252,6 +255,7 @@ module "update_season_ms" {
   json_logging          = true
   handler_name          = "UpdateSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -308,6 +312,7 @@ module "delete_season_ms" {
   json_logging          = true
   handler_name          = "DeleteSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -373,6 +378,7 @@ module "get_season_stats_ms" {
   json_logging          = true
   handler_name          = "GetSeasonStats"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -434,6 +440,7 @@ module "create_goal_ms" {
   json_logging          = true
   handler_name          = "CreateGoal"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -502,6 +509,7 @@ module "list_goals_ms" {
   json_logging          = true
   handler_name          = "ListGoals"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -569,6 +577,7 @@ module "get_goal_ms" {
   json_logging          = true
   handler_name          = "GetGoal"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -625,6 +634,7 @@ module "update_goal_ms" {
   json_logging          = true
   handler_name          = "UpdateGoal"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -693,6 +703,7 @@ module "delete_goal_ms" {
   json_logging          = true
   handler_name          = "DeleteGoal"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -752,6 +763,7 @@ module "upload_goal_file_ms" {
   json_logging          = true
   handler_name          = "UploadGoalFile"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -818,6 +830,7 @@ module "create_progress_report_ms" {
   json_logging          = true
   handler_name          = "CreateProgressReport"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -886,6 +899,7 @@ module "list_progress_reports_ms" {
   json_logging          = true
   handler_name          = "ListProgressReports"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -953,6 +967,7 @@ module "get_progress_report_ms" {
   json_logging          = true
   handler_name          = "GetProgressReport"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -1017,6 +1032,7 @@ module "update_progress_report_ms" {
   json_logging          = true
   handler_name          = "UpdateProgressReport"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -1081,6 +1097,7 @@ module "delete_progress_report_ms" {
   json_logging          = true
   handler_name          = "DeleteProgressReport"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime       = local.lambda_runtime
 
   additional_iam_statements = [
     {
