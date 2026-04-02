@@ -2,7 +2,7 @@
 
 resource "aws_api_gateway_resource" "teams_teamId_goals" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.teams_teamId.id
+  parent_id   = aws_api_gateway_resource.teams_id.id
   path_part   = "goals"
 }
 
@@ -60,9 +60,8 @@ module "create_goal_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:PutItem"]
-      Resource = [aws_dynamodb_table.goals.arn]
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.goals.arn]
     }
   ]
 }
@@ -95,9 +94,8 @@ module "list_goals_ms" {
 
   additional_iam_statements = [
     {
-      Effect = "Allow"
-      Action = ["dynamodb:Scan", "dynamodb:Query"]
-      Resource = [
+      actions = ["dynamodb:Scan", "dynamodb:Query"]
+      resources = [
         aws_dynamodb_table.goals.arn,
         aws_dynamodb_table.goal_seasons.arn,
         "${aws_dynamodb_table.goal_seasons.arn}/index/seasonIdIndex",
@@ -135,9 +133,8 @@ module "get_goal_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:GetItem"]
-      Resource = [aws_dynamodb_table.goals.arn]
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.goals.arn]
     }
   ]
 }
@@ -170,9 +167,8 @@ module "update_goal_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
-      Resource = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.activities.arn]
+      actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.activities.arn]
     }
   ]
 }
@@ -205,14 +201,13 @@ module "delete_goal_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
-      Resource = [aws_dynamodb_table.goals.arn]
+      actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.goals.arn]
     }
   ]
 }
 
-module "upload_goal_picture_ms" {
+module "upload_goal_file_ms" {
   source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -240,9 +235,8 @@ module "upload_goal_picture_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:GetItem", "dynamodb:UpdateItem", "s3:PutObject"]
-      Resource = [aws_dynamodb_table.goals.arn, "${aws_s3_bucket.this.arn}/*"]
+      actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem", "s3:PutObject"]
+      resources = [aws_dynamodb_table.goals.arn, "${aws_s3_bucket.this.arn}/*"]
     }
   ]
 }
@@ -277,9 +271,8 @@ module "tag_goal_season_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:GetItem", "dynamodb:PutItem"]
-      Resource = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.goal_seasons.arn]
+      actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.goal_seasons.arn]
     }
   ]
 }
@@ -312,9 +305,8 @@ module "untag_goal_season_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
-      Resource = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.goal_seasons.arn]
+      actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
+      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.goal_seasons.arn]
     }
   ]
 }
@@ -347,9 +339,8 @@ module "list_goal_seasons_ms" {
 
   additional_iam_statements = [
     {
-      Effect = "Allow"
-      Action = ["dynamodb:GetItem", "dynamodb:Query"]
-      Resource = [
+      actions = ["dynamodb:GetItem", "dynamodb:Query"]
+      resources = [
         aws_dynamodb_table.goals.arn,
         aws_dynamodb_table.goal_seasons.arn,
         "${aws_dynamodb_table.goal_seasons.arn}/index/goalIdIndex",
