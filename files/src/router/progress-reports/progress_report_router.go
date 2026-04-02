@@ -70,7 +70,7 @@ func CreateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 
-	activity.EmitProgressReportCreated(ctx, teamId, authorId, report.Id)
+	activity.EmitProgressReportCreated(ctx, teamId, authorId, report.Id, report.AuthorId)
 
 	return utils.SuccessResponse(http.StatusCreated, utils.MsgSuccess, map[string]interface{}{
 		"progressReport": report,

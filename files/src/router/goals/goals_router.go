@@ -200,7 +200,7 @@ func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	}
 
 	if request.Status != nil {
-		activity.EmitGoalStatusChanged(ctx, teamId, actorId, updatedGoal.Title, *request.Status, goalId)
+		activity.EmitGoalStatusChanged(ctx, teamId, actorId, updatedGoal.Title, *request.Status, goalId, updatedGoal.OwnerId)
 	}
 
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
