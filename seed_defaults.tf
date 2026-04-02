@@ -28,7 +28,7 @@ resource "aws_iam_role_policy" "seed_defaults_dynamo" {
     Statement = [
       {
         Effect = "Allow"
-        Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query"]
+        Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:UpdateItem"]
         Resource = [
           aws_dynamodb_table.role_definitions.arn,
           "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
