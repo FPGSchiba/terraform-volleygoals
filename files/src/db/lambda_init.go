@@ -27,6 +27,7 @@ var (
 	tenantMembersTableName    = os.Getenv("TENANT_MEMBERS_TABLE_NAME")
 	roleDefinitionsTableName  = os.Getenv("ROLE_DEFINITIONS_TABLE_NAME")
 	ownershipPoliciesTableName = os.Getenv("OWNERSHIP_POLICIES_TABLE_NAME")
+	goalSeasonsTableName      = os.Getenv("GOAL_SEASONS_TABLE_NAME")
 )
 
 // InitClient initializes the DynamoDB client with the provided config

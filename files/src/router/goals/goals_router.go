@@ -16,18 +16,15 @@ import (
 )
 
 func CreateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	seasonId := event.PathParameters["seasonId"]
-	teamId, err := db.GetTeamIdBySeasonId(ctx, seasonId)
-	if seasonId == "" || err != nil {
+	teamId := event.PathParameters["teamId"]
+	if teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 	var request CreateGoalRequest
-	err = json.Unmarshal([]byte(event.Body), &request)
-	if err != nil {
+	if err := json.Unmarshal([]byte(event.Body), &request); err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
-	// Authentication and Authorization
 	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeGoals}, models.PermGoalsWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
@@ -37,7 +34,7 @@ func CreateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if request.OwnerId != nil && utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeGoals}, models.PermGoalsWrite) {
 		ownerId = *request.OwnerId
 	}
-	goal, err := db.CreateGoal(ctx, seasonId, ownerId, request.Type, request.Title, request.Description)
+	goal, err := db.CreateGoal(ctx, teamId, ownerId, request.Type, request.Title, request.Description)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
@@ -47,10 +44,9 @@ func CreateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 }
 
 func GetGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	seasonId := event.PathParameters["seasonId"]
+	teamId := event.PathParameters["teamId"]
 	goalId := event.PathParameters["goalId"]
-	teamId, err := db.GetTeamIdBySeasonId(ctx, seasonId)
-	if seasonId == "" || goalId == "" || err != nil {
+	if teamId == "" || goalId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
@@ -58,11 +54,10 @@ func GetGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-	if goal == nil || goal.SeasonId != seasonId {
+	if goal == nil || goal.TeamId != teamId {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	// Authentication and Authorization
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
@@ -79,29 +74,33 @@ func GetGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 }
 
 func ListGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	seasonId := event.PathParameters["seasonId"]
-	if seasonId == "" {
+	teamId := event.PathParameters["teamId"]
+	if teamId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
-	// Parse filter from query parameters
 	filter, err := db.GoalFilterFromQuery(event.QueryStringParameters)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
+	filter.TeamId = teamId
 
-	// Authorization: ensure team access via seasonId
-	teamId, err := db.GetTeamIdBySeasonId(ctx, seasonId)
-	if err != nil {
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
-	}
-	if teamId == "" {
-		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
+	// Optional season filter: if ?seasonId= is provided, restrict to goals tagged to that season.
+	if sid, ok := event.QueryStringParameters["seasonId"]; ok && sid != "" {
+		goalIds, err := db.ListGoalIdsBySeasonId(ctx, sid)
+		if err != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+		}
+		filter.GoalIds = goalIds
+		if len(goalIds) == 0 {
+			return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+				"items": []interface{}{}, "count": 0, "nextToken": "", "hasMore": false,
+			})
+		}
 	}
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
-		// Non-admins must have goals:read on their own goals and can only list their own goals.
 		filter.OwnerId = actorId
 		allowed, aerr := utils.CheckPermission(ctx, actorId, teamId,
 			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: actorId},
@@ -116,7 +115,6 @@ func ListGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 
-	// Deduplicate ownerIds to minimise Cognito calls
 	ownerCache := map[string]*GoalOwner{}
 	for _, g := range items {
 		ownerCache[g.OwnerId] = nil
@@ -167,16 +165,14 @@ func ListGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 }
 
 func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	seasonId := event.PathParameters["seasonId"]
+	teamId := event.PathParameters["teamId"]
 	goalId := event.PathParameters["goalId"]
-	teamId, err := db.GetTeamIdBySeasonId(ctx, seasonId)
-	if seasonId == "" || goalId == "" || err != nil {
+	if teamId == "" || goalId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
 	var request UpdateGoalRequest
-	err = json.Unmarshal([]byte(event.Body), &request)
-	if err != nil {
+	if err := json.Unmarshal([]byte(event.Body), &request); err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
@@ -184,7 +180,7 @@ func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-	if goal == nil || goal.SeasonId != seasonId {
+	if goal == nil || goal.TeamId != teamId {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
@@ -198,14 +194,13 @@ func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		}
 	}
 
-	userId := actorId
 	updatedGoal, err := db.UpdateGoal(ctx, goalId, request.OwnerId, request.Title, request.Description, request.Status)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 
 	if request.Status != nil {
-		activity.EmitGoalStatusChanged(ctx, teamId, userId, updatedGoal.Title, *request.Status, goalId)
+		activity.EmitGoalStatusChanged(ctx, teamId, actorId, updatedGoal.Title, *request.Status, goalId)
 	}
 
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
@@ -214,10 +209,9 @@ func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 }
 
 func DeleteGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	seasonId := event.PathParameters["seasonId"]
+	teamId := event.PathParameters["teamId"]
 	goalId := event.PathParameters["goalId"]
-	teamId, err := db.GetTeamIdBySeasonId(ctx, seasonId)
-	if seasonId == "" || goalId == "" || err != nil {
+	if teamId == "" || goalId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
@@ -225,7 +219,7 @@ func DeleteGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-	if goal == nil || goal.SeasonId != seasonId {
+	if goal == nil || goal.TeamId != teamId {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
@@ -239,11 +233,9 @@ func DeleteGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		}
 	}
 
-	err = db.DeleteGoal(ctx, goalId)
-	if err != nil {
+	if err := db.DeleteGoal(ctx, goalId); err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-
 	return utils.SuccessResponse(http.StatusNoContent, utils.MsgSuccess, nil)
 }
 
@@ -260,10 +252,9 @@ func computeCompletionPercentage(entries []*models.Progress) int {
 }
 
 func UploadGoalFile(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	seasonId := event.PathParameters["seasonId"]
+	teamId := event.PathParameters["teamId"]
 	goalId := event.PathParameters["goalId"]
-	teamId, err := db.GetTeamIdBySeasonId(ctx, seasonId)
-	if seasonId == "" || goalId == "" || err != nil {
+	if teamId == "" || goalId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
@@ -280,11 +271,10 @@ func UploadGoalFile(ctx context.Context, event events.APIGatewayProxyRequest) (*
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
-	if goal == nil || goal.SeasonId != seasonId {
+	if goal == nil || goal.TeamId != teamId {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
 	}
 
-	// Authentication and Authorization
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
@@ -301,16 +291,13 @@ func UploadGoalFile(ctx context.Context, event events.APIGatewayProxyRequest) (*
 	}
 	publicUrl := storage.GetPublicFileURL(key)
 
-	err = db.UpdateGoalPicture(ctx, goalId, publicUrl)
-	if err != nil {
+	if err := db.UpdateGoalPicture(ctx, goalId, publicUrl); err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 
-	return utils.SuccessResponse(http.StatusOK,
-		utils.MsgSuccess,
-		map[string]interface{}{
-			"uploadUrl": presignedUrl,
-			"key":       key,
-			"fileUrl":   publicUrl,
-		})
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+		"uploadUrl": presignedUrl,
+		"key":       key,
+		"fileUrl":   publicUrl,
+	})
 }

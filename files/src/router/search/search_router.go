@@ -70,11 +70,11 @@ func GlobalSearch(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 		}
 		for _, g := range goals {
 			results = append(results, SearchGoalResult{
-				Type:     "goal",
-				Id:       g.Id,
-				Title:    g.Title,
-				SeasonId: g.SeasonId,
-				Status:   string(g.Status),
+				Type:   "goal",
+				Id:     g.Id,
+				Title:  g.Title,
+				TeamId: g.TeamId,
+				Status: string(g.Status),
 			})
 		}
 	}

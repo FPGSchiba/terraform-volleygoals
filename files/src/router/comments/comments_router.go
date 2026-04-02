@@ -330,7 +330,7 @@ func resolveTeamIdFromTarget(ctx context.Context, commentType models.CommentType
 		if goal == nil {
 			return "", nil
 		}
-		return db.GetTeamIdBySeasonId(ctx, goal.SeasonId)
+		return goal.TeamId, nil
 	case models.CommentTypeProgressReport:
 		report, err := db.GetProgressReportById(ctx, targetId)
 		if err != nil {
