@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -31,6 +32,9 @@ func CreateTenant(ctx context.Context, name, ownerId string) (*models.Tenant, er
 	})
 	if err != nil {
 		return nil, err
+	}
+	if _, err = AddTenantMember(ctx, tenant.Id, ownerId, models.TenantMemberRoleAdmin); err != nil {
+		return nil, fmt.Errorf("CreateTenant: add owner as admin: %w", err)
 	}
 	return tenant, nil
 }
@@ -69,7 +73,7 @@ func AddTenantMember(ctx context.Context, tenantId, userId string, role models.T
 	client = GetClient()
 	now := time.Now()
 	member := &models.TenantMember{
-		Id:        models.GenerateID(),
+		Id:        tenantId + "#" + userId,
 		TenantId:  tenantId,
 		UserId:    userId,
 		Role:      role,
