@@ -30,7 +30,7 @@ module "global_search_ms" {
   json_logging          = true
   handler_name          = "GlobalSearch"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-  runtime       = local.lambda_runtime
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -95,7 +95,7 @@ module "health_check_ms" {
   json_logging          = true
   handler_name          = "HealthCheck"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-  runtime       = local.lambda_runtime
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {

@@ -95,8 +95,8 @@ module "list_goals_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:Scan", "dynamodb:Query"]
+      Effect = "Allow"
+      Action = ["dynamodb:Scan", "dynamodb:Query"]
       Resource = [
         aws_dynamodb_table.goals.arn,
         aws_dynamodb_table.goal_seasons.arn,
@@ -347,8 +347,8 @@ module "list_goal_seasons_ms" {
 
   additional_iam_statements = [
     {
-      Effect   = "Allow"
-      Action   = ["dynamodb:GetItem", "dynamodb:Query"]
+      Effect = "Allow"
+      Action = ["dynamodb:GetItem", "dynamodb:Query"]
       Resource = [
         aws_dynamodb_table.goals.arn,
         aws_dynamodb_table.goal_seasons.arn,
