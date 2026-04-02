@@ -10,22 +10,23 @@ import (
 // PermissionChecker evaluates whether an actor is allowed to perform an action
 // on a resource within a team. Loader functions are injected for testability.
 type PermissionChecker struct {
-	LoadTeamMember   func(ctx context.Context, userID, teamID string) (*models.TeamMember, error)
-	LoadTeam         func(ctx context.Context, teamID string) (*models.Team, error)
-	LoadOwnership    func(ctx context.Context, tenantId, resourceType string) (*models.OwnershipPolicy, error)
-	LoadRoleByTenant func(ctx context.Context, tenantId, roleName string) (*models.RoleDefinition, error)
+	LoadTeamMember        func(ctx context.Context, userID, teamID string) (*models.TeamMember, error)
+	LoadTeam              func(ctx context.Context, teamID string) (*models.Team, error)
+	LoadOwnership         func(ctx context.Context, tenantId, resourceType string) (*models.OwnershipPolicy, error)
+	LoadRoleByTenantExact func(ctx context.Context, tenantId, roleName string) (*models.RoleDefinition, error)
+	LoadRoleByTenant      func(ctx context.Context, tenantId, roleName string) (*models.RoleDefinition, error)
 }
 
 // DefaultChecker wires the checker to the real db package.
 var DefaultChecker = &PermissionChecker{
-	LoadTeamMember:   db.GetTeamMemberByUserIDAndTeamID,
-	LoadTeam:         db.GetTeamById,
-	LoadOwnership:    db.GetOwnershipPolicy,
-	LoadRoleByTenant: db.GetRoleDefinitionByTenantAndName,
+	LoadTeamMember:        db.GetTeamMemberByUserIDAndTeamID,
+	LoadTeam:              db.GetTeamById,
+	LoadOwnership:         db.GetOwnershipPolicy,
+	LoadRoleByTenantExact: db.GetRoleDefinitionByTenantExact,
+	LoadRoleByTenant:      db.GetRoleDefinitionByTenantAndName,
 }
 
-// CheckPermission is the single entry point for all team-level permission
-// checks. It replaces IsTeamAdmin, IsTeamTrainer, HasTeamAccess, etc.
+// CheckPermission is the single entry point for all team-level permission checks.
 func CheckPermission(ctx context.Context, actorId, teamId string, resource models.Resource, action string) (bool, error) {
 	return DefaultChecker.Check(ctx, actorId, teamId, resource, action)
 }
@@ -73,9 +74,9 @@ func (pc *PermissionChecker) Check(ctx context.Context, actorId, teamId string, 
 		}
 	}
 
-	// Step 4: tenant-specific role definition
+	// Step 4: tenant-specific role definition (exact match only, no global fallback)
 	if tenantId != "" {
-		roleDef, err := pc.LoadRoleByTenant(ctx, tenantId, string(member.Role))
+		roleDef, err := pc.LoadRoleByTenantExact(ctx, tenantId, string(member.Role))
 		if err != nil {
 			return false, err
 		}

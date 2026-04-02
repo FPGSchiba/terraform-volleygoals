@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -46,6 +47,39 @@ func GetRoleDefinitionByTenantAndName(ctx context.Context, tenantId, roleName st
 		}
 	}
 	return nil, nil
+}
+
+// GetRoleDefinitionByTenantExact returns the role definition for the given
+// tenantId and role name with NO global fallback. Returns nil if not found.
+func GetRoleDefinitionByTenantExact(ctx context.Context, tenantId, roleName string) (*models.RoleDefinition, error) {
+	client = GetClient()
+	if tenantId == "" {
+		return nil, nil
+	}
+	result, err := client.Query(ctx, &dynamodb.QueryInput{
+		TableName:              &roleDefinitionsTableName,
+		IndexName:              aws.String("tenantNameIndex"),
+		KeyConditionExpression: aws.String("tenantId = :tid AND #name = :name"),
+		ExpressionAttributeNames: map[string]string{
+			"#name": "name",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":tid":  &types.AttributeValueMemberS{Value: tenantId},
+			":name": &types.AttributeValueMemberS{Value: roleName},
+		},
+		Limit: aws.Int32(1),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("GetRoleDefinitionByTenantExact: query: %w", err)
+	}
+	if len(result.Items) == 0 {
+		return nil, nil
+	}
+	var def models.RoleDefinition
+	if err := attributevalue.UnmarshalMap(result.Items[0], &def); err != nil {
+		return nil, fmt.Errorf("GetRoleDefinitionByTenantExact: unmarshal: %w", err)
+	}
+	return &def, nil
 }
 
 func ListRoleDefinitionsByTenant(ctx context.Context, tenantId string) ([]*models.RoleDefinition, error) {

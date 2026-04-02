@@ -47,10 +47,11 @@ func nilRoleLoader() func(ctx context.Context, tenantId, roleName string) (*mode
 
 func TestCheckPermission_OwnerCanReadOwnGoal(t *testing.T) {
 	checker := &utils.PermissionChecker{
-		LoadTeamMember:   memberLoader("member"),
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader([]string{models.PermGoalsRead, models.PermGoalsWrite, models.PermGoalsDelete}, nil),
-		LoadRoleByTenant: nilRoleLoader(),
+		LoadTeamMember:        memberLoader("member"),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader([]string{models.PermGoalsRead, models.PermGoalsWrite, models.PermGoalsDelete}, nil),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      nilRoleLoader(),
 	}
 	resource := models.Resource{Type: models.ResourceTypeGoals, OwnedBy: "user-1"}
 	allowed, err := checker.Check(context.Background(), "user-1", "team-1", resource, models.PermGoalsRead)
@@ -60,10 +61,11 @@ func TestCheckPermission_OwnerCanReadOwnGoal(t *testing.T) {
 
 func TestCheckPermission_NonOwnerMemberCannotReadGoal(t *testing.T) {
 	checker := &utils.PermissionChecker{
-		LoadTeamMember:   memberLoader("member"),
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader([]string{models.PermGoalsRead}, nil),
-		LoadRoleByTenant: nilRoleLoader(),
+		LoadTeamMember:        memberLoader("member"),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader([]string{models.PermGoalsRead}, nil),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      nilRoleLoader(),
 	}
 	resource := models.Resource{Type: models.ResourceTypeGoals, OwnedBy: "user-2"}
 	allowed, err := checker.Check(context.Background(), "user-1", "team-1", resource, models.PermGoalsRead)
@@ -73,10 +75,11 @@ func TestCheckPermission_NonOwnerMemberCannotReadGoal(t *testing.T) {
 
 func TestCheckPermission_TrainerCanReadAnyGoal(t *testing.T) {
 	checker := &utils.PermissionChecker{
-		LoadTeamMember:   memberLoader("trainer"),
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader(nil, nil),
-		LoadRoleByTenant: roleLoader([]string{models.PermGoalsRead, models.PermGoalsWrite}),
+		LoadTeamMember:        memberLoader("trainer"),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader(nil, nil),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      roleLoader([]string{models.PermGoalsRead, models.PermGoalsWrite}),
 	}
 	resource := models.Resource{Type: models.ResourceTypeGoals, OwnedBy: "user-2"}
 	allowed, err := checker.Check(context.Background(), "trainer-1", "team-1", resource, models.PermGoalsRead)
@@ -86,10 +89,11 @@ func TestCheckPermission_TrainerCanReadAnyGoal(t *testing.T) {
 
 func TestCheckPermission_TrainerCannotEditTeam(t *testing.T) {
 	checker := &utils.PermissionChecker{
-		LoadTeamMember:   memberLoader("trainer"),
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader(nil, nil),
-		LoadRoleByTenant: roleLoader([]string{models.PermTeamsRead}), // trainer has read, not write
+		LoadTeamMember:        memberLoader("trainer"),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader(nil, nil),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      roleLoader([]string{models.PermTeamsRead}), // trainer has read, not write
 	}
 	resource := models.Resource{Type: models.ResourceTypeTeams}
 	allowed, err := checker.Check(context.Background(), "trainer-1", "team-1", resource, models.PermTeamsWrite)
@@ -99,10 +103,11 @@ func TestCheckPermission_TrainerCannotEditTeam(t *testing.T) {
 
 func TestCheckPermission_AdminCannotReadOtherMemberGoal(t *testing.T) {
 	checker := &utils.PermissionChecker{
-		LoadTeamMember:   memberLoader("admin"),
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader([]string{models.PermGoalsRead}, nil),
-		LoadRoleByTenant: roleLoader([]string{models.PermTeamsRead, models.PermTeamsWrite, models.PermTeamsDelete}), // admin has no goals:read
+		LoadTeamMember:        memberLoader("admin"),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader([]string{models.PermGoalsRead}, nil),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      roleLoader([]string{models.PermTeamsRead, models.PermTeamsWrite, models.PermTeamsDelete}), // admin has no goals:read
 	}
 	resource := models.Resource{Type: models.ResourceTypeGoals, OwnedBy: "user-other"}
 	allowed, err := checker.Check(context.Background(), "admin-1", "team-1", resource, models.PermGoalsRead)
@@ -112,10 +117,11 @@ func TestCheckPermission_AdminCannotReadOtherMemberGoal(t *testing.T) {
 
 func TestCheckPermission_AdminCanReadOwnGoal(t *testing.T) {
 	checker := &utils.PermissionChecker{
-		LoadTeamMember:   memberLoader("admin"),
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader([]string{models.PermGoalsRead, models.PermGoalsWrite, models.PermGoalsDelete}, nil),
-		LoadRoleByTenant: roleLoader([]string{models.PermTeamsWrite}),
+		LoadTeamMember:        memberLoader("admin"),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader([]string{models.PermGoalsRead, models.PermGoalsWrite, models.PermGoalsDelete}, nil),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      roleLoader([]string{models.PermTeamsWrite}),
 	}
 	resource := models.Resource{Type: models.ResourceTypeGoals, OwnedBy: "admin-1"}
 	allowed, err := checker.Check(context.Background(), "admin-1", "team-1", resource, models.PermGoalsRead)
@@ -125,10 +131,11 @@ func TestCheckPermission_AdminCanReadOwnGoal(t *testing.T) {
 
 func TestCheckPermission_GoalOwnerCanReadCommentViaParentOwnership(t *testing.T) {
 	checker := &utils.PermissionChecker{
-		LoadTeamMember:   memberLoader("member"),
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader([]string{models.PermCommentsRead}, []string{models.PermCommentsRead, models.PermCommentsWrite}),
-		LoadRoleByTenant: nilRoleLoader(),
+		LoadTeamMember:        memberLoader("member"),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader([]string{models.PermCommentsRead}, []string{models.PermCommentsRead, models.PermCommentsWrite}),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      nilRoleLoader(),
 	}
 	// comment.OwnedBy = trainer, comment.ParentOwnedBy = member (goal owner)
 	resource := models.Resource{
@@ -143,10 +150,11 @@ func TestCheckPermission_GoalOwnerCanReadCommentViaParentOwnership(t *testing.T)
 
 func TestCheckPermission_DenyByDefault(t *testing.T) {
 	checker := &utils.PermissionChecker{
-		LoadTeamMember:   memberLoader("member"),
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader(nil, nil),
-		LoadRoleByTenant: nilRoleLoader(),
+		LoadTeamMember:        memberLoader("member"),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader(nil, nil),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      nilRoleLoader(),
 	}
 	resource := models.Resource{Type: models.ResourceTypeTeams}
 	allowed, err := checker.Check(context.Background(), "member-1", "team-1", resource, models.PermTeamsDelete)
@@ -159,12 +167,53 @@ func TestCheckPermission_NilTeamMemberDenies(t *testing.T) {
 		LoadTeamMember: func(ctx context.Context, userID, teamID string) (*models.TeamMember, error) {
 			return nil, nil // not a team member
 		},
-		LoadTeam:         teamLoader(nil),
-		LoadOwnership:    ownershipLoader([]string{models.PermGoalsRead}, nil),
-		LoadRoleByTenant: nilRoleLoader(),
+		LoadTeam:              teamLoader(nil),
+		LoadOwnership:         ownershipLoader([]string{models.PermGoalsRead}, nil),
+		LoadRoleByTenantExact: nilRoleLoader(),
+		LoadRoleByTenant:      nilRoleLoader(),
 	}
 	resource := models.Resource{Type: models.ResourceTypeGoals, OwnedBy: "user-1"}
 	allowed, err := checker.Check(context.Background(), "user-1", "team-1", resource, models.PermGoalsRead)
 	require.NoError(t, err)
 	assert.False(t, allowed, "non-member should be denied even if they own the resource")
+}
+
+// exactRoleLoader returns a role only when tenantId matches exactly; never falls back to "global".
+func exactRoleLoader(tenantId string, perms []string) func(ctx context.Context, tid, roleName string) (*models.RoleDefinition, error) {
+	return func(ctx context.Context, tid, roleName string) (*models.RoleDefinition, error) {
+		if tid == tenantId {
+			return &models.RoleDefinition{Permissions: perms}, nil
+		}
+		return nil, nil
+	}
+}
+
+func TestCheckPermission_TenantRoleUsedBeforeGlobal(t *testing.T) {
+	tenantId := "tenant-abc"
+	checker := &utils.PermissionChecker{
+		LoadTeamMember:        memberLoader("trainer"),
+		LoadTeam:              teamLoader(&tenantId),
+		LoadOwnership:         ownershipLoader(nil, nil),
+		LoadRoleByTenantExact: exactRoleLoader(tenantId, []string{models.PermGoalsWrite}),
+		LoadRoleByTenant:      roleLoader([]string{models.PermGoalsRead}),
+	}
+	resource := models.Resource{Type: models.ResourceTypeGoals}
+	allowed, err := checker.Check(context.Background(), "trainer-1", "team-1", resource, models.PermGoalsWrite)
+	require.NoError(t, err)
+	assert.True(t, allowed, "tenant-specific role should grant goals:write")
+}
+
+func TestCheckPermission_GlobalRoleFallbackWhenNoTenantRole(t *testing.T) {
+	tenantId := "tenant-abc"
+	checker := &utils.PermissionChecker{
+		LoadTeamMember:        memberLoader("trainer"),
+		LoadTeam:              teamLoader(&tenantId),
+		LoadOwnership:         ownershipLoader(nil, nil),
+		LoadRoleByTenantExact: exactRoleLoader("other-tenant", []string{models.PermGoalsWrite}), // won't match
+		LoadRoleByTenant:      roleLoader([]string{models.PermGoalsRead}),
+	}
+	resource := models.Resource{Type: models.ResourceTypeGoals}
+	allowed, err := checker.Check(context.Background(), "trainer-1", "team-1", resource, models.PermGoalsRead)
+	require.NoError(t, err)
+	assert.True(t, allowed, "global role fallback should grant goals:read")
 }
