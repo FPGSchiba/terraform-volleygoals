@@ -65,7 +65,7 @@ locals {
 # ─── Goal modules ─────────────────────────────────────────────────────────────
 
 module "create_goal_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
@@ -103,7 +103,7 @@ module "create_goal_ms" {
 }
 
 module "list_goals_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
@@ -145,7 +145,7 @@ module "list_goals_ms" {
 }
 
 module "get_goal_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
@@ -180,7 +180,7 @@ module "get_goal_ms" {
 }
 
 module "update_goal_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
@@ -218,7 +218,7 @@ module "update_goal_ms" {
 }
 
 module "delete_goal_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
@@ -256,7 +256,7 @@ module "delete_goal_ms" {
 }
 
 module "upload_goal_file_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
@@ -298,7 +298,7 @@ module "upload_goal_file_ms" {
 # ─── Goal Season tagging modules ─────────────────────────────────────────────
 
 module "tag_goal_season_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
@@ -334,7 +334,7 @@ module "tag_goal_season_ms" {
 }
 
 module "untag_goal_season_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
@@ -370,7 +370,7 @@ module "untag_goal_season_ms" {
 }
 
 module "list_goal_seasons_ms" {
-  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true

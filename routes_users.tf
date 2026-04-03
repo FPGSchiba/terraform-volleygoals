@@ -13,7 +13,7 @@ resource "aws_api_gateway_resource" "user_id" {
 }
 
 module "list_users_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -65,7 +65,7 @@ module "list_users_ms" {
 }
 
 module "get_user_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -121,7 +121,7 @@ module "get_user_ms" {
 }
 
 module "delete_user_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -178,7 +178,7 @@ module "delete_user_ms" {
 }
 
 module "update_user_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"

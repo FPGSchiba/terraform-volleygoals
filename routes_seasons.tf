@@ -35,7 +35,7 @@ resource "aws_api_gateway_resource" "progress_report_id" {
 # ─── Season modules ──────────────────────────────────────────────────────────
 
 module "create_season_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -92,7 +92,7 @@ module "create_season_ms" {
 }
 
 module "list_seasons_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -149,7 +149,7 @@ module "list_seasons_ms" {
 }
 
 module "get_season_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -205,7 +205,7 @@ module "get_season_ms" {
 }
 
 module "update_season_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -262,7 +262,7 @@ module "update_season_ms" {
 }
 
 module "delete_season_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -329,7 +329,7 @@ module "delete_season_ms" {
 }
 
 module "get_season_stats_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -397,7 +397,7 @@ module "get_season_stats_ms" {
 # ─── Progress Report modules ──────────────────────────────────────────────────
 
 module "create_progress_report_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -466,7 +466,7 @@ module "create_progress_report_ms" {
 }
 
 module "list_progress_reports_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -535,7 +535,7 @@ module "list_progress_reports_ms" {
 }
 
 module "get_progress_report_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -599,7 +599,7 @@ module "get_progress_report_ms" {
 }
 
 module "update_progress_report_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -664,7 +664,7 @@ module "update_progress_report_ms" {
 }
 
 module "delete_progress_report_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"

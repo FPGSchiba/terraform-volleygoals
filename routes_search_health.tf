@@ -7,7 +7,7 @@ resource "aws_api_gateway_resource" "search" {
 }
 
 module "global_search_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -73,7 +73,7 @@ resource "aws_api_gateway_resource" "health" {
 }
 
 module "health_check_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
