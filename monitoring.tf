@@ -317,7 +317,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "API Gateway Error Rates"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.region
           metrics = [
             ["AWS/ApiGateway", "5XXError", "ApiName", aws_api_gateway_rest_api.api.name, { stat = "Sum", color = "#d62728" }],
             ["AWS/ApiGateway", "4XXError", "ApiName", aws_api_gateway_rest_api.api.name, { stat = "Sum", color = "#ff7f0e" }],
@@ -334,7 +334,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "API Gateway Latency Percentiles"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.region
           metrics = [
             ["AWS/ApiGateway", "Latency", "ApiName", aws_api_gateway_rest_api.api.name, { stat = "p50", label = "p50" }],
             ["AWS/ApiGateway", "Latency", "ApiName", aws_api_gateway_rest_api.api.name, { stat = "p90", label = "p90" }],
@@ -352,7 +352,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "Lambda Errors (aggregated)"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.region
           metrics = [
             [{ expression = "SEARCH('{AWS/Lambda,FunctionName} MetricName=\"Errors\" FunctionName=\"${var.prefix}-\"', 'Sum', 300)", id = "errors", label = "Lambda Errors" }],
           ]
@@ -368,7 +368,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "DynamoDB Throttling"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.region
           metrics = [
             for key, name in local.dynamodb_tables :
             ["AWS/DynamoDB", "ThrottledRequests", "TableName", name, { stat = "Sum", label = key }]
@@ -385,7 +385,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "Custom: Lambda Errors & Panics"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.region
           metrics = [
             ["${var.prefix}/VolleyGoals", "LambdaErrorCount", { stat = "Sum", color = "#d62728" }],
             ["${var.prefix}/VolleyGoals", "LambdaPanicCount", { stat = "Sum", color = "#9467bd" }],
@@ -403,7 +403,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
         properties = {
           title  = "Unauthorized Access Attempts"
-          region = data.aws_region.current.name
+          region = data.aws_region.current.region
           metrics = [
             ["${var.prefix}/VolleyGoals", "UnauthorizedAccessCount", { stat = "Sum", color = "#d62728" }],
           ]

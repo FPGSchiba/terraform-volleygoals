@@ -74,7 +74,7 @@ locals {
 # ─── POST /v1/tenants ────────────────────────────────────────────────────────
 
 module "create_tenant_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -113,7 +113,7 @@ module "create_tenant_ms" {
 # ─── GET /v1/tenants/{tenantId} ─────────────────────────────────────────────
 
 module "get_tenant_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -156,7 +156,7 @@ module "get_tenant_ms" {
 # ─── PATCH /v1/tenants/{tenantId} ───────────────────────────────────────────
 
 module "update_tenant_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -200,7 +200,7 @@ module "update_tenant_ms" {
 # ─── DELETE /v1/tenants/{tenantId} ──────────────────────────────────────────
 
 module "delete_tenant_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -240,7 +240,7 @@ module "delete_tenant_ms" {
 # ─── POST /v1/tenants/{tenantId}/members ────────────────────────────────────
 
 module "add_tenant_member_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -283,7 +283,7 @@ module "add_tenant_member_ms" {
 # ─── DELETE /v1/tenants/{tenantId}/members/{memberId} ───────────────────────
 
 module "remove_tenant_member_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -326,7 +326,7 @@ module "remove_tenant_member_ms" {
 # ─── GET /v1/tenants/{tenantId}/roles ───────────────────────────────────────
 
 module "list_role_definitions_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -369,7 +369,7 @@ module "list_role_definitions_ms" {
 # ─── POST /v1/tenants/{tenantId}/roles ──────────────────────────────────────
 
 module "create_role_definition_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -413,7 +413,7 @@ module "create_role_definition_ms" {
 # ─── PATCH /v1/tenants/{tenantId}/roles/{roleId} ────────────────────────────
 
 module "update_role_definition_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -456,7 +456,7 @@ module "update_role_definition_ms" {
 # ─── DELETE /v1/tenants/{tenantId}/roles/{roleId} ───────────────────────────
 
 module "delete_role_definition_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -500,7 +500,7 @@ module "delete_role_definition_ms" {
 # ─── GET /v1/tenants/{tenantId}/ownership-policies ──────────────────────────
 
 module "list_ownership_policies_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -543,7 +543,7 @@ module "list_ownership_policies_ms" {
 # ─── PATCH /v1/tenants/{tenantId}/ownership-policies/{resourceType} ─────────
 
 module "update_ownership_policy_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -590,7 +590,7 @@ module "update_ownership_policy_ms" {
 # ─── POST /v1/tenants/{tenantId}/teams ──────────────────────────────────────
 
 module "create_tenanted_team_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
