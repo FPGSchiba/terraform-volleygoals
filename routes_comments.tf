@@ -49,6 +49,7 @@ module "create_comment_ms" {
   json_logging          = true
   handler_name          = "CreateComment"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -65,6 +66,10 @@ module "create_comment_ms" {
         "${aws_dynamodb_table.team_settings.arn}/index/teamIdIndex",
         "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
       ]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
     },
     {
       actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
@@ -116,6 +121,7 @@ module "list_comments_ms" {
   json_logging          = true
   handler_name          = "ListComments"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -175,6 +181,7 @@ module "get_comment_ms" {
   json_logging          = true
   handler_name          = "GetComment"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -235,6 +242,7 @@ module "update_comment_ms" {
   json_logging          = true
   handler_name          = "UpdateComment"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -248,6 +256,14 @@ module "update_comment_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
     },
     {
       actions = ["dynamodb:GetItem", "dynamodb:Query"]
@@ -295,6 +311,7 @@ module "delete_comment_ms" {
   json_logging          = true
   handler_name          = "DeleteComment"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -312,6 +329,14 @@ module "delete_comment_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
     },
     {
       actions = ["dynamodb:GetItem", "dynamodb:Query"]
@@ -358,6 +383,7 @@ module "upload_comment_file_ms" {
   json_logging          = true
   handler_name          = "UploadCommentFile"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {

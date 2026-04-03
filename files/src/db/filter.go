@@ -368,10 +368,12 @@ func SeasonFilterFromQuery(q map[string]string) (SeasonFilter, error) {
 // GoalFilter combines goal-specific filters with generic sort & pagination options.
 type GoalFilter struct {
 	FilterOptions
-	OwnerId       string // exact match on ownerId
-	GoalType      string // goal type (individual|team)
-	Status        string // goal status
-	TitleContains string // partial match against title
+	OwnerId       string   // exact match on ownerId
+	GoalType      string   // goal type (individual|team)
+	Status        string   // goal status
+	TitleContains string   // partial match against title
+	TeamId        string   // exact match on teamId
+	GoalIds       []string // restrict to specific goal IDs (OR condition)
 }
 
 // BuildExpression builds a DynamoDB filter expression for goals.
@@ -404,6 +406,22 @@ func (f *GoalFilter) BuildExpression() (string, map[string]types.AttributeValue,
 		values[":title"] = &types.AttributeValueMemberS{Value: f.TitleContains}
 	}
 
+	if strings.TrimSpace(f.TeamId) != "" {
+		parts = append(parts, "#teamId = :teamId")
+		names["#teamId"] = "teamId"
+		values[":teamId"] = &types.AttributeValueMemberS{Value: f.TeamId}
+	}
+
+	if len(f.GoalIds) > 0 {
+		idParts := make([]string, 0, len(f.GoalIds))
+		for i, id := range f.GoalIds {
+			k := fmt.Sprintf(":gid%d", i)
+			values[k] = &types.AttributeValueMemberS{Value: id}
+			idParts = append(idParts, fmt.Sprintf("id = %s", k))
+		}
+		parts = append(parts, "("+strings.Join(idParts, " OR ")+")")
+	}
+
 	if len(parts) == 0 {
 		return "", nil, nil
 	}
@@ -411,7 +429,6 @@ func (f *GoalFilter) BuildExpression() (string, map[string]types.AttributeValue,
 }
 
 // GoalFilterFromQuery parses goal-specific and generic filter params from QueryStringParameters.
-// seasonId is required and an error is returned if it's missing.
 func GoalFilterFromQuery(q map[string]string) (GoalFilter, error) {
 	var g GoalFilter
 

@@ -8,8 +8,8 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/db/instrumented"
 	"github.com/fpgschiba/volleygoals/models"
-	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 )
@@ -148,12 +148,11 @@ func AddTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	if user == nil {
 		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorUserNotFound, nil)
 	}
-	teamMember, err := db.AddTeamMember(ctx, teamId, request.UserId, request.Role)
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	teamMember, err := instrumented.AddTeamMember(ctx, teamId, actorId, request.UserId, request.Role)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
-
-	activity.EmitMemberJoined(ctx, teamId, request.UserId)
 
 	return utils.SuccessResponse(http.StatusCreated, utils.MsgSuccess, map[string]interface{}{
 		"teamMember": teamMember,
@@ -182,14 +181,24 @@ func UpdateTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) 
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
 	}
-	teamMember, err := db.UpdateTeamMember(ctx, teamMemberId, request.Role, request.Status)
-	if err != nil {
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
-	}
-
+	updateActorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	var teamMember *models.TeamMember
 	if request.Role != nil {
-		userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-		activity.EmitMemberRoleChanged(ctx, teamId, userId, *request.Role, teamMemberId)
+		teamMember, err = instrumented.UpdateTeamMemberRole(ctx, teamId, updateActorId, teamMemberId, *request.Role)
+		if err != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+		}
+		if request.Status != nil {
+			teamMember, err = db.UpdateTeamMember(ctx, teamMemberId, nil, request.Status)
+			if err != nil {
+				return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+			}
+		}
+	} else {
+		teamMember, err = db.UpdateTeamMember(ctx, teamMemberId, request.Role, request.Status)
+		if err != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+		}
 	}
 
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
@@ -209,13 +218,11 @@ func RemoveTeamMember(ctx context.Context, event events.APIGatewayProxyRequest) 
 	if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeMembers}, models.PermMembersWrite) {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
-	err := db.RemoveTeamMember(ctx, teamMemberId)
+	removeActorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	err := instrumented.RemoveTeamMember(ctx, teamId, removeActorId, teamMemberId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
-
-	userId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	activity.EmitMemberRemoved(ctx, teamId, userId, teamMemberId)
 
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, nil)
 }

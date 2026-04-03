@@ -34,17 +34,15 @@ func GetTeamActivity(ctx context.Context, event events.APIGatewayProxyRequest) (
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 
-	// Members only see "all"-visibility events
-	callerRole, err := utils.GetUserRoleOnTeam(ctx, event.RequestContext.Authorizer, teamId)
-	if err != nil {
-		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
-	}
-	isMember := !utils.IsAdmin(event.RequestContext.Authorizer) &&
-		(callerRole == nil || *callerRole == models.TeamMemberRoleMember)
-	if isMember {
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		pd, perr := utils.PreloadPermissions(ctx, actorId, teamId)
+		if perr != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, perr)
+		}
 		filtered := items[:0]
 		for _, a := range items {
-			if a.Visibility == models.ActivityVisibilityAll {
+			if pd.CanReadActivity(actorId, a) {
 				filtered = append(filtered, a)
 			}
 		}
@@ -99,27 +97,135 @@ func NewActivity(teamId, actorId, actorName, actorPicture, action, description, 
 	}
 }
 
-func EmitGoalStatusChanged(ctx context.Context, teamId, userId, goalTitle string, status models.GoalStatus, goalId string) {
+func NewActivityWithOwner(teamId, actorId, actorName, actorPicture, action, description, targetType, targetId, targetOwnerId string) *models.Activity {
+	a := NewActivity(teamId, actorId, actorName, actorPicture, action, description, targetType, targetId, models.ActivityVisibilityAll)
+	a.TargetOwnerId = targetOwnerId
+	return a
+}
+
+func EmitGoalCreated(ctx context.Context, teamId, userId, goalTitle, goalId, ownerId string) {
 	u, _ := users.GetUserBySub(ctx, userId)
 	actorName, actorPicture := ResolveActorInfo(u)
-	db.EmitActivity(ctx, NewActivity(
+	db.EmitActivity(ctx, NewActivityWithOwner(
 		teamId, userId, actorName, actorPicture,
-		"goal.status_changed",
-		fmt.Sprintf("Goal \"%s\" status changed to %s", goalTitle, string(status)),
-		"goal", goalId,
-		models.ActivityVisibilityAll,
+		"goal.created",
+		fmt.Sprintf("Goal \"%s\" was created", goalTitle),
+		"goal", goalId, ownerId,
 	))
 }
 
-func EmitProgressReportCreated(ctx context.Context, teamId, userId, reportId string) {
+func EmitGoalDeleted(ctx context.Context, teamId, userId, goalTitle, goalId, ownerId string) {
 	u, _ := users.GetUserBySub(ctx, userId)
 	actorName, actorPicture := ResolveActorInfo(u)
-	db.EmitActivity(ctx, NewActivity(
+	db.EmitActivity(ctx, NewActivityWithOwner(
 		teamId, userId, actorName, actorPicture,
-		"progress_report.created",
-		"A progress report was created",
-		"progress_report", reportId,
-		models.ActivityVisibilityAll,
+		"goal.deleted",
+		fmt.Sprintf("Goal \"%s\" was deleted", goalTitle),
+		"goal", goalId, ownerId,
+	))
+}
+
+func EmitGoalStatusChanged(ctx context.Context, teamId, userId, goalTitle string, status models.GoalStatus, goalId, ownerId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"goal.status_changed",
+		fmt.Sprintf("Goal \"%s\" status changed to %s", goalTitle, string(status)),
+		"goal", goalId, ownerId,
+	))
+}
+
+func EmitCommentCreated(ctx context.Context, teamId, userId, commentId, targetOwnerId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"comment.created", "A comment was posted",
+		"comment", commentId, targetOwnerId,
+	))
+}
+
+func EmitCommentUpdated(ctx context.Context, teamId, userId, commentId, targetOwnerId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"comment.updated", "A comment was updated",
+		"comment", commentId, targetOwnerId,
+	))
+}
+
+func EmitCommentDeleted(ctx context.Context, teamId, userId, commentId, targetOwnerId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"comment.deleted", "A comment was deleted",
+		"comment", commentId, targetOwnerId,
+	))
+}
+
+func EmitSeasonCreated(ctx context.Context, teamId, userId, seasonName, seasonId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"season.created",
+		fmt.Sprintf("Season \"%s\" was created", seasonName),
+		"season", seasonId, "",
+	))
+}
+
+func EmitSeasonUpdated(ctx context.Context, teamId, userId, seasonName, seasonId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"season.updated",
+		fmt.Sprintf("Season \"%s\" was updated", seasonName),
+		"season", seasonId, "",
+	))
+}
+
+func EmitSeasonDeleted(ctx context.Context, teamId, userId, seasonName, seasonId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"season.deleted",
+		fmt.Sprintf("Season \"%s\" was deleted", seasonName),
+		"season", seasonId, "",
+	))
+}
+
+func EmitProgressReportCreated(ctx context.Context, teamId, userId, reportId, ownerId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"progress_report.created", "A progress report was created",
+		"progress_report", reportId, ownerId,
+	))
+}
+
+func EmitProgressReportUpdated(ctx context.Context, teamId, userId, reportId, ownerId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"progress_report.updated", "A progress report was updated",
+		"progress_report", reportId, ownerId,
+	))
+}
+
+func EmitProgressReportDeleted(ctx context.Context, teamId, userId, reportId, ownerId string) {
+	u, _ := users.GetUserBySub(ctx, userId)
+	actorName, actorPicture := ResolveActorInfo(u)
+	db.EmitActivity(ctx, NewActivityWithOwner(
+		teamId, userId, actorName, actorPicture,
+		"progress_report.deleted", "A progress report was deleted",
+		"progress_report", reportId, ownerId,
 	))
 }
 

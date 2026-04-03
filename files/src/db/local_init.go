@@ -30,6 +30,7 @@ var (
 	tenantMembersTableName    = "dev-tenant-members"
 	roleDefinitionsTableName  = "dev-role-definitions"
 	ownershipPoliciesTableName = "dev-ownership-policies"
+	goalSeasonsTableName      = "dev-goal-seasons"
 )
 
 // InitClient initializes the DynamoDB client for local mode. If awsConfig is

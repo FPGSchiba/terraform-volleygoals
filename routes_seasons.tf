@@ -18,32 +18,6 @@ resource "aws_api_gateway_resource" "season_stats" {
   path_part   = "stats"
 }
 
-# Goals (nested under seasons)
-
-resource "aws_api_gateway_resource" "season_goals" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.season_id.id
-  path_part   = "goals"
-}
-
-resource "aws_api_gateway_resource" "goal_id" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.season_goals.id
-  path_part   = "{goalId}"
-}
-
-resource "aws_api_gateway_resource" "goal_picture" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.goal_id.id
-  path_part   = "picture"
-}
-
-resource "aws_api_gateway_resource" "goal_picture_presign" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_resource.goal_picture.id
-  path_part   = "presign"
-}
-
 # Progress Reports (nested under seasons)
 
 resource "aws_api_gateway_resource" "season_progress_reports" {
@@ -85,6 +59,7 @@ module "create_season_ms" {
   json_logging          = true
   handler_name          = "CreateSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -141,6 +116,7 @@ module "list_seasons_ms" {
   json_logging          = true
   handler_name          = "ListSeasons"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -196,6 +172,7 @@ module "get_season_ms" {
   json_logging          = true
   handler_name          = "GetSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -252,6 +229,7 @@ module "update_season_ms" {
   json_logging          = true
   handler_name          = "UpdateSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -308,6 +286,7 @@ module "delete_season_ms" {
   json_logging          = true
   handler_name          = "DeleteSeason"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -373,11 +352,19 @@ module "get_season_stats_ms" {
   json_logging          = true
   handler_name          = "GetSeasonStats"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
       actions   = ["dynamodb:GetItem", "dynamodb:Scan", "dynamodb:Query"]
       resources = [aws_dynamodb_table.seasons.arn, aws_dynamodb_table.goals.arn, aws_dynamodb_table.progress_reports.arn, aws_dynamodb_table.progress.arn]
+    },
+    {
+      actions = ["dynamodb:Query"]
+      resources = [
+        aws_dynamodb_table.goal_seasons.arn,
+        "${aws_dynamodb_table.goal_seasons.arn}/index/seasonIdIndex",
+      ]
     },
     {
       actions = ["dynamodb:Query"]
@@ -403,390 +390,6 @@ module "get_season_stats_ms" {
   depends_on = [
     aws_api_gateway_rest_api.api,
     aws_api_gateway_resource.season_stats,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-# ─── Goal modules ─────────────────────────────────────────────────────────────
-
-module "create_goal_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
-  http_methods          = ["POST"]
-  name_overwrite        = "create-goal"
-  path_name             = "goals"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.season_goals.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-  handler_name          = "CreateGoal"
-  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions   = ["dynamodb:PutItem"]
-      resources = [aws_dynamodb_table.goals.arn]
-    },
-    {
-      actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.seasons.arn]
-    },
-    {
-      actions   = ["dynamodb:PutItem"]
-      resources = [aws_dynamodb_table.activities.arn]
-    },
-    {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
-    },
-    {
-      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
-      resources = [var.cognito_user_pool_arn]
-    },
-    {
-      actions = ["dynamodb:GetItem", "dynamodb:Query"]
-      resources = [
-        aws_dynamodb_table.role_definitions.arn,
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
-        aws_dynamodb_table.ownership_policies.arn,
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
-        aws_dynamodb_table.teams.arn,
-      ]
-    },
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.season_goals,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-module "list_goals_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
-  http_methods          = ["GET"]
-  name_overwrite        = "list-goals"
-  path_name             = "goals"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.season_goals.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-  handler_name          = "ListGoals"
-  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions   = ["dynamodb:Scan", "dynamodb:Query"]
-      resources = [aws_dynamodb_table.goals.arn]
-    },
-    {
-      actions   = ["dynamodb:Scan"]
-      resources = [aws_dynamodb_table.progress.arn]
-    },
-    {
-      actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.seasons.arn]
-    },
-    {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
-    },
-    {
-      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
-      resources = [var.cognito_user_pool_arn]
-    },
-    {
-      actions = ["dynamodb:GetItem", "dynamodb:Query"]
-      resources = [
-        aws_dynamodb_table.role_definitions.arn,
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
-        aws_dynamodb_table.ownership_policies.arn,
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
-        aws_dynamodb_table.teams.arn,
-      ]
-    },
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.season_goals,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-module "get_goal_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  control_allow_origin  = local.cors_allowed_origin
-  http_methods          = ["GET"]
-  name_overwrite        = "get-goal"
-  path_name             = "{goalId}"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.goal_id.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-  handler_name          = "GetGoal"
-  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.seasons.arn]
-    },
-    {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
-    },
-    {
-      actions = ["dynamodb:GetItem", "dynamodb:Query"]
-      resources = [
-        aws_dynamodb_table.role_definitions.arn,
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
-        aws_dynamodb_table.ownership_policies.arn,
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
-        aws_dynamodb_table.teams.arn,
-      ]
-    },
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.goal_id,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-module "update_goal_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
-  http_methods          = ["PATCH"]
-  name_overwrite        = "update-goal"
-  path_name             = "{goalId}"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.goal_id.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-  handler_name          = "UpdateGoal"
-  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
-      resources = [aws_dynamodb_table.goals.arn]
-    },
-    {
-      actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.seasons.arn]
-    },
-    {
-      actions   = ["dynamodb:PutItem"]
-      resources = [aws_dynamodb_table.activities.arn]
-    },
-    {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
-    },
-    {
-      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
-      resources = [var.cognito_user_pool_arn]
-    },
-    {
-      actions = ["dynamodb:GetItem", "dynamodb:Query"]
-      resources = [
-        aws_dynamodb_table.role_definitions.arn,
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
-        aws_dynamodb_table.ownership_policies.arn,
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
-        aws_dynamodb_table.teams.arn,
-      ]
-    },
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.goal_id,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-module "delete_goal_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
-  http_methods          = ["DELETE"]
-  name_overwrite        = "delete-goal"
-  path_name             = "{goalId}"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.goal_id.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-  handler_name          = "DeleteGoal"
-  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
-      resources = [aws_dynamodb_table.goals.arn]
-    },
-    {
-      actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.seasons.arn]
-    },
-    {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
-    },
-    {
-      actions = ["dynamodb:GetItem", "dynamodb:Query"]
-      resources = [
-        aws_dynamodb_table.role_definitions.arn,
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
-        aws_dynamodb_table.ownership_policies.arn,
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
-        aws_dynamodb_table.teams.arn,
-      ]
-    },
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.goal_id,
-    data.archive_file.shared_lambda_zip,
-  ]
-}
-
-module "upload_goal_file_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.1"
-
-  api_id                = aws_api_gateway_rest_api.api.id
-  code_dir              = "${path.module}/files/src"
-  cors_enabled          = true
-  control_allow_origin  = local.cors_allowed_origin
-  http_methods          = ["GET"]
-  name_overwrite        = "upload-goal-file"
-  path_name             = "presign"
-  create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.goal_picture_presign.id
-  prefix                = var.prefix
-  authorizer_id         = aws_api_gateway_authorizer.this.id
-  authorization_type    = "COGNITO_USER_POOLS"
-  enable_tracing        = true
-  timeout               = 29
-  vpc_networked         = false
-  environment_variables = local.lambda_environment_variables
-  tags                  = local.tags
-  layer_arns            = local.lambda_layer_arns
-  json_logging          = true
-  handler_name          = "UploadGoalFile"
-  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
-
-  additional_iam_statements = [
-    {
-      actions   = ["s3:PutObject"]
-      resources = ["${aws_s3_bucket.this.arn}/goals/*"]
-    },
-    {
-      actions   = ["dynamodb:UpdateItem"]
-      resources = [aws_dynamodb_table.goals.arn]
-    },
-    {
-      actions   = ["dynamodb:GetItem"]
-      resources = [aws_dynamodb_table.seasons.arn]
-    },
-    {
-      actions   = ["dynamodb:Query"]
-      resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
-    },
-    {
-      actions = ["dynamodb:GetItem", "dynamodb:Query"]
-      resources = [
-        aws_dynamodb_table.role_definitions.arn,
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
-        aws_dynamodb_table.ownership_policies.arn,
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
-        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
-        aws_dynamodb_table.teams.arn,
-      ]
-    },
-  ]
-
-  depends_on = [
-    aws_api_gateway_rest_api.api,
-    aws_api_gateway_resource.goal_picture_presign,
     data.archive_file.shared_lambda_zip,
   ]
 }
@@ -818,6 +421,7 @@ module "create_progress_report_ms" {
   json_logging          = true
   handler_name          = "CreateProgressReport"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -886,6 +490,7 @@ module "list_progress_reports_ms" {
   json_logging          = true
   handler_name          = "ListProgressReports"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -953,6 +558,7 @@ module "get_progress_report_ms" {
   json_logging          = true
   handler_name          = "GetProgressReport"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -1017,6 +623,7 @@ module "update_progress_report_ms" {
   json_logging          = true
   handler_name          = "UpdateProgressReport"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -1081,6 +688,7 @@ module "delete_progress_report_ms" {
   json_logging          = true
   handler_name          = "DeleteProgressReport"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {

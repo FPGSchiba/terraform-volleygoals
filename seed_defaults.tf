@@ -28,7 +28,7 @@ resource "aws_iam_role_policy" "seed_defaults_dynamo" {
     Statement = [
       {
         Effect = "Allow"
-        Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query"]
+        Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query", "dynamodb:UpdateItem"]
         Resource = [
           aws_dynamodb_table.role_definitions.arn,
           "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
@@ -49,7 +49,7 @@ resource "aws_lambda_function" "seed_defaults" {
   filename         = data.archive_file.shared_lambda_zip.output_path
   source_code_hash = data.archive_file.shared_lambda_zip.output_base64sha256
   handler          = "bootstrap"
-  runtime          = "provided.al2"
+  runtime          = local.lambda_runtime
   timeout          = 60
 
   environment {

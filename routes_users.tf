@@ -36,6 +36,7 @@ module "list_users_ms" {
   json_logging          = true
   handler_name          = "ListUsers"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -87,6 +88,7 @@ module "get_user_ms" {
   json_logging          = true
   handler_name          = "GetUser"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -143,6 +145,7 @@ module "delete_user_ms" {
   json_logging          = true
   handler_name          = "DeleteUser"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {
@@ -199,6 +202,7 @@ module "update_user_ms" {
   json_logging          = true
   handler_name          = "UpdateUser"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {

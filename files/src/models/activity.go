@@ -22,8 +22,9 @@ type Activity struct {
 	Action       string             `dynamodbav:"action" json:"action"`
 	Description  string             `dynamodbav:"description" json:"description"`
 	TargetType   string             `dynamodbav:"targetType" json:"targetType,omitempty"`
-	TargetId     string             `dynamodbav:"targetId" json:"targetId,omitempty"`
-	Visibility   ActivityVisibility `dynamodbav:"visibility" json:"visibility"`
+	TargetId      string             `dynamodbav:"targetId" json:"targetId,omitempty"`
+	TargetOwnerId string             `dynamodbav:"targetOwnerId" json:"targetOwnerId,omitempty"`
+	Visibility    ActivityVisibility `dynamodbav:"visibility" json:"visibility"`
 	Timestamp    time.Time          `dynamodbav:"timestamp" json:"timestamp"`
 }
 

@@ -36,6 +36,7 @@ module "upload_self_picture_ms" {
   json_logging          = true
   handler_name          = "UploadSelfPicture"
   pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
 
   additional_iam_statements = [
     {

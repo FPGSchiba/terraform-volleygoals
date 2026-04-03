@@ -21,7 +21,7 @@ const (
 
 type Goal struct {
 	Id          string     `dynamodbav:"id" json:"id"`
-	SeasonId    string     `dynamodbav:"seasonId" json:"seasonId"`
+	TeamId      string     `dynamodbav:"teamId" json:"teamId"`
 	OwnerId     string     `dynamodbav:"ownerId" json:"ownerId"`
 	GoalType    GoalType   `dynamodbav:"goalType" json:"goalType"`
 	Picture     string     `dynamodbav:"picture" json:"picture"`

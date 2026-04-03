@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/db/instrumented"
 	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/router/activity"
 	"github.com/fpgschiba/volleygoals/users"
@@ -70,7 +71,7 @@ func CreateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 
-	activity.EmitProgressReportCreated(ctx, teamId, authorId, report.Id)
+	activity.EmitProgressReportCreated(ctx, teamId, authorId, report.Id, report.AuthorId)
 
 	return utils.SuccessResponse(http.StatusCreated, utils.MsgSuccess, map[string]interface{}{
 		"progressReport": report,
@@ -288,7 +289,7 @@ func UpdateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		entries = append(entries, db.ProgressEntry{GoalId: p.GoalId, Rating: p.Rating, Details: p.Details})
 	}
 
-	updatedReport, err := db.UpdateProgressReport(ctx, reportId, request.Summary, request.Details, request.OverallDetails, entries)
+	updatedReport, err := instrumented.UpdateProgressReport(ctx, teamId, actorId, reportId, request.Summary, request.Details, request.OverallDetails, entries, report.AuthorId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
@@ -329,7 +330,7 @@ func DeleteProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
-	if err := db.DeleteProgressReport(ctx, reportId); err != nil {
+	if err := instrumented.DeleteProgressReport(ctx, teamId, actorId, reportId, report.AuthorId); err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}
 

@@ -215,20 +215,17 @@ func DeleteTeamByID(ctx context.Context, teamId string) error {
 	}
 
 	for _, season := range seasons {
-		// 2. For each season, delete goals and their comments
-		goals, _, _, _, err := ListGoals(ctx, GoalFilter{FilterOptions: FilterOptions{Limit: 1000}})
+		// 2. For each season, delete goals (via join table) and their comments
+		goalIds, err := ListGoalIdsBySeasonId(ctx, season.Id)
 		if err != nil {
-			log.Printf("[WARN] DeleteTeamByID: failed to list goals for season %s: %v", season.Id, err)
+			log.Printf("[WARN] DeleteTeamByID: failed to list goal IDs for season %s: %v", season.Id, err)
 		}
-		for _, goal := range goals {
-			if goal.SeasonId != season.Id {
-				continue
+		for _, goalId := range goalIds {
+			if err := DeleteCommentsForTarget(ctx, goalId); err != nil {
+				log.Printf("[WARN] DeleteTeamByID: failed to delete comments for goal %s: %v", goalId, err)
 			}
-			if err := DeleteCommentsForTarget(ctx, goal.Id); err != nil {
-				log.Printf("[WARN] DeleteTeamByID: failed to delete comments for goal %s: %v", goal.Id, err)
-			}
-			if err := DeleteGoal(ctx, goal.Id); err != nil {
-				log.Printf("[WARN] DeleteTeamByID: failed to delete goal %s: %v", goal.Id, err)
+			if err := DeleteGoal(ctx, goalId); err != nil {
+				log.Printf("[WARN] DeleteTeamByID: failed to delete goal %s: %v", goalId, err)
 			}
 		}
 
