@@ -68,6 +68,10 @@ module "create_comment_ms" {
       ]
     },
     {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
       actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
       resources = [var.cognito_user_pool_arn]
     },
@@ -254,6 +258,14 @@ module "update_comment_ms" {
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
     },
     {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
+    },
+    {
       actions = ["dynamodb:GetItem", "dynamodb:Query"]
       resources = [
         aws_dynamodb_table.role_definitions.arn,
@@ -317,6 +329,14 @@ module "delete_comment_ms" {
     {
       actions   = ["dynamodb:Query"]
       resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+    },
+    {
+      actions   = ["dynamodb:PutItem"]
+      resources = [aws_dynamodb_table.activities.arn]
+    },
+    {
+      actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+      resources = [var.cognito_user_pool_arn]
     },
     {
       actions = ["dynamodb:GetItem", "dynamodb:Query"]

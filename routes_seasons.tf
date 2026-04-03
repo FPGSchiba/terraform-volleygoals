@@ -362,6 +362,13 @@ module "get_season_stats_ms" {
     {
       actions = ["dynamodb:Query"]
       resources = [
+        aws_dynamodb_table.goal_seasons.arn,
+        "${aws_dynamodb_table.goal_seasons.arn}/index/seasonIdIndex",
+      ]
+    },
+    {
+      actions = ["dynamodb:Query"]
+      resources = [
         aws_dynamodb_table.team_members.arn,
         "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
       ]

@@ -162,6 +162,7 @@ module "update_tenant_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["PATCH"]
   name_overwrite        = "update-tenant"
   path_name             = "tenants"
@@ -205,6 +206,7 @@ module "delete_tenant_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-tenant"
   path_name             = "tenants"
@@ -373,6 +375,7 @@ module "create_role_definition_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["POST"]
   name_overwrite        = "create-role-definition"
   path_name             = "roles"
@@ -459,6 +462,7 @@ module "delete_role_definition_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  create_options_method = false
   http_methods          = ["DELETE"]
   name_overwrite        = "delete-role-definition"
   path_name             = "roles"

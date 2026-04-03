@@ -30,6 +30,38 @@ resource "aws_api_gateway_resource" "teams_teamId_goals_goalId_picture" {
   path_part   = "picture"
 }
 
+# ─── Shared IAM blocks ────────────────────────────────────────────────────────
+
+locals {
+  goal_permission_iam = {
+    actions = ["dynamodb:GetItem", "dynamodb:Query"]
+    resources = [
+      aws_dynamodb_table.role_definitions.arn,
+      "${aws_dynamodb_table.role_definitions.arn}/index/tenantIdIndex",
+      "${aws_dynamodb_table.role_definitions.arn}/index/tenantNameIndex",
+      aws_dynamodb_table.ownership_policies.arn,
+      "${aws_dynamodb_table.ownership_policies.arn}/index/tenantIdIndex",
+      "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex",
+      aws_dynamodb_table.teams.arn,
+    ]
+  }
+
+  goal_team_member_iam = {
+    actions   = ["dynamodb:Query"]
+    resources = ["${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex"]
+  }
+
+  goal_activity_iam = {
+    actions   = ["dynamodb:PutItem"]
+    resources = [aws_dynamodb_table.activities.arn]
+  }
+
+  goal_cognito_iam = {
+    actions   = ["cognito-idp:AdminGetUser", "cognito-idp:AdminListGroupsForUser"]
+    resources = [var.cognito_user_pool_arn]
+  }
+}
+
 # ─── Goal modules ─────────────────────────────────────────────────────────────
 
 module "create_goal_ms" {
@@ -62,7 +94,11 @@ module "create_goal_ms" {
     {
       actions   = ["dynamodb:PutItem"]
       resources = [aws_dynamodb_table.goals.arn]
-    }
+    },
+    local.goal_team_member_iam,
+    local.goal_activity_iam,
+    local.goal_cognito_iam,
+    local.goal_permission_iam,
   ]
 }
 
@@ -101,7 +137,10 @@ module "list_goals_ms" {
         "${aws_dynamodb_table.goal_seasons.arn}/index/seasonIdIndex",
         aws_dynamodb_table.progress.arn,
       ]
-    }
+    },
+    local.goal_team_member_iam,
+    local.goal_cognito_iam,
+    local.goal_permission_iam,
   ]
 }
 
@@ -111,7 +150,6 @@ module "get_goal_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
   http_methods          = ["GET"]
   name_overwrite        = "get-goal"
   path_name             = "{goalId}"
@@ -135,7 +173,9 @@ module "get_goal_ms" {
     {
       actions   = ["dynamodb:GetItem"]
       resources = [aws_dynamodb_table.goals.arn]
-    }
+    },
+    local.goal_team_member_iam,
+    local.goal_permission_iam,
   ]
 }
 
@@ -168,8 +208,12 @@ module "update_goal_ms" {
   additional_iam_statements = [
     {
       actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
-      resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.activities.arn]
-    }
+      resources = [aws_dynamodb_table.goals.arn]
+    },
+    local.goal_team_member_iam,
+    local.goal_activity_iam,
+    local.goal_cognito_iam,
+    local.goal_permission_iam,
   ]
 }
 
@@ -203,7 +247,11 @@ module "delete_goal_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
       resources = [aws_dynamodb_table.goals.arn]
-    }
+    },
+    local.goal_team_member_iam,
+    local.goal_activity_iam,
+    local.goal_cognito_iam,
+    local.goal_permission_iam,
   ]
 }
 
@@ -235,9 +283,15 @@ module "upload_goal_file_ms" {
 
   additional_iam_statements = [
     {
-      actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem", "s3:PutObject"]
-      resources = [aws_dynamodb_table.goals.arn, "${aws_s3_bucket.this.arn}/*"]
-    }
+      actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
+      resources = [aws_dynamodb_table.goals.arn]
+    },
+    {
+      actions   = ["s3:PutObject"]
+      resources = ["${aws_s3_bucket.this.arn}/*"]
+    },
+    local.goal_team_member_iam,
+    local.goal_permission_iam,
   ]
 }
 
@@ -273,7 +327,9 @@ module "tag_goal_season_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
       resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.goal_seasons.arn]
-    }
+    },
+    local.goal_team_member_iam,
+    local.goal_permission_iam,
   ]
 }
 
@@ -307,7 +363,9 @@ module "untag_goal_season_ms" {
     {
       actions   = ["dynamodb:GetItem", "dynamodb:DeleteItem"]
       resources = [aws_dynamodb_table.goals.arn, aws_dynamodb_table.goal_seasons.arn]
-    }
+    },
+    local.goal_team_member_iam,
+    local.goal_permission_iam,
   ]
 }
 
@@ -317,7 +375,6 @@ module "list_goal_seasons_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
   http_methods          = ["GET"]
   name_overwrite        = "list-goal-seasons"
   path_name             = "seasons"
@@ -345,6 +402,8 @@ module "list_goal_seasons_ms" {
         aws_dynamodb_table.goal_seasons.arn,
         "${aws_dynamodb_table.goal_seasons.arn}/index/goalIdIndex",
       ]
-    }
+    },
+    local.goal_team_member_iam,
+    local.goal_permission_iam,
   ]
 }
