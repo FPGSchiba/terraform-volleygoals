@@ -1,6 +1,10 @@
 package progress_reports
 
-import "github.com/fpgschiba/volleygoals/models"
+import (
+	"time"
+
+	"github.com/fpgschiba/volleygoals/models"
+)
 
 type ProgressReportWithProgress struct {
 	*models.ProgressReport
@@ -18,6 +22,7 @@ type CreateProgressReportRequest struct {
 	Details        string          `json:"details"`
 	OverallDetails string          `json:"overallDetails"`
 	Progress       []ProgressEntry `json:"progress,omitempty"`
+	ReportedAt     time.Time       `json:"reportedAt,omitempty"`
 }
 
 type UpdateProgressReportRequest struct {

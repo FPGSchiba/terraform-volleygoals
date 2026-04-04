@@ -190,13 +190,58 @@ func GetRouter() *gin.Engine {
 	// Public auth endpoints (not under apiGroup to mirror your example)
 	// Invite completion endpoint (no auth)
 	engine.POST("/api/v1/invites/complete", Adapter("CompleteInvite"))
-	engine.POST("/health", Adapter("HealthCheck"))
+	engine.GET("/health", Adapter("HealthCheck"))
 
 	apiGroup := engine.Group("/api/v1")
 	{
 		// Apply auth for subsequent routes
 		apiGroup.Use(AuthMiddleware())
 
+		commentsGroup := apiGroup.Group("/comments")
+		{
+			commentsGroup.GET("", Adapter("ListComments"))
+			commentsGroup.POST("", Adapter("CreateComment"))
+
+			commentsGroup.DELETE(":commentId", Adapter("DeleteComment"))
+			commentsGroup.GET(":commentId", Adapter("GetComment"))
+			commentsGroup.PATCH(":commentId", Adapter("UpdateComment"))
+
+			commentsGroup.GET(":commentId/file/presign", Adapter("UploadCommentFile"))
+		}
+		invitesGroup := apiGroup.Group("/invites")
+		{
+			invitesGroup.POST("", Adapter("CreateInvite"))
+
+			invitesGroup.DELETE(":inviteId", Adapter("RevokeInvite"))
+			invitesGroup.PATCH(":inviteId", Adapter("ResendInvite"))
+
+			invitesGroup.GET(":token", Adapter("GetInviteByToken"))
+		}
+		apiGroup.GET("/search", Adapter("GlobalSearch"))
+		// Resource definitions for dynamic UI rendering
+		apiGroup.GET("/resource-definitions", Adapter("GetResourceDefinitions"))
+		seasonsGroup := apiGroup.Group("/seasons")
+		{
+			seasonsGroup.POST("", Adapter("CreateSeason"))
+			seasonsGroup.GET("", Adapter("ListSeasons"))
+			seasonGroup := seasonsGroup.Group(":seasonId")
+			{
+				seasonGroup.GET("", Adapter("GetSeason"))
+				seasonGroup.PATCH("", Adapter("UpdateSeason"))
+				seasonGroup.DELETE("", Adapter("DeleteSeason"))
+				seasonGroup.GET("/stats", Adapter("GetSeasonStats"))
+
+				progressReportGroup := seasonGroup.Group("/progress-reports")
+				{
+					progressReportGroup.POST("", Adapter("CreateProgressReport"))
+					progressReportGroup.GET("", Adapter("ListProgressReports"))
+
+					progressReportGroup.GET(":reportId", Adapter("GetProgressReport"))
+					progressReportGroup.PATCH(":reportId", Adapter("UpdateProgressReport"))
+					progressReportGroup.DELETE(":reportId", Adapter("DeleteProgressReport"))
+				}
+			}
+		}
 		selfGroup := apiGroup.Group("/self")
 		{
 			selfGroup.GET("", Adapter("GetSelf"))
@@ -211,28 +256,86 @@ func GetRouter() *gin.Engine {
 			{
 				teamGroup.DELETE("", Adapter("DeleteTeam"))
 				teamGroup.GET("", Adapter("GetTeam"))
+				teamGroup.PATCH("", Adapter("UpdateTeam"))
+
 				teamGroup.PATCH("/settings", Adapter("UpdateTeamSettings"))
 				teamGroup.GET("/invites", Adapter("GetTeamInvites"))
 				teamGroup.GET("/picture/presign", Adapter("UploadTeamPicture"))
-				teamGroup.PATCH("", Adapter("UpdateTeam"))
+				teamGroup.GET("/activity", Adapter("GetTeamActivity"))
+
 				membersGroup := teamGroup.Group("/members")
 				{
 					membersGroup.POST("", Adapter("AddTeamMember"))
 					membersGroup.GET("", Adapter("ListTeamMembers"))
 					membersGroup.DELETE("", Adapter("LeaveTeam"))
+
 					membersGroup.DELETE(":memberId", Adapter("RemoveTeamMember"))
 					membersGroup.PATCH(":memberId", Adapter("UpdateTeamMember"))
 				}
-				teamGroup.GET("/activity", Adapter("GetTeamActivity"))
+				goalsGroup := teamGroup.Group("/goals")
+				{
+					goalsGroup.POST("", Adapter("CreateGoal"))
+					goalsGroup.GET("", Adapter("ListGoals"))
 
+					goalGroup := goalsGroup.Group(":goalId")
+					{
+						goalGroup.GET("", Adapter("GetGoal"))
+						goalGroup.PUT("", Adapter("UpdateGoal"))
+						goalGroup.DELETE("", Adapter("DeleteGoal"))
+
+						goalGroup.GET("/picture/presign", Adapter("UploadGoalFile"))
+
+						seasonsGoalGroup := goalGroup.Group("/seasons")
+						{
+							seasonsGoalGroup.GET("", Adapter("ListGoalSeasons"))
+							seasonsGoalGroup.DELETE(":seasonId", Adapter("UntagGoalFromSeason"))
+							seasonsGoalGroup.POST(":seasonId", Adapter("TagGoalToSeason"))
+						}
+					}
+				}
 			}
 		}
-		invitesGroup := apiGroup.Group("/invites")
+		tenantsGroup := apiGroup.Group("/tenants")
 		{
-			invitesGroup.POST("", Adapter("CreateInvite"))
-			invitesGroup.DELETE(":inviteId", Adapter("RevokeInvite"))
-			invitesGroup.PATCH(":inviteId", Adapter("ResendInvite"))
-			invitesGroup.GET(":inviteToken", Adapter("GetInviteByToken"))
+			tenantsGroup.POST("", Adapter("CreateTenant"))
+			tenantsGroup.GET("", Adapter("ListTenants"))
+
+			tenantGroup := tenantsGroup.Group(":tenantId")
+			{
+				tenantGroup.GET("", Adapter("GetTenant"))
+				tenantGroup.PATCH("", Adapter("UpdateTenant"))
+				tenantGroup.DELETE("", Adapter("DeleteTenant"))
+
+				tenantGroup.GET("/resource-model", Adapter("GetResourceModel"))
+
+				membersGroup := tenantGroup.Group("/members")
+				{
+					membersGroup.GET("", Adapter("ListTenantMembers"))
+					membersGroup.POST("", Adapter("AddTenantMember"))
+					membersGroup.DELETE(":memberId", Adapter("RemoveTenantMember"))
+				}
+
+				ownershipPoliciesGroup := tenantGroup.Group("/ownership-policies")
+				{
+					ownershipPoliciesGroup.GET("", Adapter("ListOwnershipPolicies"))
+					ownershipPoliciesGroup.PATCH(":resourceType", Adapter("UpdateOwnershipPolicy"))
+					ownershipPoliciesGroup.PUT("", Adapter("BatchUpsertOwnershipPolicies"))
+					ownershipPoliciesGroup.POST("/preview", Adapter("PreviewEffectivePermissions"))
+				}
+
+				rolesGroup := tenantGroup.Group("/roles")
+				{
+					rolesGroup.GET("", Adapter("ListRoleDefinitions"))
+					rolesGroup.POST("", Adapter("CreateRoleDefinition"))
+					rolesGroup.DELETE(":roleId", Adapter("DeleteRoleDefinition"))
+					rolesGroup.PATCH(":roleId", Adapter("UpdateRoleDefinition"))
+				}
+				teamsTenantGroup := tenantGroup.Group("/teams")
+				{
+					teamsTenantGroup.GET("", Adapter("ListTenantedTeams"))
+					teamsTenantGroup.POST("", Adapter("CreateTenantedTeam"))
+				}
+			}
 		}
 		usersGroup := apiGroup.Group("/users") // Admin only
 		{
@@ -240,46 +343,6 @@ func GetRouter() *gin.Engine {
 			usersGroup.GET(":userSub", Adapter("GetUser"))
 			usersGroup.DELETE(":userSub", Adapter("DeleteUser"))
 			usersGroup.PATCH(":userSub", Adapter("UpdateUser"))
-		}
-		seasonsGroup := apiGroup.Group("/seasons")
-		{
-			seasonsGroup.POST("", Adapter("CreateSeason"))
-			seasonsGroup.GET("", Adapter("ListSeasons"))
-			seasonGroup := seasonsGroup.Group(":seasonId")
-			{
-				seasonGroup.GET("", Adapter("GetSeason"))
-				seasonGroup.PATCH("", Adapter("UpdateSeason"))
-				seasonGroup.DELETE("", Adapter("DeleteSeason"))
-				seasonGroup.GET("/stats", Adapter("GetSeasonStats"))
-				goalsGroup := seasonGroup.Group("/goals")
-				{
-					goalsGroup.POST("", Adapter("CreateGoal"))
-					goalsGroup.GET(":goalId", Adapter("GetGoal"))
-					goalsGroup.GET("", Adapter("ListGoals"))
-					goalsGroup.PATCH(":goalId", Adapter("UpdateGoal"))
-					goalsGroup.DELETE(":goalId", Adapter("DeleteGoal"))
-					goalsGroup.GET(":goalId/picture/presign", Adapter("UploadGoalFile"))
-				}
-				progressReportGroup := seasonGroup.Group("/progress-reports")
-				{
-					progressReportGroup.POST("", Adapter("CreateProgressReport"))
-					progressReportGroup.GET(":reportId", Adapter("GetProgressReport"))
-					progressReportGroup.GET("", Adapter("ListProgressReports"))
-					progressReportGroup.PATCH(":reportId", Adapter("UpdateProgressReport"))
-					progressReportGroup.DELETE(":reportId", Adapter("DeleteProgressReport"))
-				}
-			}
-		}
-		apiGroup.GET("/search", Adapter("GlobalSearch"))
-
-		commentsGroup := apiGroup.Group("/comments")
-		{
-			commentsGroup.POST("", Adapter("CreateComment"))
-			commentsGroup.GET(":commentId", Adapter("GetComment"))
-			commentsGroup.GET("", Adapter("ListComments"))
-			commentsGroup.PATCH(":commentId", Adapter("UpdateComment"))
-			commentsGroup.DELETE(":commentId", Adapter("DeleteComment"))
-			commentsGroup.GET(":commentId/file/presign", Adapter("UploadCommentFile"))
 		}
 	}
 

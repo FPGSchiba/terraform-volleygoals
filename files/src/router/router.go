@@ -13,14 +13,15 @@ import (
 	"github.com/fpgschiba/volleygoals/router/goals"
 	"github.com/fpgschiba/volleygoals/router/invites"
 	progress_reports "github.com/fpgschiba/volleygoals/router/progress-reports"
+	"github.com/fpgschiba/volleygoals/router/resource_definitions"
 	"github.com/fpgschiba/volleygoals/router/search"
-	"github.com/fpgschiba/volleygoals/router/seed"
 	"github.com/fpgschiba/volleygoals/router/seasons"
+	"github.com/fpgschiba/volleygoals/router/seed"
 	"github.com/fpgschiba/volleygoals/router/self"
 	teammembers "github.com/fpgschiba/volleygoals/router/team-members"
-	"github.com/fpgschiba/volleygoals/router/tenants"
 	teamsettings "github.com/fpgschiba/volleygoals/router/team-settings"
 	"github.com/fpgschiba/volleygoals/router/teams"
+	"github.com/fpgschiba/volleygoals/router/tenants"
 	"github.com/fpgschiba/volleygoals/router/users"
 	"github.com/fpgschiba/volleygoals/utils"
 	log "github.com/sirupsen/logrus"
@@ -197,6 +198,10 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (re
 	case "GlobalSearch":
 		response, err = search.GlobalSearch(ctx, event)
 
+	// Resource definitions
+	case "GetResourceDefinitions":
+		response, err = resource_definitions.GetResourceDefinitions(ctx, event)
+
 	// Activity handlers
 	case "GetTeamActivity":
 		response, err = activity.GetTeamActivity(ctx, event)
@@ -208,6 +213,8 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (re
 	// Tenant management handlers
 	case "CreateTenant":
 		response, err = tenants.CreateTenant(ctx, event)
+	case "ListTenants":
+		response, err = tenants.ListTenants(ctx, event)
 	case "GetTenant":
 		response, err = tenants.GetTenant(ctx, event)
 	case "UpdateTenant":
@@ -218,6 +225,8 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (re
 		response, err = tenants.AddTenantMember(ctx, event)
 	case "RemoveTenantMember":
 		response, err = tenants.RemoveTenantMember(ctx, event)
+	case "ListTenantMembers":
+		response, err = tenants.ListTenantMembers(ctx, event)
 
 	// Role definition handlers
 	case "ListRoleDefinitions":
@@ -234,10 +243,18 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (re
 		response, err = tenants.ListOwnershipPolicies(ctx, event)
 	case "UpdateOwnershipPolicy":
 		response, err = tenants.UpdateOwnershipPolicy(ctx, event)
+	case "BatchUpsertOwnershipPolicies":
+		response, err = tenants.BatchUpsertOwnershipPolicies(ctx, event)
+	case "GetResourceModel":
+		response, err = tenants.GetResourceModel(ctx, event)
+	case "PreviewEffectivePermissions":
+		response, err = tenants.PreviewEffectivePermissions(ctx, event)
 
 	// Tenanted team handlers
 	case "CreateTenantedTeam":
 		response, err = tenants.CreateTenantedTeam(ctx, event)
+	case "ListTenantedTeams":
+		response, err = tenants.ListTenantedTeams(ctx, event)
 
 	// Unknown handler
 	default:

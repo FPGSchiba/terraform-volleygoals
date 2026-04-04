@@ -6,7 +6,7 @@ The invites system manages team membership invitations via email tokens. Some en
 
 ### Create Invite
 
-- **Endpoint**: `POST /v1/invites`
+- **Endpoint**: `POST /api/v1/invites`
 - **Auth**: Global Admin, Team Admin, or team member with `invites:write` permission. Only Global Admins can invite with `admin` role.
 - **Description**: Creates a new invite for a user by email. Optionally sends an invitation email.
 
@@ -33,25 +33,23 @@ The invites system manages team membership invitations via email tokens. Some en
 ```json
 {
   "message": "Success",
-  "data": {
-    "invite": {
-      "id": "invite-uuid",
-      "teamId": "team-uuid",
-      "email": "newplayer@example.com",
-      "role": "member",
-      "status": "pending",
-      "token": "hashed-token-string",
-      "message": "We'd love to have you on the team!",
-      "invitedBy": "cognito-sub-of-inviter",
-      "acceptedBy": null,
-      "revokedBy": null,
-      "expiresAt": "2024-11-01T10:00:00Z",
-      "createdAt": "2024-10-25T10:00:00Z",
-      "updatedAt": "2024-10-25T10:00:00Z",
-      "acceptedAt": null,
-      "declinedAt": null,
-      "revokedAt": null
-    }
+  "invite": {
+    "id": "invite-uuid",
+    "teamId": "team-uuid",
+    "email": "newplayer@example.com",
+    "role": "member",
+    "status": "pending",
+    "token": "hashed-token-string",
+    "message": "We'd love to have you on the team!",
+    "invitedBy": "cognito-sub-of-inviter",
+    "acceptedBy": null,
+    "revokedBy": null,
+    "expiresAt": "2024-11-01T10:00:00Z",
+    "createdAt": "2024-10-25T10:00:00Z",
+    "updatedAt": "2024-10-25T10:00:00Z",
+    "acceptedAt": null,
+    "declinedAt": null,
+    "revokedAt": null
   }
 }
 ```
@@ -68,7 +66,7 @@ The invites system manages team membership invitations via email tokens. Some en
 
 ### Complete Invite
 
-- **Endpoint**: `POST /v1/invites/complete`
+- **Endpoint**: `POST /api/v1/invites/complete`
 - **Auth**: **Public (no auth required)**
 - **Description**: Accepts or declines an invitation using the invite token. If the email does not yet have a Cognito account, one is created automatically and a temporary password is returned.
 
@@ -91,27 +89,25 @@ The invites system manages team membership invitations via email tokens. Some en
 ```json
 {
   "message": "Success",
-  "data": {
-    "invite": {
-      "id": "invite-uuid",
-      "status": "accepted",
-      "acceptedBy": "cognito-sub",
-      "acceptedAt": "2024-10-26T08:00:00Z"
-    },
-    "member": {
-      "id": "member-uuid",
-      "userId": "cognito-sub",
-      "teamId": "team-uuid",
-      "role": "member",
-      "status": "active",
-      "createdAt": "2024-10-26T08:00:00Z",
-      "updatedAt": "2024-10-26T08:00:00Z",
-      "joinedAt": "2024-10-26T08:00:00Z",
-      "leftAt": null
-    },
-    "userCreated": true,
-    "temporaryPassword": "Temp@12345"
-  }
+  "invite": {
+    "id": "invite-uuid",
+    "status": "accepted",
+    "acceptedBy": "cognito-sub",
+    "acceptedAt": "2024-10-26T08:00:00Z"
+  },
+  "member": {
+    "id": "member-uuid",
+    "userId": "cognito-sub",
+    "teamId": "team-uuid",
+    "role": "member",
+    "status": "active",
+    "createdAt": "2024-10-26T08:00:00Z",
+    "updatedAt": "2024-10-26T08:00:00Z",
+    "joinedAt": "2024-10-26T08:00:00Z",
+    "leftAt": null
+  },
+  "userCreated": true,
+  "temporaryPassword": "Temp@12345"
 }
 ```
 
@@ -128,36 +124,34 @@ The invites system manages team membership invitations via email tokens. Some en
 
 ### Get Invite by Token
 
-- **Endpoint**: `GET /v1/invites/{inviteId}`
-- **Auth**: **Public (no auth required)** — `inviteId` here is the invite **token** string, not a UUID
+- **Endpoint**: `GET /api/v1/invites/{token}`
+- **Auth**: **Public (no auth required)** — `token` is the invite **token** string, not a UUID
 - **Description**: Looks up an invite by its token. Returns the invite and team membership if already accepted. Used to validate a token before completing.
 
 **Path Parameters**
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `inviteId` | string | Yes | The invite token (from the invitation URL) |
+| `token` | string | Yes | The invite token (from the invitation URL) |
 
 **Response** `200 OK` (if already accepted)
 ```json
 {
   "message": "Success",
-  "data": {
-    "invite": {
-      "id": "invite-uuid",
-      "status": "accepted",
-      "email": "newplayer@example.com",
-      "teamId": "team-uuid",
-      "role": "member",
-      "expiresAt": "2024-11-01T10:00:00Z"
-    },
-    "member": {
-      "id": "member-uuid",
-      "userId": "cognito-sub",
-      "teamId": "team-uuid",
-      "role": "member",
-      "status": "active"
-    }
+  "invite": {
+    "id": "invite-uuid",
+    "status": "accepted",
+    "email": "newplayer@example.com",
+    "teamId": "team-uuid",
+    "role": "member",
+    "expiresAt": "2024-11-01T10:00:00Z"
+  },
+  "member": {
+    "id": "member-uuid",
+    "userId": "cognito-sub",
+    "teamId": "team-uuid",
+    "role": "member",
+    "status": "active"
   }
 }
 ```
@@ -173,7 +167,7 @@ The invites system manages team membership invitations via email tokens. Some en
 
 ### Get Team Invites
 
-- **Endpoint**: `GET /v1/teams/{teamId}/invites`
+- **Endpoint**: `GET /api/v1/teams/{teamId}/invites`
 - **Auth**: Global Admin or team member with `invites:write` permission
 - **Description**: Returns a paginated list of all invites for a team.
 
@@ -195,25 +189,23 @@ The invites system manages team membership invitations via email tokens. Some en
 ```json
 {
   "message": "Success",
-  "data": {
-    "items": [
-      {
-        "id": "invite-uuid",
-        "teamId": "team-uuid",
-        "email": "newplayer@example.com",
-        "role": "member",
-        "status": "pending",
-        "token": "hashed-token-string",
-        "invitedBy": "cognito-sub",
-        "expiresAt": "2024-11-01T10:00:00Z",
-        "createdAt": "2024-10-25T10:00:00Z",
-        "updatedAt": "2024-10-25T10:00:00Z"
-      }
-    ],
-    "count": 1,
-    "nextToken": "",
-    "hasMore": false
-  }
+  "items": [
+    {
+      "id": "invite-uuid",
+      "teamId": "team-uuid",
+      "email": "newplayer@example.com",
+      "role": "member",
+      "status": "pending",
+      "token": "hashed-token-string",
+      "invitedBy": "cognito-sub",
+      "expiresAt": "2024-11-01T10:00:00Z",
+      "createdAt": "2024-10-25T10:00:00Z",
+      "updatedAt": "2024-10-25T10:00:00Z"
+    }
+  ],
+  "count": 1,
+  "nextToken": "",
+  "hasMore": false
 }
 ```
 
@@ -228,7 +220,7 @@ The invites system manages team membership invitations via email tokens. Some en
 
 ### Revoke Invite
 
-- **Endpoint**: `DELETE /v1/invites/{inviteId}`
+- **Endpoint**: `DELETE /api/v1/invites/{inviteId}`
 - **Auth**: Global Admin or team member with `invites:write` permission
 - **Description**: Revokes a pending invite so it can no longer be accepted.
 
@@ -242,13 +234,11 @@ The invites system manages team membership invitations via email tokens. Some en
 ```json
 {
   "message": "Success",
-  "data": {
-    "invite": {
-      "id": "invite-uuid",
-      "status": "revoked",
-      "revokedBy": "cognito-sub",
-      "revokedAt": "2024-10-27T10:00:00Z"
-    }
+  "invite": {
+    "id": "invite-uuid",
+    "status": "revoked",
+    "revokedBy": "cognito-sub",
+    "revokedAt": "2024-10-27T10:00:00Z"
   }
 }
 ```
@@ -265,7 +255,7 @@ The invites system manages team membership invitations via email tokens. Some en
 
 ### Resend Invite
 
-- **Endpoint**: `PATCH /v1/invites/{inviteId}`
+- **Endpoint**: `PATCH /api/v1/invites/{inviteId}`
 - **Auth**: Global Admin or team member with `invites:write` permission
 - **Description**: Resends the invitation email for a pending invite.
 
@@ -279,12 +269,10 @@ The invites system manages team membership invitations via email tokens. Some en
 ```json
 {
   "message": "Success",
-  "data": {
-    "invite": {
-      "id": "invite-uuid",
-      "status": "pending",
-      "email": "newplayer@example.com"
-    }
+  "invite": {
+    "id": "invite-uuid",
+    "status": "pending",
+    "email": "newplayer@example.com"
   }
 }
 ```

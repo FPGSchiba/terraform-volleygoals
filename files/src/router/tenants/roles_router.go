@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -40,11 +41,23 @@ func ListRoleDefinitions(ctx context.Context, event events.APIGatewayProxyReques
 	if !ok {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
-	roles, err := db.ListRoleDefinitionsByTenant(ctx, tenantId)
+	tenantRoles, err := db.ListRoleDefinitionsByTenant(ctx, tenantId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
-	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{"roles": roles})
+
+	globalRoles, err := db.ListRoleDefinitionsByTenant(ctx, "global")
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	// Combine tenant and global roles. Global roles are represented in their
+	// RoleDefinition (they typically have TenantId == "global" and IsDefault set).
+	var respItems []*models.RoleDefinition
+	respItems = append(respItems, tenantRoles...)
+	respItems = append(respItems, globalRoles...)
+
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{"items": respItems})
 }
 
 func CreateRoleDefinition(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {

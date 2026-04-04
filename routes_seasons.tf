@@ -41,7 +41,7 @@ module "create_season_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
+  create_options_method = true
   http_methods          = ["POST"]
   name_overwrite        = "create-season"
   path_name             = "seasons"
@@ -403,7 +403,7 @@ module "create_progress_report_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
+  create_options_method = true
   http_methods          = ["POST"]
   name_overwrite        = "create-progress-report"
   path_name             = "progress-reports"

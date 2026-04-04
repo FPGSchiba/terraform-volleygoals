@@ -184,3 +184,104 @@ func GetTenantMemberById(ctx context.Context, memberId string) (*models.TenantMe
 	err = attributevalue.UnmarshalMap(result.Item, &member)
 	return &member, err
 }
+
+// ListTenants returns a page of tenants according to TenantFilter.
+func ListTenants(ctx context.Context, filter TenantFilter) ([]*models.Tenant, int, *models.Cursor, bool, error) {
+	client = GetClient()
+
+	// ensure sane default limit
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 25
+	}
+
+	in := &dynamodb.ScanInput{
+		TableName: aws.String(tenantsTableName),
+		Limit:     aws.Int32(int32(limit)),
+	}
+
+	// Build filter expression using TenantFilter
+	if expr, vals, names := filter.BuildExpression(); expr != "" {
+		in.FilterExpression = aws.String(expr)
+		in.ExpressionAttributeValues = vals
+		if len(names) > 0 {
+			in.ExpressionAttributeNames = names
+		}
+	}
+
+	// Resume from cursor if provided
+	if filter.Cursor != nil && filter.Cursor.LastID != "" {
+		in.ExclusiveStartKey = map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: filter.Cursor.LastID},
+		}
+	}
+
+	result, err := client.Scan(ctx, in)
+	if err != nil {
+		return nil, 0, nil, false, err
+	}
+	var tenants []*models.Tenant
+	if err := attributevalue.UnmarshalListOfMaps(result.Items, &tenants); err != nil {
+		return nil, 0, nil, false, err
+	}
+	// Build cursor from LastEvaluatedKey if present
+	nextCursor, hasMore := nextCursorFromLEK(result.LastEvaluatedKey)
+	return tenants, len(tenants), nextCursor, hasMore, nil
+}
+
+// ListTenantMembers returns a page of tenant members for the given tenant according to TenantMemberFilter.
+func ListTenantMembers(ctx context.Context, tenantId string, filter TenantMemberFilter) ([]*models.TenantMember, int, *models.Cursor, bool, error) {
+	client = GetClient()
+
+	// ensure sane default limit
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 25
+	}
+	in := &dynamodb.ScanInput{
+		TableName: aws.String(tenantMembersTableName),
+		Limit:     aws.Int32(int32(limit)),
+	}
+
+	// Build filter expression using TenantMemberFilter
+	expr, vals, names := filter.BuildExpression()
+
+	// Always filter by tenantId
+	tenantExpr := "#tenantId = :tenantId"
+	if expr != "" {
+		expr = expr + " AND " + tenantExpr
+	} else {
+		expr = tenantExpr
+	}
+	if names == nil {
+		names = make(map[string]string)
+	}
+	names["#tenantId"] = "tenantId"
+	if vals == nil {
+		vals = make(map[string]types.AttributeValue)
+	}
+	vals[":tenantId"] = &types.AttributeValueMemberS{Value: tenantId}
+
+	in.FilterExpression = aws.String(expr)
+	in.ExpressionAttributeNames = names
+	in.ExpressionAttributeValues = vals
+
+	// Resume from cursor if provided
+	if filter.Cursor != nil && filter.Cursor.LastID != "" {
+		in.ExclusiveStartKey = map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: filter.Cursor.LastID},
+		}
+	}
+
+	result, err := client.Scan(ctx, in)
+	if err != nil {
+		return nil, 0, nil, false, err
+	}
+	var members []*models.TenantMember
+	if err := attributevalue.UnmarshalListOfMaps(result.Items, &members); err != nil {
+		return nil, 0, nil, false, err
+	}
+	nextCursor, hasMore := nextCursorFromLEK(result.LastEvaluatedKey)
+	return members, len(members), nextCursor, hasMore, nil
+}
+

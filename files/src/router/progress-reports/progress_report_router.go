@@ -66,7 +66,7 @@ func CreateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 		entries = append(entries, db.ProgressEntry{GoalId: p.GoalId, Rating: p.Rating, Details: p.Details})
 	}
 
-	report, err := db.CreateProgressReport(ctx, seasonId, authorId, request.Summary, request.Details, request.OverallDetails, entries, authorName, authorPicture)
+	report, err := db.CreateProgressReport(ctx, seasonId, authorId, request.Summary, request.Details, request.OverallDetails, request.ReportedAt, entries, authorName, authorPicture)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
 	}

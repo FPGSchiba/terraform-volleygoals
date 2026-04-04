@@ -178,3 +178,88 @@ func RemoveTenantMember(ctx context.Context, event events.APIGatewayProxyRequest
 	}
 	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, nil)
 }
+
+func ListTenants(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	}
+
+	// Parse tenant filter (includes pagination/sort)
+	filter, err := db.TenantFilterFromQuery(event.QueryStringParameters)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+	}
+
+	items, count, nextCursor, hasMore, err := db.ListTenants(ctx, filter)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	outNextToken := ""
+	if nextCursor != nil {
+		outNextToken, err = models.EncodeCursor(nextCursor)
+		if err != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+		}
+	}
+
+	resp := models.PaginationResponse{
+		Items:     items,
+		Count:     count,
+		NextToken: outNextToken,
+		HasMore:   hasMore,
+	}
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+		"items":     resp.Items,
+		"count":     resp.Count,
+		"nextToken": resp.NextToken,
+		"hasMore":   resp.HasMore,
+	})
+}
+
+func ListTenantMembers(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
+	tenantId := event.PathParameters["tenantId"]
+	if tenantId == "" {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+	}
+	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		isTA, err := db.IsTenantAdmin(ctx, utils.GetCognitoUsername(event.RequestContext.Authorizer), tenantId)
+		if err != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+		}
+		if !isTA {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
+	}
+
+	// parse tenant member filter (includes pagination)
+	filter, err := db.TenantMemberFilterFromQuery(event.QueryStringParameters)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+	}
+	items, count, nextCursor, hasMore, err := db.ListTenantMembers(ctx, tenantId, filter)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	outNextToken := ""
+	if nextCursor != nil {
+		outNextToken, err = models.EncodeCursor(nextCursor)
+		if err != nil {
+			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+		}
+	}
+
+	resp := models.PaginationResponse{
+		Items:     items,
+		Count:     count,
+		NextToken: outNextToken,
+		HasMore:   hasMore,
+	}
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{
+		"items":     resp.Items,
+		"count":     resp.Count,
+		"nextToken": resp.NextToken,
+		"hasMore":   resp.HasMore,
+	})
+}

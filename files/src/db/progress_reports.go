@@ -21,7 +21,7 @@ type ProgressEntry struct {
 	Details string
 }
 
-func CreateProgressReport(ctx context.Context, seasonId, authorId, summary, details, overallDetails string, progressEntries []ProgressEntry, authorName *string, authorPicture *string) (*models.ProgressReport, error) {
+func CreateProgressReport(ctx context.Context, seasonId, authorId, summary, details, overallDetails string, reportedAt time.Time, progressEntries []ProgressEntry, authorName *string, authorPicture *string) (*models.ProgressReport, error) {
 	client = GetClient()
 	now := time.Now()
 	report := &models.ProgressReport{
@@ -33,6 +33,7 @@ func CreateProgressReport(ctx context.Context, seasonId, authorId, summary, deta
 		OverallDetails: overallDetails,
 		AuthorName:     authorName,
 		AuthorPicture:  authorPicture,
+		ReportDate:     reportedAt,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}

@@ -99,6 +99,82 @@ type TeamFilter struct {
 	Status       string // "active" | "inactive" | ""
 }
 
+// TenantFilter defines filterable fields for tenants.
+// Filterable fields proposed:
+// - name (partial match) => name / name_contains
+// - ownerId (exact match) => ownerId
+// - createdAfter / createdBefore (RFC3339 timestamps) => createdAfter, createdBefore
+type TenantFilter struct {
+	FilterOptions
+	NameContains   string
+	OwnerId        string
+	CreatedAfter   *time.Time
+	CreatedBefore  *time.Time
+}
+
+// BuildExpression builds a DynamoDB filter expression for tenants.
+func (f *TenantFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.NameContains) != "" {
+		parts = append(parts, "contains(#n, :name)")
+		names["#n"] = "name"
+		values[":name"] = &types.AttributeValueMemberS{Value: f.NameContains}
+	}
+	if strings.TrimSpace(f.OwnerId) != "" {
+		parts = append(parts, "#ownerId = :ownerId")
+		names["#ownerId"] = "ownerId"
+		values[":ownerId"] = &types.AttributeValueMemberS{Value: f.OwnerId}
+	}
+	if f.CreatedAfter != nil {
+		parts = append(parts, "createdAt >= :createdAfter")
+		values[":createdAfter"] = &types.AttributeValueMemberS{Value: f.CreatedAfter.Format(time.RFC3339)}
+	}
+	if f.CreatedBefore != nil {
+		parts = append(parts, "createdAt <= :createdBefore")
+		values[":createdBefore"] = &types.AttributeValueMemberS{Value: f.CreatedBefore.Format(time.RFC3339)}
+	}
+
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// TenantFilterFromQuery parses tenant-specific and generic filter params from QueryStringParameters.
+func TenantFilterFromQuery(q map[string]string) (TenantFilter, error) {
+	var t TenantFilter
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return t, err
+	}
+	t.FilterOptions = fo
+
+	if v, ok := q["name"]; ok && strings.TrimSpace(v) != "" {
+		t.NameContains = strings.TrimSpace(v)
+	}
+	if v, ok := q["ownerId"]; ok && strings.TrimSpace(v) != "" {
+		t.OwnerId = strings.TrimSpace(v)
+	}
+	if v, ok := q["createdAfter"]; ok && strings.TrimSpace(v) != "" {
+		tt, err := time.Parse(time.RFC3339, strings.TrimSpace(v))
+		if err != nil {
+			return t, fmt.Errorf("invalid createdAfter: must be RFC3339 / ISO 8601")
+		}
+		t.CreatedAfter = &tt
+	}
+	if v, ok := q["createdBefore"]; ok && strings.TrimSpace(v) != "" {
+		tt, err := time.Parse(time.RFC3339, strings.TrimSpace(v))
+		if err != nil {
+			return t, fmt.Errorf("invalid createdBefore: must be RFC3339 / ISO 8601")
+		}
+		t.CreatedBefore = &tt
+	}
+	return t, nil
+}
+
 // BuildExpression builds a DynamoDB filter expression for teams.
 func (f *TeamFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
 	parts := make([]string, 0)
@@ -227,6 +303,62 @@ type TeamMemberFilter struct {
 	Status       string // "active" | "invited" | "removed" | "left" | ""
 	NameContains  string // partial match on user name (applied in-memory after enrichment)
 	EmailContains string // partial match on user email (applied in-memory after enrichment)
+}
+
+// TenantMemberFilter is used for listing tenant members. Filterable fields proposed:
+// - role (exact), userId (exact), status (exact)
+type TenantMemberFilter struct {
+	FilterOptions
+	Role   string
+	UserId string
+	Status string
+}
+
+// BuildExpression builds a DynamoDB filter expression for tenant members.
+func (f *TenantMemberFilter) BuildExpression() (string, map[string]types.AttributeValue, map[string]string) {
+	parts := make([]string, 0)
+	values := make(map[string]types.AttributeValue)
+	names := make(map[string]string)
+
+	if strings.TrimSpace(f.Role) != "" {
+		parts = append(parts, "#role = :role")
+		names["#role"] = "role"
+		values[":role"] = &types.AttributeValueMemberS{Value: f.Role}
+	}
+	if strings.TrimSpace(f.UserId) != "" {
+		parts = append(parts, "#userId = :userId")
+		names["#userId"] = "userId"
+		values[":userId"] = &types.AttributeValueMemberS{Value: f.UserId}
+	}
+	if strings.TrimSpace(f.Status) != "" {
+		parts = append(parts, "#status = :status")
+		names["#status"] = "status"
+		values[":status"] = &types.AttributeValueMemberS{Value: f.Status}
+	}
+	if len(parts) == 0 {
+		return "", nil, nil
+	}
+	return strings.Join(parts, " AND "), values, names
+}
+
+// TenantMemberFilterFromQuery parses tenant-member-specific and generic filter params.
+func TenantMemberFilterFromQuery(q map[string]string) (TenantMemberFilter, error) {
+	var t TenantMemberFilter
+	fo, err := FilterOptionsFromQuery(q, defaultPageSize, maxPageSize)
+	if err != nil {
+		return t, err
+	}
+	t.FilterOptions = fo
+	if v, ok := q["role"]; ok {
+		t.Role = strings.TrimSpace(v)
+	}
+	if v, ok := q["userId"]; ok {
+		t.UserId = strings.TrimSpace(v)
+	}
+	if v, ok := q["status"]; ok {
+		t.Status = strings.TrimSpace(v)
+	}
+	return t, nil
 }
 
 // BuildExpression builds a DynamoDB filter expression for team members.

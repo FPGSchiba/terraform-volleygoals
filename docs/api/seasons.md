@@ -1,12 +1,12 @@
 # Seasons API
 
-All season endpoints are under `/v1/seasons`. Seasons belong to a team and act as the top-level container for Goals and Progress Reports.
+All season endpoints are under `/api/v1/seasons`. Seasons belong to a team and act as the top-level container for Goals and Progress Reports.
 
 ---
 
 ### Create Season
 
-- **Endpoint**: `POST /v1/seasons`
+- **Endpoint**: `POST /api/v1/seasons`
 - **Auth**: Team member with `seasons:write` permission
 - **Description**: Creates a new season for the given team.
 
@@ -31,17 +31,15 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 ```json
 {
   "message": "Success",
-  "data": {
-    "season": {
-      "id": "season-uuid",
-      "teamId": "team-uuid",
-      "name": "Season 2024/2025",
-      "startDate": "2024-09-01T00:00:00Z",
-      "endDate": "2025-05-31T23:59:59Z",
-      "status": "planned",
-      "createdAt": "2024-08-01T10:00:00Z",
-      "updatedAt": "2024-08-01T10:00:00Z"
-    }
+  "season": {
+    "id": "season-uuid",
+    "teamId": "team-uuid",
+    "name": "Season 2024/2025",
+    "startDate": "2024-09-01T00:00:00Z",
+    "endDate": "2025-05-31T23:59:59Z",
+    "status": "planned",
+    "createdAt": "2024-08-01T10:00:00Z",
+    "updatedAt": "2024-08-01T10:00:00Z"
   }
 }
 ```
@@ -57,7 +55,7 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 
 ### Get Season
 
-- **Endpoint**: `GET /v1/seasons/{seasonId}`
+- **Endpoint**: `GET /api/v1/seasons/{seasonId}`
 - **Auth**: Team member with `seasons:read` permission (team member or above)
 - **Description**: Returns a single season by ID.
 
@@ -71,17 +69,15 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 ```json
 {
   "message": "Success",
-  "data": {
-    "season": {
-      "id": "season-uuid",
-      "teamId": "team-uuid",
-      "name": "Season 2024/2025",
-      "startDate": "2024-09-01T00:00:00Z",
-      "endDate": "2025-05-31T23:59:59Z",
-      "status": "active",
-      "createdAt": "2024-08-01T10:00:00Z",
-      "updatedAt": "2024-09-01T00:00:00Z"
-    }
+  "season": {
+    "id": "season-uuid",
+    "teamId": "team-uuid",
+    "name": "Season 2024/2025",
+    "startDate": "2024-09-01T00:00:00Z",
+    "endDate": "2025-05-31T23:59:59Z",
+    "status": "active",
+    "createdAt": "2024-08-01T10:00:00Z",
+    "updatedAt": "2024-09-01T00:00:00Z"
   }
 }
 ```
@@ -97,7 +93,7 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 
 ### List Seasons
 
-- **Endpoint**: `GET /v1/seasons`
+- **Endpoint**: `GET /api/v1/seasons`
 - **Auth**: Team member with `seasons:read` permission
 - **Description**: Returns a paginated list of seasons for a specific team. `teamId` is required.
 
@@ -115,23 +111,21 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 ```json
 {
   "message": "Success",
-  "data": {
-    "items": [
-      {
-        "id": "season-uuid",
-        "teamId": "team-uuid",
-        "name": "Season 2024/2025",
-        "startDate": "2024-09-01T00:00:00Z",
-        "endDate": "2025-05-31T23:59:59Z",
-        "status": "active",
-        "createdAt": "2024-08-01T10:00:00Z",
-        "updatedAt": "2024-09-01T00:00:00Z"
-      }
-    ],
-    "count": 1,
-    "nextToken": "",
-    "hasMore": false
-  }
+  "items": [
+    {
+      "id": "season-uuid",
+      "teamId": "team-uuid",
+      "name": "Season 2024/2025",
+      "startDate": "2024-09-01T00:00:00Z",
+      "endDate": "2025-05-31T23:59:59Z",
+      "status": "active",
+      "createdAt": "2024-08-01T10:00:00Z",
+      "updatedAt": "2024-09-01T00:00:00Z"
+    }
+  ],
+  "count": 1,
+  "nextToken": "",
+  "hasMore": false
 }
 ```
 
@@ -146,7 +140,7 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 
 ### Update Season
 
-- **Endpoint**: `PATCH /v1/seasons/{seasonId}`
+- **Endpoint**: `PATCH /api/v1/seasons/{seasonId}`
 - **Auth**: Team member with `seasons:write` permission (trainer or admin)
 - **Description**: Updates a season's name, dates, or status.
 
@@ -177,17 +171,15 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 ```json
 {
   "message": "Success",
-  "data": {
-    "season": {
-      "id": "season-uuid",
-      "teamId": "team-uuid",
-      "name": "Updated Season Name",
-      "startDate": "2024-09-15T00:00:00Z",
-      "endDate": "2025-06-15T23:59:59Z",
-      "status": "active",
-      "createdAt": "2024-08-01T10:00:00Z",
-      "updatedAt": "2024-09-15T00:00:00Z"
-    }
+  "season": {
+    "id": "season-uuid",
+    "teamId": "team-uuid",
+    "name": "Updated Season Name",
+    "startDate": "2024-09-15T00:00:00Z",
+    "endDate": "2025-06-15T23:59:59Z",
+    "status": "active",
+    "createdAt": "2024-08-01T10:00:00Z",
+    "updatedAt": "2024-09-15T00:00:00Z"
   }
 }
 ```
@@ -204,7 +196,7 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 
 ### Delete Season
 
-- **Endpoint**: `DELETE /v1/seasons/{seasonId}`
+- **Endpoint**: `DELETE /api/v1/seasons/{seasonId}`
 - **Auth**: Team member with `seasons:write` permission (trainer or admin)
 - **Description**: Deletes a season.
 
@@ -217,8 +209,7 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 **Response** `200 OK`
 ```json
 {
-  "message": "Success",
-  "data": null
+  "message": "Success"
 }
 ```
 
@@ -233,7 +224,7 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 
 ### Get Season Stats
 
-- **Endpoint**: `GET /v1/seasons/{seasonId}/stats`
+- **Endpoint**: `GET /api/v1/seasons/{seasonId}/stats`
 - **Auth**: Team member with `seasons:read` permission
 - **Description**: Returns aggregated statistics for a season.
 
@@ -247,15 +238,13 @@ All season endpoints are under `/v1/seasons`. Seasons belong to a team and act a
 ```json
 {
   "message": "Success",
-  "data": {
-    "stats": {
-      "goalCount": 12,
-      "completedGoalCount": 4,
-      "openGoalCount": 5,
-      "inProgressGoalCount": 3,
-      "reportCount": 8,
-      "memberCount": 15
-    }
+  "stats": {
+    "goalCount": 12,
+    "completedGoalCount": 4,
+    "openGoalCount": 5,
+    "inProgressGoalCount": 3,
+    "reportCount": 8,
+    "memberCount": 15
   }
 }
 ```
