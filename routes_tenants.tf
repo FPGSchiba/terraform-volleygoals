@@ -648,6 +648,7 @@ module "list_tenants_ms" {
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
   enable_tracing        = true
+  create_options_method = false
   timeout               = 29
   vpc_networked         = false
   environment_variables = local.lambda_environment_variables
