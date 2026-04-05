@@ -352,7 +352,7 @@ func fetchAndValidateInvite(ctx context.Context, token string) (*models.Invite, 
 		}
 		return nil, resp, e
 	}
-	
+
 	if !utils.ValidateInviteToken(token, invite.Email, invite.TeamId, invite.Role) {
 		resp, e := utils.ErrorResponse(http.StatusBadRequest, utils.MsgErrorInvalidInviteToken, nil)
 		return nil, resp, e

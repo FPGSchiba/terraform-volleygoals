@@ -8,7 +8,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### List Teams
 
-- **Endpoint**: `GET /v1/teams`
+- **Endpoint**: `GET /api/v1/teams`
 - **Auth**: Global Admin only
 - **Description**: Returns a paginated list of all teams.
 
@@ -25,23 +25,21 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Success",
-  "data": {
-    "items": [
-      {
-        "id": "team-uuid",
-        "name": "Volleyball Team A",
-        "status": "active",
-        "picture": "https://cdn.example.com/teams/team-uuid/logo.jpg",
-        "tenantId": "tenant-uuid",
-        "createdAt": "2024-01-15T10:00:00Z",
-        "updatedAt": "2024-06-01T12:00:00Z",
-        "deletedAt": null
-      }
-    ],
-    "count": 1,
-    "nextToken": "",
-    "hasMore": false
-  }
+  "items": [
+    {
+      "id": "team-uuid",
+      "name": "Volleyball Team A",
+      "status": "active",
+      "picture": "https://cdn.example.com/teams/team-uuid/logo.jpg",
+      "tenantId": "tenant-uuid",
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-06-01T12:00:00Z",
+      "deletedAt": null
+    }
+  ],
+  "count": 1,
+  "nextToken": "",
+  "hasMore": false
 }
 ```
 
@@ -55,7 +53,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Get Team
 
-- **Endpoint**: `GET /v1/teams/{teamId}`
+- **Endpoint**: `GET /api/v1/teams/{teamId}`
 - **Auth**: Global Admin or team member with `teams:read` permission
 - **Description**: Returns a single team and its settings.
 
@@ -69,26 +67,24 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Success",
-  "data": {
-    "team": {
-      "id": "team-uuid",
-      "name": "Volleyball Team A",
-      "status": "active",
-      "picture": "https://cdn.example.com/teams/team-uuid/logo.jpg",
-      "tenantId": "tenant-uuid",
-      "createdAt": "2024-01-15T10:00:00Z",
-      "updatedAt": "2024-06-01T12:00:00Z",
-      "deletedAt": null
-    },
-    "teamSettings": {
-      "id": "settings-uuid",
-      "teamId": "team-uuid",
-      "allowFileUploads": true,
-      "allowTeamGoalComments": true,
-      "allowIndividualGoalComments": false,
-      "createdAt": "2024-01-15T10:00:00Z",
-      "updatedAt": "2024-06-01T12:00:00Z"
-    }
+  "team": {
+    "id": "team-uuid",
+    "name": "Volleyball Team A",
+    "status": "active",
+    "picture": "https://cdn.example.com/teams/team-uuid/logo.jpg",
+    "tenantId": "tenant-uuid",
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-06-01T12:00:00Z",
+    "deletedAt": null
+  },
+  "teamSettings": {
+    "id": "settings-uuid",
+    "teamId": "team-uuid",
+    "allowFileUploads": true,
+    "allowTeamGoalComments": true,
+    "allowIndividualGoalComments": false,
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-06-01T12:00:00Z"
   }
 }
 ```
@@ -105,7 +101,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Create Team
 
-- **Endpoint**: `POST /v1/teams`
+- **Endpoint**: `POST /api/v1/teams`
 - **Auth**: Global Admin only
 - **Description**: Creates a new team with default settings.
 
@@ -124,16 +120,14 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Team created successfully",
-  "data": {
-    "team": {
-      "id": "team-uuid",
-      "name": "Volleyball Team A",
-      "status": "active",
-      "picture": "",
-      "createdAt": "2024-01-15T10:00:00Z",
-      "updatedAt": "2024-01-15T10:00:00Z",
-      "deletedAt": null
-    }
+  "team": {
+    "id": "team-uuid",
+    "name": "Volleyball Team A",
+    "status": "active",
+    "picture": "",
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-01-15T10:00:00Z",
+    "deletedAt": null
   }
 }
 ```
@@ -149,7 +143,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Update Team
 
-- **Endpoint**: `PATCH /v1/teams/{teamId}`
+- **Endpoint**: `PATCH /api/v1/teams/{teamId}`
 - **Auth**: Global Admin only
 - **Description**: Updates a team's name or status.
 
@@ -176,16 +170,14 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Success",
-  "data": {
-    "team": {
-      "id": "team-uuid",
-      "name": "New Team Name",
-      "status": "inactive",
-      "picture": "",
-      "createdAt": "2024-01-15T10:00:00Z",
-      "updatedAt": "2024-06-01T12:00:00Z",
-      "deletedAt": null
-    }
+  "team": {
+    "id": "team-uuid",
+    "name": "New Team Name",
+    "status": "inactive",
+    "picture": "",
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-06-01T12:00:00Z",
+    "deletedAt": null
   }
 }
 ```
@@ -202,7 +194,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Delete Team
 
-- **Endpoint**: `DELETE /v1/teams/{teamId}`
+- **Endpoint**: `DELETE /api/v1/teams/{teamId}`
 - **Auth**: Global Admin only
 - **Description**: Deletes a team and all associated data.
 
@@ -215,8 +207,7 @@ Covers Teams, Team Settings, and Team Members.
 **Response** `200 OK`
 ```json
 {
-  "message": "Team deleted successfully",
-  "data": null
+  "message": "Team deleted successfully"
 }
 ```
 
@@ -231,7 +222,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Upload Team Picture (Presign)
 
-- **Endpoint**: `GET /v1/teams/{teamId}/picture/presign`
+- **Endpoint**: `GET /api/v1/teams/{teamId}/picture/presign`
 - **Auth**: Global Admin or team member with `teams:write` permission
 - **Description**: Generates a presigned S3 upload URL for the team's picture. After uploading directly to S3 using the returned URL, the team's `picture` field is automatically updated.
 
@@ -252,11 +243,9 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Success",
-  "data": {
-    "uploadUrl": "https://s3.amazonaws.com/bucket/teams/team-uuid/logo.png?X-Amz-...",
-    "key": "teams/team-uuid/logo.png",
-    "fileUrl": "https://cdn.example.com/teams/team-uuid/logo.png"
-  }
+  "uploadUrl": "https://s3.amazonaws.com/bucket/teams/team-uuid/logo.png?X-Amz-...",
+  "key": "teams/team-uuid/logo.png",
+  "fileUrl": "https://cdn.example.com/teams/team-uuid/logo.png"
 }
 ```
 
@@ -273,7 +262,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Update Team Settings
 
-- **Endpoint**: `PATCH /v1/teams/{teamId}/settings`
+- **Endpoint**: `PATCH /api/v1/teams/{teamId}/settings`
 - **Auth**: Global Admin or team member with `team_settings:write` permission
 - **Description**: Updates configurable settings for a team.
 
@@ -302,16 +291,14 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Success",
-  "data": {
-    "teamSettings": {
-      "id": "settings-uuid",
-      "teamId": "team-uuid",
-      "allowFileUploads": true,
-      "allowTeamGoalComments": true,
-      "allowIndividualGoalComments": false,
-      "createdAt": "2024-01-15T10:00:00Z",
-      "updatedAt": "2024-06-01T12:00:00Z"
-    }
+  "teamSettings": {
+    "id": "settings-uuid",
+    "teamId": "team-uuid",
+    "allowFileUploads": true,
+    "allowTeamGoalComments": true,
+    "allowIndividualGoalComments": false,
+    "createdAt": "2024-01-15T10:00:00Z",
+    "updatedAt": "2024-06-01T12:00:00Z"
   }
 }
 ```
@@ -330,7 +317,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### List Team Members
 
-- **Endpoint**: `GET /v1/teams/{teamId}/members`
+- **Endpoint**: `GET /api/v1/teams/{teamId}/members`
 - **Auth**: Global Admin or team member with `members:read` permission
 - **Description**: Returns a paginated list of team members enriched with user profile data. Regular members (`role=member`) receive a reduced public view.
 
@@ -353,26 +340,24 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Success",
-  "data": {
-    "items": [
-      {
-        "id": "member-uuid",
-        "userId": "cognito-sub",
-        "role": "trainer",
-        "status": "active",
-        "userStatus": "CONFIRMED",
-        "name": "Jane Doe",
-        "email": "jane@example.com",
-        "picture": "https://cdn.example.com/users/jane.jpg",
-        "preferredUsername": "jane_v",
-        "birthdate": "1990-05-20T00:00:00Z",
-        "joinedAt": "2024-02-01T09:00:00Z"
-      }
-    ],
-    "count": 1,
-    "nextToken": "",
-    "hasMore": false
-  }
+  "items": [
+    {
+      "id": "member-uuid",
+      "userId": "cognito-sub",
+      "role": "trainer",
+      "status": "active",
+      "userStatus": "CONFIRMED",
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "picture": "https://cdn.example.com/users/jane.jpg",
+      "preferredUsername": "jane_v",
+      "birthdate": "1990-05-20T00:00:00Z",
+      "joinedAt": "2024-02-01T09:00:00Z"
+    }
+  ],
+  "count": 1,
+  "nextToken": "",
+  "hasMore": false
 }
 ```
 
@@ -389,7 +374,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Add Team Member
 
-- **Endpoint**: `POST /v1/teams/{teamId}/members`
+- **Endpoint**: `POST /api/v1/teams/{teamId}/members`
 - **Auth**: Global Admin or team member with `members:write` permission
 - **Description**: Directly adds an existing user to a team by user ID (no invite flow).
 
@@ -416,18 +401,16 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Success",
-  "data": {
-    "teamMember": {
-      "id": "member-uuid",
-      "userId": "cognito-sub",
-      "teamId": "team-uuid",
-      "role": "member",
-      "status": "active",
-      "createdAt": "2024-06-01T10:00:00Z",
-      "updatedAt": "2024-06-01T10:00:00Z",
-      "joinedAt": "2024-06-01T10:00:00Z",
-      "leftAt": null
-    }
+  "teamMember": {
+    "id": "member-uuid",
+    "userId": "cognito-sub",
+    "teamId": "team-uuid",
+    "role": "member",
+    "status": "active",
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": "2024-06-01T10:00:00Z",
+    "joinedAt": "2024-06-01T10:00:00Z",
+    "leftAt": null
   }
 }
 ```
@@ -444,7 +427,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Update Team Member
 
-- **Endpoint**: `PATCH /v1/teams/{teamId}/members/{memberId}`
+- **Endpoint**: `PATCH /api/v1/teams/{teamId}/members/{memberId}`
 - **Auth**: Global Admin or team member with `members:write` permission. Assigning `admin` role requires `members:delete` permission.
 - **Description**: Updates a team member's role or status.
 
@@ -472,18 +455,16 @@ Covers Teams, Team Settings, and Team Members.
 ```json
 {
   "message": "Success",
-  "data": {
-    "teamMember": {
-      "id": "member-uuid",
-      "userId": "cognito-sub",
-      "teamId": "team-uuid",
-      "role": "trainer",
-      "status": "active",
-      "createdAt": "2024-06-01T10:00:00Z",
-      "updatedAt": "2024-06-10T08:00:00Z",
-      "joinedAt": "2024-06-01T10:00:00Z",
-      "leftAt": null
-    }
+  "teamMember": {
+    "id": "member-uuid",
+    "userId": "cognito-sub",
+    "teamId": "team-uuid",
+    "role": "trainer",
+    "status": "active",
+    "createdAt": "2024-06-01T10:00:00Z",
+    "updatedAt": "2024-06-10T08:00:00Z",
+    "joinedAt": "2024-06-01T10:00:00Z",
+    "leftAt": null
   }
 }
 ```
@@ -499,7 +480,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Remove Team Member
 
-- **Endpoint**: `DELETE /v1/teams/{teamId}/members/{memberId}`
+- **Endpoint**: `DELETE /api/v1/teams/{teamId}/members/{memberId}`
 - **Auth**: Global Admin or team member with `members:write` permission
 - **Description**: Removes a member from the team.
 
@@ -513,8 +494,7 @@ Covers Teams, Team Settings, and Team Members.
 **Response** `200 OK`
 ```json
 {
-  "message": "Success",
-  "data": null
+  "message": "Success"
 }
 ```
 
@@ -529,7 +509,7 @@ Covers Teams, Team Settings, and Team Members.
 
 ### Leave Team
 
-- **Endpoint**: `DELETE /v1/teams/{teamId}/members/leave`
+- **Endpoint**: `DELETE /api/v1/teams/{teamId}/members/leave`
 - **Auth**: Any authenticated team member
 - **Description**: The currently authenticated user leaves the team. Admins and Trainers can only leave if another Admin or Trainer exists in the team.
 
@@ -542,8 +522,7 @@ Covers Teams, Team Settings, and Team Members.
 **Response** `200 OK`
 ```json
 {
-  "message": "Success",
-  "data": null
+  "message": "Success"
 }
 ```
 
@@ -555,3 +534,70 @@ Covers Teams, Team Settings, and Team Members.
 | `401 Unauthorized` | Not authenticated |
 | `403 Forbidden` | Not a member of this team |
 | `406 Not Acceptable` | Last admin/trainer cannot leave |
+
+---
+
+### Get Team Activity
+
+- **Endpoint**: `GET /api/v1/teams/{teamId}/activity`
+- **Auth**: Global Admin or any team member
+- **Description**: Returns a paginated activity feed for a team. Regular members (`role=member`) only receive events with `visibility=all`; admins and trainers also receive staff-only events.
+
+**Path Parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `teamId` | string (UUID) | Yes | ID of the team |
+
+**Query Parameters**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | integer | No | Items per page |
+| `nextToken` | string | No | Pagination cursor |
+| `sortBy` | string | No | Field to sort by |
+| `sortOrder` | string | No | `asc` or `desc` |
+
+**Response** `200 OK`
+```json
+{
+  "message": "Success",
+  "items": [
+    {
+      "id": "activity-uuid",
+      "teamId": "team-uuid",
+      "actorId": "cognito-sub",
+      "actorName": "Jane Doe",
+      "actorPicture": "https://cdn.example.com/users/jane.jpg",
+      "action": "goal.status_changed",
+      "description": "Goal \"Improve serve accuracy\" status changed to completed",
+      "targetType": "goal",
+      "targetId": "goal-uuid",
+      "visibility": "all",
+      "timestamp": "2024-11-01T12:00:00Z"
+    }
+  ],
+  "count": 1,
+  "nextToken": "",
+  "hasMore": false
+}
+```
+
+**Activity Actions**
+
+| Action | Visibility | Description |
+|--------|------------|-------------|
+| `goal.status_changed` | `all` | A goal's status was updated |
+| `progress_report.created` | `all` | A new progress report was submitted |
+| `member.joined` | `all` | A new member joined the team |
+| `member.role_changed` | `admin_trainer` | A member's role was changed |
+| `member.removed` | `admin_trainer` | A member was removed |
+| `team_settings.updated` | `admin_trainer` | Team settings were changed |
+
+**Visibility Values**
+
+| Value | Who sees it |
+|-------|-------------|
+| `all` | All team members |
+| `admin_trainer` | Admins and trainers only |
+

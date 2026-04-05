@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/fpgschiba/volleygoals/db"
+	"github.com/fpgschiba/volleygoals/models"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -40,11 +42,23 @@ func ListRoleDefinitions(ctx context.Context, event events.APIGatewayProxyReques
 	if !ok {
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
-	roles, err := db.ListRoleDefinitionsByTenant(ctx, tenantId)
+	tenantRoles, err := db.ListRoleDefinitionsByTenant(ctx, tenantId)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
-	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{"roles": roles})
+
+	globalRoles, err := db.ListRoleDefinitionsByTenant(ctx, "global")
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	// Combine tenant and global roles. Global roles are represented in their
+	// RoleDefinition (they typically have TenantId == "global" and IsDefault set).
+	var respItems []*models.RoleDefinition
+	respItems = append(respItems, tenantRoles...)
+	respItems = append(respItems, globalRoles...)
+
+	return utils.SuccessResponse(http.StatusOK, utils.MsgSuccess, map[string]interface{}{"items": respItems})
 }
 
 func CreateRoleDefinition(ctx context.Context, event events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
@@ -61,6 +75,17 @@ func CreateRoleDefinition(ctx context.Context, event events.APIGatewayProxyReque
 	}
 	var req createRoleRequest
 	if err := json.Unmarshal([]byte(event.Body), &req); err != nil || req.Name == "" || len(req.Permissions) == 0 {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+	}
+	// Validate provided permissions against canonical definitions
+	cleaned := make([]string, 0, len(req.Permissions))
+	for _, p := range req.Permissions {
+		if strings.TrimSpace(p) == "" {
+			continue
+		}
+		cleaned = append(cleaned, strings.TrimSpace(p))
+	}
+	if err := models.ValidatePermissions(cleaned); err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
 	role, err := db.CreateRoleDefinition(ctx, tenantId, req.Name, req.Permissions, false)
@@ -96,6 +121,17 @@ func UpdateRoleDefinition(ctx context.Context, event events.APIGatewayProxyReque
 	}
 	var req updateRoleRequest
 	if err := json.Unmarshal([]byte(event.Body), &req); err != nil || len(req.Permissions) == 0 {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+	}
+	// Validate provided permissions
+	cleaned := make([]string, 0, len(req.Permissions))
+	for _, p := range req.Permissions {
+		if strings.TrimSpace(p) == "" {
+			continue
+		}
+		cleaned = append(cleaned, strings.TrimSpace(p))
+	}
+	if err := models.ValidatePermissions(cleaned); err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
 	updated, err := db.UpdateRoleDefinitionPermissions(ctx, roleId, req.Permissions)

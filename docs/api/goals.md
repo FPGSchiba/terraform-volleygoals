@@ -1,6 +1,6 @@
 # Goals API
 
-Goals are nested under seasons: `/v1/seasons/{seasonId}/goals`.
+Goals are nested under seasons: `/api/v1/seasons/{seasonId}/goals`.
 
 A goal can be either **individual** (owned by one player) or **team** (shared). Access is controlled by the goal owner and the caller's role.
 
@@ -8,7 +8,7 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 
 ### Create Goal
 
-- **Endpoint**: `POST /v1/seasons/{seasonId}/goals`
+- **Endpoint**: `POST /api/v1/seasons/{seasonId}/goals`
 - **Auth**: Team member with `goals:write` permission
 - **Description**: Creates a new goal within a season. The caller becomes the owner by default; a different `ownerId` can be specified if the caller has write permission.
 
@@ -39,20 +39,18 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 ```json
 {
   "message": "Success",
-  "data": {
-    "goal": {
-      "id": "goal-uuid",
-      "seasonId": "season-uuid",
-      "ownerId": "cognito-sub",
-      "goalType": "individual",
-      "picture": "",
-      "title": "Improve serve accuracy",
-      "description": "Achieve 80% first-serve accuracy by end of season",
-      "status": "open",
-      "createdBy": "cognito-sub",
-      "createdAt": "2024-09-10T08:00:00Z",
-      "updatedAt": "2024-09-10T08:00:00Z"
-    }
+  "goal": {
+    "id": "goal-uuid",
+    "seasonId": "season-uuid",
+    "ownerId": "cognito-sub",
+    "goalType": "individual",
+    "picture": "",
+    "title": "Improve serve accuracy",
+    "description": "Achieve 80% first-serve accuracy by end of season",
+    "status": "open",
+    "createdBy": "cognito-sub",
+    "createdAt": "2024-09-10T08:00:00Z",
+    "updatedAt": "2024-09-10T08:00:00Z"
   }
 }
 ```
@@ -68,7 +66,7 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 
 ### Get Goal
 
-- **Endpoint**: `GET /v1/seasons/{seasonId}/goals/{goalId}`
+- **Endpoint**: `GET /api/v1/seasons/{seasonId}/goals/{goalId}`
 - **Auth**: Global Admin, or team member with `goals:read` permission for own goals (ownership-aware)
 - **Description**: Returns a single goal. Non-admins can only read goals they own or have explicit access to via ownership policy.
 
@@ -83,20 +81,18 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 ```json
 {
   "message": "Success",
-  "data": {
-    "goal": {
-      "id": "goal-uuid",
-      "seasonId": "season-uuid",
-      "ownerId": "cognito-sub",
-      "goalType": "individual",
-      "picture": "https://cdn.example.com/goals/goal-uuid/picture.jpg",
-      "title": "Improve serve accuracy",
-      "description": "Achieve 80% first-serve accuracy by end of season",
-      "status": "in_progress",
-      "createdBy": "cognito-sub",
-      "createdAt": "2024-09-10T08:00:00Z",
-      "updatedAt": "2024-10-01T09:00:00Z"
-    }
+  "goal": {
+    "id": "goal-uuid",
+    "seasonId": "season-uuid",
+    "ownerId": "cognito-sub",
+    "goalType": "individual",
+    "picture": "https://cdn.example.com/goals/goal-uuid/picture.jpg",
+    "title": "Improve serve accuracy",
+    "description": "Achieve 80% first-serve accuracy by end of season",
+    "status": "in_progress",
+    "createdBy": "cognito-sub",
+    "createdAt": "2024-09-10T08:00:00Z",
+    "updatedAt": "2024-10-01T09:00:00Z"
   }
 }
 ```
@@ -113,7 +109,7 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 
 ### List Goals
 
-- **Endpoint**: `GET /v1/seasons/{seasonId}/goals`
+- **Endpoint**: `GET /api/v1/seasons/{seasonId}/goals`
 - **Auth**: Team member with `goals:read` permission. Non-admins can only see their own goals.
 - **Description**: Returns a paginated list of goals for a season. Non-admin callers are automatically filtered to their own goals.
 
@@ -137,33 +133,31 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 ```json
 {
   "message": "Success",
-  "data": {
-    "items": [
-      {
-        "id": "goal-uuid",
-        "seasonId": "season-uuid",
-        "ownerId": "cognito-sub",
-        "goalType": "individual",
-        "picture": "",
-        "title": "Improve serve accuracy",
-        "description": "Achieve 80% first-serve accuracy by end of season",
-        "status": "in_progress",
-        "createdBy": "cognito-sub",
-        "createdAt": "2024-09-10T08:00:00Z",
-        "updatedAt": "2024-10-01T09:00:00Z",
-        "owner": {
-          "id": "cognito-sub",
-          "name": "Jane Doe",
-          "preferredUsername": "jane_v",
-          "picture": "https://cdn.example.com/users/jane.jpg"
-        },
-        "completionPercentage": 60
-      }
-    ],
-    "count": 1,
-    "nextToken": "",
-    "hasMore": false
-  }
+  "items": [
+    {
+      "id": "goal-uuid",
+      "seasonId": "season-uuid",
+      "ownerId": "cognito-sub",
+      "goalType": "individual",
+      "picture": "",
+      "title": "Improve serve accuracy",
+      "description": "Achieve 80% first-serve accuracy by end of season",
+      "status": "in_progress",
+      "createdBy": "cognito-sub",
+      "createdAt": "2024-09-10T08:00:00Z",
+      "updatedAt": "2024-10-01T09:00:00Z",
+      "owner": {
+        "id": "cognito-sub",
+        "name": "Jane Doe",
+        "preferredUsername": "jane_v",
+        "picture": "https://cdn.example.com/users/jane.jpg"
+      },
+      "completionPercentage": 60
+    }
+  ],
+  "count": 1,
+  "nextToken": "",
+  "hasMore": false
 }
 ```
 
@@ -184,7 +178,7 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 
 ### Update Goal
 
-- **Endpoint**: `PATCH /v1/seasons/{seasonId}/goals/{goalId}`
+- **Endpoint**: `PATCH /api/v1/seasons/{seasonId}/goals/{goalId}`
 - **Auth**: Global Admin, or team member with `goals:write` on their own goals
 - **Description**: Updates a goal's owner, title, description, or status. Status changes emit an activity event.
 
@@ -216,20 +210,18 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 ```json
 {
   "message": "Success",
-  "data": {
-    "goal": {
-      "id": "goal-uuid",
-      "seasonId": "season-uuid",
-      "ownerId": "cognito-sub",
-      "goalType": "individual",
-      "picture": "",
-      "title": "Updated title",
-      "description": "Updated description",
-      "status": "completed",
-      "createdBy": "cognito-sub",
-      "createdAt": "2024-09-10T08:00:00Z",
-      "updatedAt": "2024-11-01T12:00:00Z"
-    }
+  "goal": {
+    "id": "goal-uuid",
+    "seasonId": "season-uuid",
+    "ownerId": "cognito-sub",
+    "goalType": "individual",
+    "picture": "",
+    "title": "Updated title",
+    "description": "Updated description",
+    "status": "completed",
+    "createdBy": "cognito-sub",
+    "createdAt": "2024-09-10T08:00:00Z",
+    "updatedAt": "2024-11-01T12:00:00Z"
   }
 }
 ```
@@ -246,7 +238,7 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 
 ### Delete Goal
 
-- **Endpoint**: `DELETE /v1/seasons/{seasonId}/goals/{goalId}`
+- **Endpoint**: `DELETE /api/v1/seasons/{seasonId}/goals/{goalId}`
 - **Auth**: Global Admin, or team member with `goals:delete` permission for own goals
 - **Description**: Deletes a goal.
 
@@ -271,7 +263,7 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 
 ### Upload Goal Picture (Presign)
 
-- **Endpoint**: `GET /v1/seasons/{seasonId}/goals/{goalId}/picture/presign`
+- **Endpoint**: `GET /api/v1/seasons/{seasonId}/goals/{goalId}/picture/presign`
 - **Auth**: Global Admin, or team member with `goals:write` on their own goal
 - **Description**: Generates a presigned S3 upload URL for a goal picture. After uploading to S3 via the returned URL, the goal's `picture` field is automatically updated.
 
@@ -293,11 +285,9 @@ A goal can be either **individual** (owned by one player) or **team** (shared). 
 ```json
 {
   "message": "Success",
-  "data": {
-    "uploadUrl": "https://s3.amazonaws.com/bucket/goals/goal-uuid/goal-pic.jpg?X-Amz-...",
-    "key": "goals/goal-uuid/goal-pic.jpg",
-    "fileUrl": "https://cdn.example.com/goals/goal-uuid/goal-pic.jpg"
-  }
+  "uploadUrl": "https://s3.amazonaws.com/bucket/goals/goal-uuid/goal-pic.jpg?X-Amz-...",
+  "key": "goals/goal-uuid/goal-pic.jpg",
+  "fileUrl": "https://cdn.example.com/goals/goal-uuid/goal-pic.jpg"
 }
 ```
 

@@ -14,18 +14,18 @@ const (
 )
 
 type Activity struct {
-	Id           string             `dynamodbav:"id" json:"id"`
-	TeamId       string             `dynamodbav:"teamId" json:"teamId"`
-	ActorId      string             `dynamodbav:"actorId" json:"actorId"`
-	ActorName    string             `dynamodbav:"actorName" json:"actorName"`
-	ActorPicture string             `dynamodbav:"actorPicture" json:"actorPicture,omitempty"`
-	Action       string             `dynamodbav:"action" json:"action"`
-	Description  string             `dynamodbav:"description" json:"description"`
-	TargetType   string             `dynamodbav:"targetType" json:"targetType,omitempty"`
+	Id            string             `dynamodbav:"id" json:"id"`
+	TeamId        string             `dynamodbav:"teamId" json:"teamId"`
+	ActorId       string             `dynamodbav:"actorId" json:"actorId"`
+	ActorName     string             `dynamodbav:"actorName" json:"actorName"`
+	ActorPicture  string             `dynamodbav:"actorPicture" json:"actorPicture,omitempty"`
+	Action        string             `dynamodbav:"action" json:"action"`
+	Description   string             `dynamodbav:"description" json:"description"`
+	TargetType    string             `dynamodbav:"targetType" json:"targetType,omitempty"`
 	TargetId      string             `dynamodbav:"targetId" json:"targetId,omitempty"`
 	TargetOwnerId string             `dynamodbav:"targetOwnerId" json:"targetOwnerId,omitempty"`
 	Visibility    ActivityVisibility `dynamodbav:"visibility" json:"visibility"`
-	Timestamp    time.Time          `dynamodbav:"timestamp" json:"timestamp"`
+	Timestamp     time.Time          `dynamodbav:"timestamp" json:"timestamp"`
 }
 
 func (a *Activity) ToAttributeValues() map[string]types.AttributeValue {

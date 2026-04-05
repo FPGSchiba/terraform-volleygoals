@@ -1,12 +1,12 @@
 # Self API
 
-The Self API allows the currently authenticated user to read and update their own profile. All endpoints are under `/v1/self`.
+The Self API allows the currently authenticated user to read and update their own profile. All endpoints are under `/api/v1/self`.
 
 ---
 
 ### Get Self
 
-- **Endpoint**: `GET /v1/self`
+- **Endpoint**: `GET /api/v1/self`
 - **Auth**: Any authenticated user
 - **Description**: Returns the current user's profile and all their team assignments (team + role + status).
 
@@ -14,36 +14,34 @@ The Self API allows the currently authenticated user to read and update their ow
 ```json
 {
   "message": "Success",
-  "data": {
-    "user": {
-      "id": "cognito-sub",
-      "email": "jane@example.com",
-      "name": "Jane Doe",
-      "preferredUsername": "jane_v",
-      "picture": "https://cdn.example.com/users/jane.jpg",
-      "birthdate": "1990-05-20T00:00:00Z",
-      "locale": "en",
-      "userStatus": "CONFIRMED",
-      "userType": "user",
-      "enabled": true,
-      "createdAt": "2024-01-01T08:00:00Z",
-      "updatedAt": "2024-06-01T12:00:00Z"
-    },
-    "assignments": [
-      {
-        "team": {
-          "id": "team-uuid",
-          "name": "Volleyball Team A",
-          "status": "active",
-          "picture": "https://cdn.example.com/teams/team-uuid/logo.jpg",
-          "createdAt": "2024-01-15T10:00:00Z",
-          "updatedAt": "2024-06-01T12:00:00Z"
-        },
-        "role": "trainer",
-        "status": "active"
-      }
-    ]
-  }
+  "user": {
+    "id": "cognito-sub",
+    "email": "jane@example.com",
+    "name": "Jane Doe",
+    "preferredUsername": "jane_v",
+    "picture": "https://cdn.example.com/users/jane.jpg",
+    "birthdate": "1990-05-20T00:00:00Z",
+    "locale": "en",
+    "userStatus": "CONFIRMED",
+    "userType": "user",
+    "enabled": true,
+    "createdAt": "2024-01-01T08:00:00Z",
+    "updatedAt": "2024-06-01T12:00:00Z"
+  },
+  "assignments": [
+    {
+      "team": {
+        "id": "team-uuid",
+        "name": "Volleyball Team A",
+        "status": "active",
+        "picture": "https://cdn.example.com/teams/team-uuid/logo.jpg",
+        "createdAt": "2024-01-15T10:00:00Z",
+        "updatedAt": "2024-06-01T12:00:00Z"
+      },
+      "role": "trainer",
+      "status": "active"
+    }
+  ]
 }
 ```
 
@@ -63,7 +61,7 @@ The Self API allows the currently authenticated user to read and update their ow
 
 ### Update Self
 
-- **Endpoint**: `PATCH /v1/self`
+- **Endpoint**: `PATCH /api/v1/self`
 - **Auth**: Any authenticated user
 - **Description**: Updates the current user's Cognito profile attributes. All fields are optional; only provided fields are updated.
 
@@ -88,21 +86,19 @@ The Self API allows the currently authenticated user to read and update their ow
 ```json
 {
   "message": "Success",
-  "data": {
-    "user": {
-      "id": "cognito-sub",
-      "email": "jane@example.com",
-      "name": "Jane Smith",
-      "preferredUsername": "jane_smith",
-      "picture": "https://cdn.example.com/users/jane.jpg",
-      "birthdate": "1990-05-20T00:00:00Z",
-      "locale": "en",
-      "userStatus": "CONFIRMED",
-      "userType": "user",
-      "enabled": true,
-      "createdAt": "2024-01-01T08:00:00Z",
-      "updatedAt": "2024-11-01T10:00:00Z"
-    }
+  "user": {
+    "id": "cognito-sub",
+    "email": "jane@example.com",
+    "name": "Jane Smith",
+    "preferredUsername": "jane_smith",
+    "picture": "https://cdn.example.com/users/jane.jpg",
+    "birthdate": "1990-05-20T00:00:00Z",
+    "locale": "en",
+    "userStatus": "CONFIRMED",
+    "userType": "user",
+    "enabled": true,
+    "createdAt": "2024-01-01T08:00:00Z",
+    "updatedAt": "2024-11-01T10:00:00Z"
   }
 }
 ```
@@ -119,7 +115,7 @@ The Self API allows the currently authenticated user to read and update their ow
 
 ### Upload Profile Picture (Presign)
 
-- **Endpoint**: `GET /v1/self/picture/presign`
+- **Endpoint**: `GET /api/v1/self/picture/presign`
 - **Auth**: Any authenticated user
 - **Description**: Generates a presigned S3 URL to upload a profile picture. After uploading directly to S3, the user's Cognito `picture` attribute is automatically updated to the public URL.
 
@@ -134,11 +130,9 @@ The Self API allows the currently authenticated user to read and update their ow
 ```json
 {
   "message": "Success",
-  "data": {
-    "uploadUrl": "https://s3.amazonaws.com/bucket/users/cognito-sub/avatar.jpg?X-Amz-...",
-    "key": "users/cognito-sub/avatar.jpg",
-    "fileUrl": "https://cdn.example.com/users/cognito-sub/avatar.jpg"
-  }
+  "uploadUrl": "https://s3.amazonaws.com/bucket/users/cognito-sub/avatar.jpg?X-Amz-...",
+  "key": "users/cognito-sub/avatar.jpg",
+  "fileUrl": "https://cdn.example.com/users/cognito-sub/avatar.jpg"
 }
 ```
 

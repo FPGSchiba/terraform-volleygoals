@@ -34,10 +34,14 @@ type PreloadedData struct {
 	OwnershipByType map[string]*models.OwnershipPolicy
 	RoleExact       *models.RoleDefinition
 	RoleGlobal      *models.RoleDefinition
+	RoleGlobalAdmin *models.RoleDefinition
 }
 
 // PreloadPermissions fetches all permission data needed to check activities.
-func PreloadPermissions(ctx context.Context, actorId, teamId string) (*PreloadedData, error) {
+// If the request authorizer indicates the caller is a platform admin (utils.IsAdmin)
+// this function will also load the `global_admin` RoleDefinition so authorization
+// decisions can consult DB-backed admin permissions.
+func PreloadPermissions(ctx context.Context, actorId, teamId string, authorizer map[string]interface{}) (*PreloadedData, error) {
 	member, err := db.GetTeamMemberByUserIDAndTeamID(ctx, actorId, teamId)
 	if err != nil {
 		return nil, fmt.Errorf("PreloadPermissions: load member: %w", err)
@@ -72,7 +76,7 @@ func PreloadPermissions(ctx context.Context, actorId, teamId string) (*Preloaded
 		ownershipByType[rt] = policy
 	}
 
-	var roleExact, roleGlobal *models.RoleDefinition
+	var roleExact, roleGlobal, roleGlobalAdmin *models.RoleDefinition
 	roleName := string(member.Role)
 	if tenantId != "" {
 		roleExact, err = db.GetRoleDefinitionByTenantExact(ctx, tenantId, roleName)
@@ -84,6 +88,14 @@ func PreloadPermissions(ctx context.Context, actorId, teamId string) (*Preloaded
 	if err != nil {
 		return nil, fmt.Errorf("PreloadPermissions: load global role: %w", err)
 	}
+	// If the caller is a platform admin, also consult the DB-backed global_admin
+	// role so platform admin permissions are driven by DB content.
+	if IsAdmin(authorizer) {
+		roleGlobalAdmin, err = db.GetRoleDefinitionByTenantAndName(ctx, "global", "global_admin")
+		if err != nil {
+			return nil, fmt.Errorf("PreloadPermissions: load global_admin role: %w", err)
+		}
+	}
 
 	return &PreloadedData{
 		Member:          member,
@@ -91,6 +103,7 @@ func PreloadPermissions(ctx context.Context, actorId, teamId string) (*Preloaded
 		OwnershipByType: ownershipByType,
 		RoleExact:       roleExact,
 		RoleGlobal:      roleGlobal,
+		RoleGlobalAdmin: roleGlobalAdmin,
 	}, nil
 }
 
@@ -122,24 +135,24 @@ func (pd *PreloadedData) CanReadActivity(actorId string, a *models.Activity) boo
 		return true
 	}
 
+	// If the caller is a platform admin, their effective permissions are driven by
+	// the `global_admin` role (when present). Check it as the last fallback.
+	if pd.RoleGlobalAdmin != nil && containsString(pd.RoleGlobalAdmin.Permissions, readPerm) {
+		return true
+	}
+
 	return false
 }
 
 func resourceReadPerm(targetType string) string {
-	switch targetType {
-	case models.ResourceTypeGoals:
-		return models.PermGoalsRead
-	case models.ResourceTypeComments:
-		return models.PermCommentsRead
-	case models.ResourceTypeProgressReports:
-		return models.PermProgressReportsRead
-	case models.ResourceTypeProgress:
-		return models.PermProgressRead
-	case models.ResourceTypeSeasons:
-		return models.PermSeasonsRead
-	default:
+	// Use the canonical permission generator so callers may emit either
+	// canonical resource IDs or legacy values; GetPermission will return a
+	// best-effort formatted permission string if the resource/action is
+	// unknown. This keeps tests and existing stored permissions compatible.
+	if targetType == "" {
 		return ""
 	}
+	return models.GetPermission(targetType, "read")
 }
 
 // CheckPermission is the single entry point for all team-level permission checks.

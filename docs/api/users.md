@@ -6,7 +6,7 @@ The Users API provides admin-only access to manage Cognito user accounts. All en
 
 ### List Users
 
-- **Endpoint**: `GET /v1/users`
+- **Endpoint**: `GET /api/v1/users`
 - **Auth**: Global Admin only
 - **Description**: Returns a paginated list of Cognito users. Can be filtered to a specific group.
 
@@ -23,25 +23,23 @@ The Users API provides admin-only access to manage Cognito user accounts. All en
 ```json
 {
   "message": "Success",
-  "data": {
-    "users": [
-      {
-        "id": "cognito-sub",
-        "email": "jane@example.com",
-        "name": "Jane Doe",
-        "preferredUsername": "jane_v",
-        "picture": "https://cdn.example.com/users/jane.jpg",
-        "birthdate": "1990-05-20T00:00:00Z",
-        "locale": "en",
-        "userStatus": "CONFIRMED",
-        "userType": "user",
-        "enabled": true,
-        "createdAt": "2024-01-01T08:00:00Z",
-        "updatedAt": "2024-06-01T12:00:00Z"
-      }
-    ],
-    "paginationToken": "cognito-next-page-token"
-  }
+  "users": [
+    {
+      "id": "cognito-sub",
+      "email": "jane@example.com",
+      "name": "Jane Doe",
+      "preferredUsername": "jane_v",
+      "picture": "https://cdn.example.com/users/jane.jpg",
+      "birthdate": "1990-05-20T00:00:00Z",
+      "locale": "en",
+      "userStatus": "CONFIRMED",
+      "userType": "user",
+      "enabled": true,
+      "createdAt": "2024-01-01T08:00:00Z",
+      "updatedAt": "2024-06-01T12:00:00Z"
+    }
+  ],
+  "paginationToken": "cognito-next-page-token"
 }
 ```
 
@@ -58,7 +56,7 @@ The Users API provides admin-only access to manage Cognito user accounts. All en
 
 ### Get User
 
-- **Endpoint**: `GET /v1/users/{userSub}`
+- **Endpoint**: `GET /api/v1/users/{userSub}`
 - **Auth**: Global Admin only
 - **Description**: Returns a user's full profile and all their team memberships.
 
@@ -72,35 +70,33 @@ The Users API provides admin-only access to manage Cognito user accounts. All en
 ```json
 {
   "message": "Success",
-  "data": {
-    "user": {
-      "id": "cognito-sub",
-      "email": "jane@example.com",
-      "name": "Jane Doe",
-      "preferredUsername": "jane_v",
-      "picture": "https://cdn.example.com/users/jane.jpg",
-      "birthdate": "1990-05-20T00:00:00Z",
-      "locale": "en",
-      "userStatus": "CONFIRMED",
-      "userType": "user",
-      "enabled": true,
-      "createdAt": "2024-01-01T08:00:00Z",
-      "updatedAt": "2024-06-01T12:00:00Z"
-    },
-    "memberships": [
-      {
-        "id": "member-uuid",
-        "userId": "cognito-sub",
-        "teamId": "team-uuid",
-        "role": "trainer",
-        "status": "active",
-        "createdAt": "2024-02-01T09:00:00Z",
-        "updatedAt": "2024-02-01T09:00:00Z",
-        "joinedAt": "2024-02-01T09:00:00Z",
-        "leftAt": null
-      }
-    ]
-  }
+  "user": {
+    "id": "cognito-sub",
+    "email": "jane@example.com",
+    "name": "Jane Doe",
+    "preferredUsername": "jane_v",
+    "picture": "https://cdn.example.com/users/jane.jpg",
+    "birthdate": "1990-05-20T00:00:00Z",
+    "locale": "en",
+    "userStatus": "CONFIRMED",
+    "userType": "user",
+    "enabled": true,
+    "createdAt": "2024-01-01T08:00:00Z",
+    "updatedAt": "2024-06-01T12:00:00Z"
+  },
+  "memberships": [
+    {
+      "id": "member-uuid",
+      "userId": "cognito-sub",
+      "teamId": "team-uuid",
+      "role": "trainer",
+      "status": "active",
+      "createdAt": "2024-02-01T09:00:00Z",
+      "updatedAt": "2024-02-01T09:00:00Z",
+      "joinedAt": "2024-02-01T09:00:00Z",
+      "leftAt": null
+    }
+  ]
 }
 ```
 
@@ -116,7 +112,7 @@ The Users API provides admin-only access to manage Cognito user accounts. All en
 
 ### Update User
 
-- **Endpoint**: `PATCH /v1/users/{userSub}`
+- **Endpoint**: `PATCH /api/v1/users/{userSub}`
 - **Auth**: Global Admin only
 - **Description**: Updates a user's type or enabled/disabled status. Promoting a user to `admin` automatically removes all their team memberships.
 
@@ -143,15 +139,13 @@ The Users API provides admin-only access to manage Cognito user accounts. All en
 ```json
 {
   "message": "Success",
-  "data": {
-    "user": {
-      "id": "cognito-sub",
-      "email": "jane@example.com",
-      "name": "Jane Doe",
-      "userType": "admin",
-      "enabled": false,
-      "userStatus": "CONFIRMED"
-    }
+  "user": {
+    "id": "cognito-sub",
+    "email": "jane@example.com",
+    "name": "Jane Doe",
+    "userType": "admin",
+    "enabled": false,
+    "userStatus": "CONFIRMED"
   }
 }
 ```
@@ -168,7 +162,7 @@ The Users API provides admin-only access to manage Cognito user accounts. All en
 
 ### Delete User
 
-- **Endpoint**: `DELETE /v1/users/{userSub}`
+- **Endpoint**: `DELETE /api/v1/users/{userSub}`
 - **Auth**: Global Admin only
 - **Description**: Deletes a user from Cognito and removes all their team memberships.
 
@@ -181,8 +175,7 @@ The Users API provides admin-only access to manage Cognito user accounts. All en
 **Response** `200 OK`
 ```json
 {
-  "message": "Success",
-  "data": null
+  "message": "Success"
 }
 ```
 

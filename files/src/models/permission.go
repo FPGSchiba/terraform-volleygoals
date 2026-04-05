@@ -4,45 +4,88 @@ package models
 // DynamoDB cannot index null values, so "global" is used instead of an empty string.
 const TenantIDGlobal = "global"
 
-// Permission constants — resource:action pairs used in RoleDefinition.Permissions
-// and OwnershipPolicy.OwnerPermissions.
-const (
-	PermTeamsRead   = "teams:read"
-	PermTeamsWrite  = "teams:write"
-	PermTeamsDelete = "teams:delete"
+// Permission variables — resource:action pairs used in RoleDefinition.Permissions
+// and OwnershipPolicy.OwnerPermissions. Values are populated at init from
+// the canonical resource definitions in models.GetDefinitions().
+var (
+	PermTeamsRead   string
+	PermTeamsWrite  string
+	PermTeamsDelete string
 
-	PermTeamSettingsRead  = "team_settings:read"
-	PermTeamSettingsWrite = "team_settings:write"
+	PermTeamSettingsRead  string
+	PermTeamSettingsWrite string
 
-	PermMembersRead   = "members:read"
-	PermMembersWrite  = "members:write"
-	PermMembersDelete = "members:delete"
+	PermMembersRead   string
+	PermMembersWrite  string
+	PermMembersDelete string
 
-	PermInvitesRead   = "invites:read"
-	PermInvitesWrite  = "invites:write"
-	PermInvitesDelete = "invites:delete"
+	PermInvitesRead   string
+	PermInvitesWrite  string
+	PermInvitesDelete string
 
-	PermSeasonsRead   = "seasons:read"
-	PermSeasonsWrite  = "seasons:write"
-	PermSeasonsDelete = "seasons:delete"
+	PermSeasonsRead   string
+	PermSeasonsWrite  string
+	PermSeasonsDelete string
 
-	PermGoalsRead   = "goals:read"
-	PermGoalsWrite  = "goals:write"
-	PermGoalsDelete = "goals:delete"
+	PermGoalsRead   string
+	PermGoalsWrite  string
+	PermGoalsDelete string
 
-	PermProgressReportsRead   = "progress_reports:read"
-	PermProgressReportsWrite  = "progress_reports:write"
-	PermProgressReportsDelete = "progress_reports:delete"
+	PermProgressReportsRead   string
+	PermProgressReportsWrite  string
+	PermProgressReportsDelete string
 
-	PermProgressRead  = "progress:read"
-	PermProgressWrite = "progress:write"
+	PermProgressRead  string
+	PermProgressWrite string
 
-	PermCommentsRead   = "comments:read"
-	PermCommentsWrite  = "comments:write"
-	PermCommentsDelete = "comments:delete"
+	PermCommentsRead   string
+	PermCommentsWrite  string
+	PermCommentsDelete string
 
-	PermActivitiesRead = "activities:read"
+	PermActivitiesRead string
 )
+
+func init() {
+	// Populate variables with generated values using the canonical accessor.
+	// Fall back to the original hard-coded strings if the model does not
+	// contain the resource/action (GetPermission returns a best-effort
+	// formatted string in that case).
+	PermTeamsRead = GetPermission("teams", "read")
+	PermTeamsWrite = GetPermission("teams", "write")
+	PermTeamsDelete = GetPermission("teams", "delete")
+
+	PermTeamSettingsRead = GetPermission("team_settings", "read")
+	PermTeamSettingsWrite = GetPermission("team_settings", "write")
+
+	PermMembersRead = GetPermission("members", "read")
+	PermMembersWrite = GetPermission("members", "write")
+	PermMembersDelete = GetPermission("members", "delete")
+
+	PermInvitesRead = GetPermission("invites", "read")
+	PermInvitesWrite = GetPermission("invites", "write")
+	PermInvitesDelete = GetPermission("invites", "delete")
+
+	PermSeasonsRead = GetPermission("seasons", "read")
+	PermSeasonsWrite = GetPermission("seasons", "write")
+	PermSeasonsDelete = GetPermission("seasons", "delete")
+
+	PermGoalsRead = GetPermission("goals", "read")
+	PermGoalsWrite = GetPermission("goals", "write")
+	PermGoalsDelete = GetPermission("goals", "delete")
+
+	PermProgressReportsRead = GetPermission("progress_reports", "read")
+	PermProgressReportsWrite = GetPermission("progress_reports", "write")
+	PermProgressReportsDelete = GetPermission("progress_reports", "delete")
+
+	PermProgressRead = GetPermission("progress", "read")
+	PermProgressWrite = GetPermission("progress", "write")
+
+	PermCommentsRead = GetPermission("comments", "read")
+	PermCommentsWrite = GetPermission("comments", "write")
+	PermCommentsDelete = GetPermission("comments", "delete")
+
+	PermActivitiesRead = GetPermission("activities", "read")
+}
 
 // Resource type constants passed to CheckPermission.
 const (

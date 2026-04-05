@@ -1,0 +1,126 @@
+package models
+
+// GetDefinitions returns the static list of resource definitions for programmatic use.
+func GetDefinitions() []ResourceDefinition {
+	return []ResourceDefinition{
+		{
+			Id:                    "goals",
+			Name:                  "Goals",
+			Description:           "Individual or team goals",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"comments", "progress_reports", "goal_seasons", "activities"},
+		},
+		{
+			Id:                    "comments",
+			Name:                  "Comments",
+			Description:           "Comments attached to goals or progress reports",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"comment_files", "activities"},
+		},
+		{
+			Id:                    "progress_reports",
+			Name:                  "Progress Reports",
+			Description:           "Reports of progress during a season",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"comments", "progress", "activities"},
+		},
+		{
+			Id:                    "progress",
+			Name:                  "Progress Entries",
+			Description:           "Progress entries for reports",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"activities"},
+		},
+		{
+			Id:                    "seasons",
+			Name:                  "Seasons",
+			Description:           "Team seasons",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"goals", "progress_reports", "goal_seasons", "activities"},
+		},
+		{
+			Id:                    "teams",
+			Name:                  "Teams",
+			Description:           "Teams holding members, goals, and seasons",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"seasons", "goals", "team_settings", "members", "invites", "activities"},
+		},
+		{
+			Id:                    "tenants",
+			Name:                  "Tenants",
+			Description:           "Tenants holding members and teams",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"teams", "role_definitions", "ownership_policies", "tenant_members", "activities"},
+		},
+		{
+			Id:                    "tenant_members",
+			Name:                  "Tenant Members",
+			Description:           "Membership records linking users to tenants",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"activities"},
+		},
+		{
+			Id:                    "members",
+			Name:                  "Team Members",
+			Description:           "Membership records linking users to teams",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"activities"},
+		},
+		{
+			Id:                    "invites",
+			Name:                  "Invites",
+			Description:           "Invitations to join teams",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"activities"},
+		},
+		{
+			Id:                    "team_settings",
+			Name:                  "Team Settings",
+			Description:           "Configuration and preferences for a team",
+			Actions:               []string{"read", "write"},
+			AllowedChildResources: []string{},
+		},
+		{
+			Id:                    "activities",
+			Name:                  "Activities",
+			Description:           "Activity feed entries for actions taken in the system",
+			Actions:               []string{"read"},
+			AllowedChildResources: []string{},
+		},
+		{
+			Id:                    "role_definitions",
+			Name:                  "Role Definitions",
+			Description:           "Named role definitions (permission sets) available to tenants",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{},
+		},
+		{
+			Id:                    "ownership_policies",
+			Name:                  "Ownership Policies",
+			Description:           "Policies defining what owners are allowed to do for each resource type",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{},
+		},
+		{
+			Id:                    "users",
+			Name:                  "Users",
+			Description:           "User accounts synced from the identity provider",
+			Actions:               []string{"read"},
+			AllowedChildResources: []string{},
+		},
+		{
+			Id:                    "comment_files",
+			Name:                  "Comment Files",
+			Description:           "Files attached to comments",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{},
+		},
+		{
+			Id:                    "goal_seasons",
+			Name:                  "Goal Seasons",
+			Description:           "Associations between goals and seasons",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{},
+		},
+	}
+}

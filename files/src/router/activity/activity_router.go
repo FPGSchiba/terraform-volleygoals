@@ -35,11 +35,15 @@ func GetTeamActivity(ctx context.Context, event events.APIGatewayProxyRequest) (
 	}
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	if !utils.IsAdmin(event.RequestContext.Authorizer) {
-		pd, perr := utils.PreloadPermissions(ctx, actorId, teamId)
-		if perr != nil {
-			return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, perr)
-		}
+	pd, perr := utils.PreloadPermissions(ctx, actorId, teamId, event.RequestContext.Authorizer)
+	if perr != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, perr)
+	}
+	// If the caller is a platform admin but there is no DB-backed global_admin
+	// role, preserve the previous behaviour and allow all activities. Otherwise
+	// filter items according to the preloaded permissions (which will consult
+	// global_admin for admin callers when present).
+	if !(utils.IsAdmin(event.RequestContext.Authorizer) && pd.RoleGlobalAdmin == nil) {
 		filtered := items[:0]
 		for _, a := range items {
 			if pd.CanReadActivity(actorId, a) {
@@ -110,7 +114,7 @@ func EmitGoalCreated(ctx context.Context, teamId, userId, goalTitle, goalId, own
 		teamId, userId, actorName, actorPicture,
 		"goal.created",
 		fmt.Sprintf("Goal \"%s\" was created", goalTitle),
-		"goal", goalId, ownerId,
+		models.ResourceTypeGoals, goalId, ownerId,
 	))
 }
 
@@ -121,7 +125,7 @@ func EmitGoalDeleted(ctx context.Context, teamId, userId, goalTitle, goalId, own
 		teamId, userId, actorName, actorPicture,
 		"goal.deleted",
 		fmt.Sprintf("Goal \"%s\" was deleted", goalTitle),
-		"goal", goalId, ownerId,
+		models.ResourceTypeGoals, goalId, ownerId,
 	))
 }
 
@@ -132,7 +136,7 @@ func EmitGoalStatusChanged(ctx context.Context, teamId, userId, goalTitle string
 		teamId, userId, actorName, actorPicture,
 		"goal.status_changed",
 		fmt.Sprintf("Goal \"%s\" status changed to %s", goalTitle, string(status)),
-		"goal", goalId, ownerId,
+		models.ResourceTypeGoals, goalId, ownerId,
 	))
 }
 
@@ -142,7 +146,7 @@ func EmitCommentCreated(ctx context.Context, teamId, userId, commentId, targetOw
 	db.EmitActivity(ctx, NewActivityWithOwner(
 		teamId, userId, actorName, actorPicture,
 		"comment.created", "A comment was posted",
-		"comment", commentId, targetOwnerId,
+		models.ResourceTypeComments, commentId, targetOwnerId,
 	))
 }
 
@@ -152,7 +156,7 @@ func EmitCommentUpdated(ctx context.Context, teamId, userId, commentId, targetOw
 	db.EmitActivity(ctx, NewActivityWithOwner(
 		teamId, userId, actorName, actorPicture,
 		"comment.updated", "A comment was updated",
-		"comment", commentId, targetOwnerId,
+		models.ResourceTypeComments, commentId, targetOwnerId,
 	))
 }
 
@@ -162,7 +166,7 @@ func EmitCommentDeleted(ctx context.Context, teamId, userId, commentId, targetOw
 	db.EmitActivity(ctx, NewActivityWithOwner(
 		teamId, userId, actorName, actorPicture,
 		"comment.deleted", "A comment was deleted",
-		"comment", commentId, targetOwnerId,
+		models.ResourceTypeComments, commentId, targetOwnerId,
 	))
 }
 
@@ -173,7 +177,7 @@ func EmitSeasonCreated(ctx context.Context, teamId, userId, seasonName, seasonId
 		teamId, userId, actorName, actorPicture,
 		"season.created",
 		fmt.Sprintf("Season \"%s\" was created", seasonName),
-		"season", seasonId, "",
+		models.ResourceTypeSeasons, seasonId, "",
 	))
 }
 
@@ -184,7 +188,7 @@ func EmitSeasonUpdated(ctx context.Context, teamId, userId, seasonName, seasonId
 		teamId, userId, actorName, actorPicture,
 		"season.updated",
 		fmt.Sprintf("Season \"%s\" was updated", seasonName),
-		"season", seasonId, "",
+		models.ResourceTypeSeasons, seasonId, "",
 	))
 }
 
@@ -195,7 +199,7 @@ func EmitSeasonDeleted(ctx context.Context, teamId, userId, seasonName, seasonId
 		teamId, userId, actorName, actorPicture,
 		"season.deleted",
 		fmt.Sprintf("Season \"%s\" was deleted", seasonName),
-		"season", seasonId, "",
+		models.ResourceTypeSeasons, seasonId, "",
 	))
 }
 
@@ -205,7 +209,7 @@ func EmitProgressReportCreated(ctx context.Context, teamId, userId, reportId, ow
 	db.EmitActivity(ctx, NewActivityWithOwner(
 		teamId, userId, actorName, actorPicture,
 		"progress_report.created", "A progress report was created",
-		"progress_report", reportId, ownerId,
+		models.ResourceTypeProgressReports, reportId, ownerId,
 	))
 }
 
@@ -215,7 +219,7 @@ func EmitProgressReportUpdated(ctx context.Context, teamId, userId, reportId, ow
 	db.EmitActivity(ctx, NewActivityWithOwner(
 		teamId, userId, actorName, actorPicture,
 		"progress_report.updated", "A progress report was updated",
-		"progress_report", reportId, ownerId,
+		models.ResourceTypeProgressReports, reportId, ownerId,
 	))
 }
 
@@ -225,7 +229,7 @@ func EmitProgressReportDeleted(ctx context.Context, teamId, userId, reportId, ow
 	db.EmitActivity(ctx, NewActivityWithOwner(
 		teamId, userId, actorName, actorPicture,
 		"progress_report.deleted", "A progress report was deleted",
-		"progress_report", reportId, ownerId,
+		models.ResourceTypeProgressReports, reportId, ownerId,
 	))
 }
 
@@ -236,7 +240,7 @@ func EmitMemberJoined(ctx context.Context, teamId, userId string) {
 		teamId, userId, actorName, actorPicture,
 		"member.joined",
 		fmt.Sprintf("%s joined the team", actorName),
-		"team_member", "",
+		models.ResourceTypeMembers, "",
 		models.ActivityVisibilityAll,
 	))
 }
@@ -248,7 +252,7 @@ func EmitMemberRoleChanged(ctx context.Context, teamId, userId string, role mode
 		teamId, userId, actorName, actorPicture,
 		"member.role_changed",
 		fmt.Sprintf("A member's role was changed to %s", string(role)),
-		"team_member", memberId,
+		models.ResourceTypeMembers, memberId,
 		models.ActivityVisibilityAdminTrainer,
 	))
 }
@@ -260,7 +264,7 @@ func EmitMemberRemoved(ctx context.Context, teamId, userId, memberId string) {
 		teamId, userId, actorName, actorPicture,
 		"member.removed",
 		"A member was removed from the team",
-		"team_member", memberId,
+		models.ResourceTypeMembers, memberId,
 		models.ActivityVisibilityAdminTrainer,
 	))
 }
@@ -272,7 +276,7 @@ func EmitTeamSettingsUpdated(ctx context.Context, teamId, userId string) {
 		teamId, userId, actorName, actorPicture,
 		"team_settings.updated",
 		"Team settings were updated",
-		"team_settings", teamId,
+		models.ResourceTypeTeamSettings, teamId,
 		models.ActivityVisibilityAdminTrainer,
 	))
 }

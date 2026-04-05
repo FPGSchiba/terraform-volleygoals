@@ -1,6 +1,6 @@
 # Progress Reports API
 
-Progress Reports are nested under seasons: `/v1/seasons/{seasonId}/progress-reports`.
+Progress Reports are nested under seasons: `/api/v1/seasons/{seasonId}/progress-reports`.
 
 A progress report is a periodic self-assessment submitted by a team member. It includes an overall summary and individual progress ratings per goal (progress entries).
 
@@ -8,7 +8,7 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 
 ### Create Progress Report
 
-- **Endpoint**: `POST /v1/seasons/{seasonId}/progress-reports`
+- **Endpoint**: `POST /api/v1/seasons/{seasonId}/progress-reports`
 - **Auth**: Team member with `progress_reports:write` permission
 - **Description**: Creates a new progress report for the caller. Emits a `progress_report.created` activity event.
 
@@ -48,28 +48,26 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 ```json
 {
   "message": "Success",
-  "data": {
-    "progressReport": {
-      "id": "report-uuid",
-      "seasonId": "season-uuid",
-      "authorId": "cognito-sub",
-      "authorName": "Jane Doe",
-      "authorPicture": "https://cdn.example.com/users/jane.jpg",
-      "summary": "Good progress this week",
-      "details": "Focused on serving drills every day",
-      "overallDetails": "Overall I'm improving but need to work on defense",
-      "createdAt": "2024-10-01T09:00:00Z",
-      "updatedAt": "2024-10-01T09:00:00Z",
-      "progress": [
-        {
-          "id": "progress-uuid",
-          "progressReportId": "report-uuid",
-          "goalId": "goal-uuid",
-          "rating": 4,
-          "details": "Achieved 75% accuracy in practice"
-        }
-      ]
-    }
+  "progressReport": {
+    "id": "report-uuid",
+    "seasonId": "season-uuid",
+    "authorId": "cognito-sub",
+    "authorName": "Jane Doe",
+    "authorPicture": "https://cdn.example.com/users/jane.jpg",
+    "summary": "Good progress this week",
+    "details": "Focused on serving drills every day",
+    "overallDetails": "Overall I'm improving but need to work on defense",
+    "createdAt": "2024-10-01T09:00:00Z",
+    "updatedAt": "2024-10-01T09:00:00Z",
+    "progress": [
+      {
+        "id": "progress-uuid",
+        "progressReportId": "report-uuid",
+        "goalId": "goal-uuid",
+        "rating": 4,
+        "details": "Achieved 75% accuracy in practice"
+      }
+    ]
   }
 }
 ```
@@ -86,7 +84,7 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 
 ### Get Progress Report
 
-- **Endpoint**: `GET /v1/seasons/{seasonId}/progress-reports/{reportId}`
+- **Endpoint**: `GET /api/v1/seasons/{seasonId}/progress-reports/{reportId}`
 - **Auth**: Team member with `progress_reports:read` permission (ownership-aware)
 - **Description**: Returns a single progress report with all its progress entries.
 
@@ -101,28 +99,26 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 ```json
 {
   "message": "Success",
-  "data": {
-    "progressReport": {
-      "id": "report-uuid",
-      "seasonId": "season-uuid",
-      "authorId": "cognito-sub",
-      "authorName": "Jane Doe",
-      "authorPicture": "https://cdn.example.com/users/jane.jpg",
-      "summary": "Good progress this week",
-      "details": "Focused on serving drills every day",
-      "overallDetails": "Overall I'm improving but need to work on defense",
-      "createdAt": "2024-10-01T09:00:00Z",
-      "updatedAt": "2024-10-01T09:00:00Z",
-      "progress": [
-        {
-          "id": "progress-uuid",
-          "progressReportId": "report-uuid",
-          "goalId": "goal-uuid",
-          "rating": 4,
-          "details": "Achieved 75% accuracy in practice"
-        }
-      ]
-    }
+  "progressReport": {
+    "id": "report-uuid",
+    "seasonId": "season-uuid",
+    "authorId": "cognito-sub",
+    "authorName": "Jane Doe",
+    "authorPicture": "https://cdn.example.com/users/jane.jpg",
+    "summary": "Good progress this week",
+    "details": "Focused on serving drills every day",
+    "overallDetails": "Overall I'm improving but need to work on defense",
+    "createdAt": "2024-10-01T09:00:00Z",
+    "updatedAt": "2024-10-01T09:00:00Z",
+    "progress": [
+      {
+        "id": "progress-uuid",
+        "progressReportId": "report-uuid",
+        "goalId": "goal-uuid",
+        "rating": 4,
+        "details": "Achieved 75% accuracy in practice"
+      }
+    ]
   }
 }
 ```
@@ -139,7 +135,7 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 
 ### List Progress Reports
 
-- **Endpoint**: `GET /v1/seasons/{seasonId}/progress-reports`
+- **Endpoint**: `GET /api/v1/seasons/{seasonId}/progress-reports`
 - **Auth**: Team member with `progress_reports:read` permission
 - **Description**: Returns a paginated list of progress reports for a season, each enriched with progress entries.
 
@@ -163,34 +159,32 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 ```json
 {
   "message": "Success",
-  "data": {
-    "items": [
-      {
-        "id": "report-uuid",
-        "seasonId": "season-uuid",
-        "authorId": "cognito-sub",
-        "authorName": "Jane Doe",
-        "authorPicture": "https://cdn.example.com/users/jane.jpg",
-        "summary": "Good progress this week",
-        "details": "Focused on serving drills every day",
-        "overallDetails": "Overall I'm improving but need to work on defense",
-        "createdAt": "2024-10-01T09:00:00Z",
-        "updatedAt": "2024-10-01T09:00:00Z",
-        "progress": [
-          {
-            "id": "progress-uuid",
-            "progressReportId": "report-uuid",
-            "goalId": "goal-uuid",
-            "rating": 4,
-            "details": "Achieved 75% accuracy in practice"
-          }
-        ]
-      }
-    ],
-    "count": 1,
-    "nextToken": "",
-    "hasMore": false
-  }
+  "items": [
+    {
+      "id": "report-uuid",
+      "seasonId": "season-uuid",
+      "authorId": "cognito-sub",
+      "authorName": "Jane Doe",
+      "authorPicture": "https://cdn.example.com/users/jane.jpg",
+      "summary": "Good progress this week",
+      "details": "Focused on serving drills every day",
+      "overallDetails": "Overall I'm improving but need to work on defense",
+      "createdAt": "2024-10-01T09:00:00Z",
+      "updatedAt": "2024-10-01T09:00:00Z",
+      "progress": [
+        {
+          "id": "progress-uuid",
+          "progressReportId": "report-uuid",
+          "goalId": "goal-uuid",
+          "rating": 4,
+          "details": "Achieved 75% accuracy in practice"
+        }
+      ]
+    }
+  ],
+  "count": 1,
+  "nextToken": "",
+  "hasMore": false
 }
 ```
 
@@ -206,7 +200,7 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 
 ### Update Progress Report
 
-- **Endpoint**: `PATCH /v1/seasons/{seasonId}/progress-reports/{reportId}`
+- **Endpoint**: `PATCH /api/v1/seasons/{seasonId}/progress-reports/{reportId}`
 - **Auth**: Report author or team member with `progress_reports:write` on the author's reports
 - **Description**: Updates a progress report's summary, details, or progress entries. Providing `progress` replaces all existing entries.
 
@@ -244,18 +238,16 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 ```json
 {
   "message": "Success",
-  "data": {
-    "progressReport": {
-      "id": "report-uuid",
-      "seasonId": "season-uuid",
-      "authorId": "cognito-sub",
-      "authorName": "Jane Doe",
-      "summary": "Updated summary",
-      "details": "Updated details",
-      "overallDetails": "Updated overall reflection",
-      "createdAt": "2024-10-01T09:00:00Z",
-      "updatedAt": "2024-10-05T11:00:00Z"
-    }
+  "progressReport": {
+    "id": "report-uuid",
+    "seasonId": "season-uuid",
+    "authorId": "cognito-sub",
+    "authorName": "Jane Doe",
+    "summary": "Updated summary",
+    "details": "Updated details",
+    "overallDetails": "Updated overall reflection",
+    "createdAt": "2024-10-01T09:00:00Z",
+    "updatedAt": "2024-10-05T11:00:00Z"
   }
 }
 ```
@@ -272,7 +264,7 @@ A progress report is a periodic self-assessment submitted by a team member. It i
 
 ### Delete Progress Report
 
-- **Endpoint**: `DELETE /v1/seasons/{seasonId}/progress-reports/{reportId}`
+- **Endpoint**: `DELETE /api/v1/seasons/{seasonId}/progress-reports/{reportId}`
 - **Auth**: Report author or team member with `progress_reports:delete` on the author's reports
 - **Description**: Deletes a progress report and all its progress entries.
 

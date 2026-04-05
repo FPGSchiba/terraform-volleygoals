@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-type TenantMemberRole   string
+type TenantMemberRole string
 type TenantMemberStatus string
 
 const (

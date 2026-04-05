@@ -118,3 +118,35 @@ module "health_check_ms" {
     data.archive_file.shared_lambda_zip,
   ]
 }
+
+resource "aws_api_gateway_resource" "resource_definitions" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.v1.id
+  path_part   = "resource-definitions"
+}
+module "get_resource_definitions_ms" {
+  source                    = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  api_id                    = aws_api_gateway_rest_api.api.id
+  code_dir                  = "${path.module}/files/src"
+  cors_enabled              = true
+  control_allow_origin      = local.cors_allowed_origin
+  http_methods              = ["GET"]
+  name_overwrite            = "get-resource-definitions"
+  path_name                 = "resource-definitions"
+  create_resource           = false
+  existing_resource_id      = aws_api_gateway_resource.resource_definitions.id
+  prefix                    = var.prefix
+  authorizer_id             = aws_api_gateway_authorizer.this.id
+  authorization_type        = "COGNITO_USER_POOLS"
+  enable_tracing            = true
+  timeout                   = 29
+  vpc_networked             = false
+  environment_variables     = local.lambda_environment_variables
+  tags                      = local.tags
+  layer_arns                = local.lambda_layer_arns
+  json_logging              = true
+  handler_name              = "GetResourceDefinitions"
+  pre_built_zip             = data.archive_file.shared_lambda_zip.output_path
+  runtime                   = local.lambda_runtime
+  additional_iam_statements = []
+}

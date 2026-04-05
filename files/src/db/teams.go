@@ -90,6 +90,79 @@ func ListTeams(ctx context.Context, filter TeamFilter) ([]*models.Team, int, *mo
 	return teams, len(teams), nextCursor, hasMore, nil
 }
 
+// ListTeamsByTenant returns a page of teams that belong to the given tenant.
+func ListTeamsByTenant(ctx context.Context, tenantId string, filter TeamFilter) ([]*models.Team, int, *models.Cursor, bool, error) {
+	client = GetClient()
+
+	// ensure sane default limit
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 25
+	}
+
+	in := &dynamodb.ScanInput{
+		TableName: aws.String(teamsTableName),
+		Limit:     aws.Int32(int32(limit)),
+	}
+
+	// Build filter expression using TeamFilter
+	expr := ""
+	var vals map[string]types.AttributeValue
+	var names map[string]string
+	if e, v, n := filter.BuildExpression(); e != "" {
+		expr = e
+		vals = v
+		names = n
+	}
+
+	// Add tenantId filter
+	tenantExpr := "#tenantId = :tenantId"
+	if expr != "" {
+		expr = expr + " AND " + tenantExpr
+	} else {
+		expr = tenantExpr
+	}
+	if names == nil {
+		names = make(map[string]string)
+	}
+	names["#tenantId"] = "tenantId"
+	if vals == nil {
+		vals = make(map[string]types.AttributeValue)
+	}
+	vals[":tenantId"] = &types.AttributeValueMemberS{Value: tenantId}
+
+	in.FilterExpression = aws.String(expr)
+	in.ExpressionAttributeValues = vals
+	in.ExpressionAttributeNames = names
+
+	// Resume from cursor if provided
+	if filter.Cursor != nil && filter.Cursor.LastID != "" {
+		in.ExclusiveStartKey = map[string]types.AttributeValue{
+			"id": &types.AttributeValueMemberS{Value: filter.Cursor.LastID},
+		}
+	}
+
+	result, err := client.Scan(ctx, in)
+	if err != nil {
+		return nil, 0, nil, false, err
+	}
+
+	teams, err := unmarshalTeams(result.Items)
+	if err != nil {
+		return nil, 0, nil, false, err
+	}
+
+	// Sorting (in-memory) using embedded FilterOptions
+	if sortBy, sortOrder := filter.NormalizeSort(); sortBy != "" {
+		sortTeams(teams, sortBy, sortOrder)
+	}
+
+	// Build cursor from LastEvaluatedKey
+	nextCursor, hasMore := nextCursorFromLEK(result.LastEvaluatedKey)
+
+	return teams, len(teams), nextCursor, hasMore, nil
+}
+
 func unmarshalTeams(items []map[string]types.AttributeValue) ([]*models.Team, error) {
 	teams := make([]*models.Team, 0, len(items))
 	for _, it := range items {

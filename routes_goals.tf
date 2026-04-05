@@ -30,6 +30,12 @@ resource "aws_api_gateway_resource" "teams_teamId_goals_goalId_picture" {
   path_part   = "picture"
 }
 
+resource "aws_api_gateway_resource" "teams_teamId_goals_goalId_picture_presign" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.teams_teamId_goals_goalId_picture.id
+  path_part   = "presign"
+}
+
 # ─── Shared IAM blocks ────────────────────────────────────────────────────────
 
 locals {
@@ -70,7 +76,7 @@ module "create_goal_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
+  create_options_method = true
   http_methods          = ["POST"]
   name_overwrite        = "create-goal"
   path_name             = "goals"
@@ -261,12 +267,12 @@ module "upload_goal_file_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
-  http_methods          = ["POST"]
+  create_options_method = true
+  http_methods          = ["GET"]
   name_overwrite        = "upload-goal-picture"
   path_name             = "picture"
   create_resource       = false
-  existing_resource_id  = aws_api_gateway_resource.teams_teamId_goals_goalId_picture.id
+  existing_resource_id  = aws_api_gateway_resource.teams_teamId_goals_goalId_picture_presign.id
   prefix                = var.prefix
   authorizer_id         = aws_api_gateway_authorizer.this.id
   authorization_type    = "COGNITO_USER_POOLS"
@@ -303,7 +309,7 @@ module "tag_goal_season_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
+  create_options_method = true
   http_methods          = ["POST"]
   name_overwrite        = "tag-goal-season"
   path_name             = "{seasonId}"

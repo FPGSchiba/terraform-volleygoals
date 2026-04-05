@@ -157,7 +157,7 @@ module "revoke_invite_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
+  create_options_method = true
   http_methods          = ["DELETE"]
   name_overwrite        = "revoke-invite"
   path_name             = "{inviteId}"
@@ -282,10 +282,10 @@ module "get_invite_by_token_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  create_options_method = false
+  create_options_method = true
   http_methods          = ["GET"]
   name_overwrite        = "get-invite-by-token"
-  path_name             = "{inviteId}"
+  path_name             = "{token}"
   create_resource       = false
   existing_resource_id  = aws_api_gateway_resource.invite_id.id
   prefix                = var.prefix
