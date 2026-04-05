@@ -79,32 +79,26 @@ resource "aws_cloudwatch_metric_alarm" "api_latency" {
 
 locals {
   dynamodb_tables = {
-    teams            = aws_dynamodb_table.teams.name
-    team_members     = aws_dynamodb_table.team_members.name
-    invites          = aws_dynamodb_table.invites.name
-    team_settings    = aws_dynamodb_table.team_settings.name
-    seasons          = aws_dynamodb_table.seasons.name
-    goals            = aws_dynamodb_table.goals.name
-    progress_reports = aws_dynamodb_table.progress_reports.name
-    progress         = aws_dynamodb_table.progress.name
-    comments         = aws_dynamodb_table.comments.name
-    comment_files    = aws_dynamodb_table.comment_files.name
-    activities       = aws_dynamodb_table.activities.name
+    teams              = aws_dynamodb_table.teams.name
+    team_members       = aws_dynamodb_table.team_members.name
+    invites            = aws_dynamodb_table.invites.name
+    team_settings      = aws_dynamodb_table.team_settings.name
+    seasons            = aws_dynamodb_table.seasons.name
+    goals              = aws_dynamodb_table.goals.name
+    progress_reports   = aws_dynamodb_table.progress_reports.name
+    progress           = aws_dynamodb_table.progress.name
+    comments           = aws_dynamodb_table.comments.name
+    comment_files      = aws_dynamodb_table.comment_files.name
+    activities         = aws_dynamodb_table.activities.name
+    goal_seasons       = aws_dynamodb_table.goal_seasons.name
+    tenants            = aws_dynamodb_table.tenants.name
+    tenant_members     = aws_dynamodb_table.tenant_members.name
+    role_definitions   = aws_dynamodb_table.role_definitions.name
+    ownership_policies = aws_dynamodb_table.ownership_policies.name
   }
 
   lambda_function_names = [
-    "get-self", "update-self", "upload-self-picture",
-    "list-teams", "get-team", "create-team", "update-team", "delete-team",
-    "update-team-settings",
-    "list-team-members", "add-team-member", "update-team-member", "delete-team-member", "leave-team",
-    "upload-team-picture", "get-team-activity", "get-team-invites",
-    "create-invite", "complete-invite", "revoke-invite", "resend-invite", "get-invite-by-token",
-    "list-users", "get-user", "delete-user", "update-user",
-    "create-season", "list-seasons", "get-season", "update-season", "delete-season", "get-season-stats",
-    "create-goal", "list-goals", "get-goal", "update-goal", "delete-goal", "upload-goal-file",
-    "create-progress-report", "list-progress-reports", "get-progress-report", "update-progress-report", "delete-progress-report",
-    "create-comment", "list-comments", "get-comment", "update-comment", "delete-comment", "upload-comment-file",
-    "global-search", "health-check",
+    "get-self", "update-self", "list-teams", "get-team", "create-team", "delete-team", "update-team", "get-team-invites", "upload-team-picture", "get-team-activity", "update-team-settings", "list-team-members", "add-team-member", "update-team-member", "delete-team-member", "leave-team", "create-comment", "list-comments", "get-comment", "update-comment", "delete-comment", "upload-comment-file", "create-goal", "list-goals", "get-goal", "update-goal", "delete-goal", "upload-goal-picture", "tag-goal-season", "untag-goal-season", "list-goal-seasons", "create-invite", "complete-invite", "revoke-invite", "resend-invite", "get-invite-by-token", "global-search", "health-check", "get-resource-definitions", "create-season", "list-seasons", "get-season", "update-season", "delete-season", "get-season-stats", "create-progress-report", "list-progress-reports", "get-progress-report", "update-progress-report", "delete-progress-report", "upload-self-picture", "create-tenant", "get-tenant", "update-tenant", "delete-tenant", "add-tenant-member", "remove-tenant-member", "list-role-definitions", "create-role-definition", "update-role-definition", "delete-role-definition", "list-ownership-policies", "update-ownership-policy", "create-tenanted-team", "list-tenants", "get-resource-model", "list-users", "get-user", "delete-user", "update-user"
   ]
 }
 
@@ -147,24 +141,7 @@ resource "aws_cloudwatch_log_metric_filter" "lambda_errors" {
   }
 
   depends_on = [
-    module.get_self_ms, module.update_self_ms, module.upload_self_picture_ms,
-    module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms,
-    module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms,
-    module.get_team_activity_ms, module.update_team_settings_ms,
-    module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms,
-    module.delete_team_member_ms, module.leave_team_ms,
-    module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms,
-    module.resend_invite_ms, module.get_invite_by_token_ms,
-    module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms,
-    module.create_season_ms, module.list_seasons_ms, module.get_season_ms,
-    module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms,
-    module.create_goal_ms, module.list_goals_ms, module.get_goal_ms,
-    module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms,
-    module.create_progress_report_ms, module.list_progress_reports_ms,
-    module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms,
-    module.create_comment_ms, module.list_comments_ms, module.get_comment_ms,
-    module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms,
-    module.global_search_ms, module.health_check_ms,
+    module.get_self_ms, module.update_self_ms, module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms, module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms, module.get_team_activity_ms, module.update_team_settings_ms, module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms, module.delete_team_member_ms, module.leave_team_ms, module.create_comment_ms, module.list_comments_ms, module.get_comment_ms, module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms, module.create_goal_ms, module.list_goals_ms, module.get_goal_ms, module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms, module.tag_goal_season_ms, module.untag_goal_season_ms, module.list_goal_seasons_ms, module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms, module.resend_invite_ms, module.get_invite_by_token_ms, module.global_search_ms, module.health_check_ms, module.get_resource_definitions_ms, module.create_season_ms, module.list_seasons_ms, module.get_season_ms, module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms, module.create_progress_report_ms, module.list_progress_reports_ms, module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms, module.upload_self_picture_ms, module.create_tenant_ms, module.get_tenant_ms, module.update_tenant_ms, module.delete_tenant_ms, module.add_tenant_member_ms, module.remove_tenant_member_ms, module.list_role_definitions_ms, module.create_role_definition_ms, module.update_role_definition_ms, module.delete_role_definition_ms, module.list_ownership_policies_ms, module.update_ownership_policy_ms, module.create_tenanted_team_ms, module.list_tenants_ms, module.get_resource_model_ms, module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms
   ]
 }
 
@@ -183,24 +160,7 @@ resource "aws_cloudwatch_log_metric_filter" "lambda_panics" {
   }
 
   depends_on = [
-    module.get_self_ms, module.update_self_ms, module.upload_self_picture_ms,
-    module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms,
-    module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms,
-    module.get_team_activity_ms, module.update_team_settings_ms,
-    module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms,
-    module.delete_team_member_ms, module.leave_team_ms,
-    module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms,
-    module.resend_invite_ms, module.get_invite_by_token_ms,
-    module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms,
-    module.create_season_ms, module.list_seasons_ms, module.get_season_ms,
-    module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms,
-    module.create_goal_ms, module.list_goals_ms, module.get_goal_ms,
-    module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms,
-    module.create_progress_report_ms, module.list_progress_reports_ms,
-    module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms,
-    module.create_comment_ms, module.list_comments_ms, module.get_comment_ms,
-    module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms,
-    module.global_search_ms, module.health_check_ms,
+    module.get_self_ms, module.update_self_ms, module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms, module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms, module.get_team_activity_ms, module.update_team_settings_ms, module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms, module.delete_team_member_ms, module.leave_team_ms, module.create_comment_ms, module.list_comments_ms, module.get_comment_ms, module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms, module.create_goal_ms, module.list_goals_ms, module.get_goal_ms, module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms, module.tag_goal_season_ms, module.untag_goal_season_ms, module.list_goal_seasons_ms, module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms, module.resend_invite_ms, module.get_invite_by_token_ms, module.global_search_ms, module.health_check_ms, module.get_resource_definitions_ms, module.create_season_ms, module.list_seasons_ms, module.get_season_ms, module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms, module.create_progress_report_ms, module.list_progress_reports_ms, module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms, module.upload_self_picture_ms, module.create_tenant_ms, module.get_tenant_ms, module.update_tenant_ms, module.delete_tenant_ms, module.add_tenant_member_ms, module.remove_tenant_member_ms, module.list_role_definitions_ms, module.create_role_definition_ms, module.update_role_definition_ms, module.delete_role_definition_ms, module.list_ownership_policies_ms, module.update_ownership_policy_ms, module.create_tenanted_team_ms, module.list_tenants_ms, module.get_resource_model_ms, module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms
   ]
 }
 
@@ -219,24 +179,7 @@ resource "aws_cloudwatch_log_metric_filter" "lambda_access_denied" {
   }
 
   depends_on = [
-    module.get_self_ms, module.update_self_ms, module.upload_self_picture_ms,
-    module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms,
-    module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms,
-    module.get_team_activity_ms, module.update_team_settings_ms,
-    module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms,
-    module.delete_team_member_ms, module.leave_team_ms,
-    module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms,
-    module.resend_invite_ms, module.get_invite_by_token_ms,
-    module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms,
-    module.create_season_ms, module.list_seasons_ms, module.get_season_ms,
-    module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms,
-    module.create_goal_ms, module.list_goals_ms, module.get_goal_ms,
-    module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms,
-    module.create_progress_report_ms, module.list_progress_reports_ms,
-    module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms,
-    module.create_comment_ms, module.list_comments_ms, module.get_comment_ms,
-    module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms,
-    module.global_search_ms, module.health_check_ms,
+    module.get_self_ms, module.update_self_ms, module.get_teams_ms, module.get_team_ms, module.create_team_ms, module.delete_team_ms, module.update_team_ms, module.get_team_invites_ms, module.upload_team_picture_ms, module.get_team_activity_ms, module.update_team_settings_ms, module.list_team_members_ms, module.add_team_member_ms, module.update_team_member_ms, module.delete_team_member_ms, module.leave_team_ms, module.create_comment_ms, module.list_comments_ms, module.get_comment_ms, module.update_comment_ms, module.delete_comment_ms, module.upload_comment_file_ms, module.create_goal_ms, module.list_goals_ms, module.get_goal_ms, module.update_goal_ms, module.delete_goal_ms, module.upload_goal_file_ms, module.tag_goal_season_ms, module.untag_goal_season_ms, module.list_goal_seasons_ms, module.create_invite_ms, module.complete_invite_ms, module.revoke_invite_ms, module.resend_invite_ms, module.get_invite_by_token_ms, module.global_search_ms, module.health_check_ms, module.get_resource_definitions_ms, module.create_season_ms, module.list_seasons_ms, module.get_season_ms, module.update_season_ms, module.delete_season_ms, module.get_season_stats_ms, module.create_progress_report_ms, module.list_progress_reports_ms, module.get_progress_report_ms, module.update_progress_report_ms, module.delete_progress_report_ms, module.upload_self_picture_ms, module.create_tenant_ms, module.get_tenant_ms, module.update_tenant_ms, module.delete_tenant_ms, module.add_tenant_member_ms, module.remove_tenant_member_ms, module.list_role_definitions_ms, module.create_role_definition_ms, module.update_role_definition_ms, module.delete_role_definition_ms, module.list_ownership_policies_ms, module.update_ownership_policy_ms, module.create_tenanted_team_ms, module.list_tenants_ms, module.get_resource_model_ms, module.list_users_ms, module.get_user_ms, module.delete_user_ms, module.update_user_ms
   ]
 }
 
