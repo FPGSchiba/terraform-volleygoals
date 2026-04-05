@@ -41,6 +41,21 @@ func UpdateTeam(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if request.Status != nil {
 		team.Status = *request.Status
 	}
+	if request.TenantId != nil {
+		if *request.TenantId != "" && (team.TenantId == nil || *request.TenantId != *team.TenantId) {
+			targetTenantId := *request.TenantId
+			tenant, err := db.GetTenantById(ctx, targetTenantId)
+			if err != nil {
+				return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+			}
+			if tenant == nil {
+				return utils.ErrorResponse(http.StatusBadRequest, utils.MsgErrorTenantNotFound, nil)
+			}
+			team.TenantId = &targetTenantId
+		} else if *request.TenantId == "" {
+			team.TenantId = nil
+		}
+	}
 	err = db.UpdateTeam(ctx, team)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)

@@ -210,3 +210,17 @@ func GetUsersByTeamMembers(ctx context.Context, members []*models.TeamMember) ([
 	}
 	return users, nil
 }
+
+func GetUsersByTenantMembers(ctx context.Context, members []*models.TenantMember) ([]models.User, error) {
+	var users []models.User
+	for _, member := range members {
+		user, err := GetUserBySub(ctx, member.UserId)
+		if err != nil {
+			return nil, err
+		}
+		if user != nil {
+			users = append(users, *user)
+		}
+	}
+	return users, nil
+}

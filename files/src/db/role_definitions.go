@@ -137,7 +137,10 @@ func UpdateRoleDefinitionPermissions(ctx context.Context, roleId string, permiss
 		Key: map[string]types.AttributeValue{
 			"id": &types.AttributeValueMemberS{Value: roleId},
 		},
-		UpdateExpression: aws.String("SET permissions = :p, updatedAt = :u"),
+		UpdateExpression: aws.String("SET #perms = :p, updatedAt = :u"),
+		ExpressionAttributeNames: map[string]string{
+			"#perms": "permissions",
+		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":p": &types.AttributeValueMemberL{Value: permList},
 			":u": &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},

@@ -14,6 +14,9 @@ import (
 // determineKey returns the DynamoDB key name for a struct field.
 func determineKey(sf reflect.StructField) string {
 	key := sf.Tag.Get("dynamodbav")
+	if idx := strings.Index(key, ","); idx != -1 {
+		key = key[:idx]
+	}
 	if key != "" {
 		return key
 	}
