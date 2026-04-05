@@ -1,7 +1,7 @@
 resource "aws_iam_role" "migrate_goals" {
   name = "${var.prefix}-migrate-goals"
   assume_role_policy = jsonencode({
-    Version = "2012-10-17", Statement = [{Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "lambda.amazonaws.com" }}]
+    Version = "2012-10-17", Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "lambda.amazonaws.com" } }]
   })
 }
 
@@ -42,10 +42,10 @@ resource "aws_lambda_function" "migrate_goals" {
 
   environment {
     variables = {
-      HANDLER          = "MigrateGoals"
-      GOALS_TABLE_NAME = aws_dynamodb_table.goals.name
-      SEASONS_TABLE_NAME = aws_dynamodb_table.seasons.name
-      TEAMS_TABLE_NAME = aws_dynamodb_table.teams.name
+      HANDLER                 = "MigrateGoals"
+      GOALS_TABLE_NAME        = aws_dynamodb_table.goals.name
+      SEASONS_TABLE_NAME      = aws_dynamodb_table.seasons.name
+      TEAMS_TABLE_NAME        = aws_dynamodb_table.teams.name
       GOAL_SEASONS_TABLE_NAME = aws_dynamodb_table.goal_seasons.name
     }
   }
@@ -54,14 +54,14 @@ resource "aws_lambda_function" "migrate_goals" {
 resource "aws_lambda_invocation" "migrate_goals" {
   function_name = aws_lambda_function.migrate_goals.function_name
   input         = jsonencode({})
-  triggers = { version = "1" }
+  triggers      = { version = "1" }
   depends_on    = [aws_lambda_function.migrate_goals]
 }
 
 resource "aws_iam_role" "migrate_permissions" {
   name = "${var.prefix}-migrate-permissions"
   assume_role_policy = jsonencode({
-    Version = "2012-10-17", Statement = [{Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "lambda.amazonaws.com" }}]
+    Version = "2012-10-17", Statement = [{ Action = "sts:AssumeRole", Effect = "Allow", Principal = { Service = "lambda.amazonaws.com" } }]
   })
 }
 
@@ -112,7 +112,7 @@ resource "aws_lambda_function" "migrate_permissions" {
 resource "aws_lambda_invocation" "migrate_permissions" {
   function_name = aws_lambda_function.migrate_permissions.function_name
   input         = jsonencode({})
-  triggers = { version = "1" }
+  triggers      = { version = "1" }
   depends_on    = [aws_lambda_function.migrate_permissions]
 }
 
