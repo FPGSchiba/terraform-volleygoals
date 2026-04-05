@@ -31,43 +31,53 @@ func main() {
 }
 
 func seedRoleDefinitions(ctx context.Context) error {
+	defs := models.GetDefinitions()
+
+	// Admin: full access to all resource actions
+	adminPerms := []string{}
+	for _, d := range defs {
+		for _, a := range d.Actions {
+			adminPerms = append(adminPerms, models.GetPermission(d.Id, a))
+		}
+	}
+
+	// Trainer: read across all resources, write/delete for content-related resources
+	trainerWrite := map[string]bool{"seasons": true, "goals": true, "progress_reports": true, "progress": true, "comments": true}
+	trainerDelete := map[string]bool{"seasons": true, "goals": true, "progress_reports": true, "comments": true}
+	trainerPerms := []string{}
+	for _, d := range defs {
+		// read for all
+		trainerPerms = append(trainerPerms, models.GetPermission(d.Id, "read"))
+		if trainerWrite[d.Id] {
+			trainerPerms = append(trainerPerms, models.GetPermission(d.Id, "write"))
+		}
+		if trainerDelete[d.Id] {
+			trainerPerms = append(trainerPerms, models.GetPermission(d.Id, "delete"))
+		}
+	}
+
+	// Member: conservative read access to team-scoped resources
+	memberReadSet := map[string]bool{"teams": true, "members": true, "seasons": true, "goals": true, "progress_reports": true, "activities": true}
+	memberPerms := []string{}
+	for _, d := range defs {
+		if memberReadSet[d.Id] {
+			memberPerms = append(memberPerms, models.GetPermission(d.Id, "read"))
+		}
+	}
+
 	roles := []struct {
 		name        string
 		permissions []string
 	}{
-		{
-			name: "admin",
-			permissions: []string{
-				models.PermTeamsRead, models.PermTeamsWrite, models.PermTeamsDelete,
-				models.PermTeamSettingsRead, models.PermTeamSettingsWrite,
-				models.PermMembersRead, models.PermMembersWrite, models.PermMembersDelete,
-				models.PermInvitesRead, models.PermInvitesWrite, models.PermInvitesDelete,
-				models.PermSeasonsRead,
-				models.PermActivitiesRead,
-			},
-		},
-		{
-			name: "trainer",
-			permissions: []string{
-				models.PermTeamsRead,
-				models.PermTeamSettingsRead,
-				models.PermMembersRead,
-				models.PermSeasonsRead, models.PermSeasonsWrite, models.PermSeasonsDelete,
-				models.PermGoalsRead, models.PermGoalsWrite, models.PermGoalsDelete,
-				models.PermProgressReportsRead, models.PermProgressReportsWrite, models.PermProgressReportsDelete,
-				models.PermProgressRead, models.PermProgressWrite,
-				models.PermCommentsRead, models.PermCommentsWrite, models.PermCommentsDelete,
-				models.PermActivitiesRead,
-			},
-		},
-		{
-			name: "member",
-			permissions: []string{
-				models.PermTeamsRead,
-				models.PermMembersRead,
-				models.PermSeasonsRead,
-			},
-		},
+		// tenant-scoped roles
+		{name: "admin", permissions: adminPerms},
+		{name: "trainer", permissions: trainerPerms},
+		{name: "member", permissions: memberPerms},
+		// platform-level role stored under the "global" tenant. This role is
+		// intended to represent platform administrators and should include
+		// every available permission. Seeder is idempotent so if the role
+		// already exists it will be skipped.
+		{name: "global_admin", permissions: adminPerms},
 	}
 
 	for _, r := range roles {
@@ -89,41 +99,29 @@ func seedRoleDefinitions(ctx context.Context) error {
 }
 
 func seedOwnershipPolicies(ctx context.Context) error {
-	policies := []struct {
-		resourceType     string
-		ownerPerms       []string
-		parentOwnerPerms []string
-	}{
-		{
-			resourceType: models.ResourceTypeGoals,
-			ownerPerms: []string{
-				models.PermGoalsRead, models.PermGoalsWrite, models.PermGoalsDelete,
-				models.PermCommentsRead, models.PermCommentsWrite,
-			},
-			parentOwnerPerms: nil,
-		},
-		{
-			resourceType: models.ResourceTypeProgressReports,
-			ownerPerms: []string{
-				models.PermProgressReportsRead, models.PermProgressReportsWrite, models.PermProgressReportsDelete,
-				models.PermCommentsRead, models.PermCommentsWrite,
-			},
-			parentOwnerPerms: nil,
-		},
-		{
-			resourceType: models.ResourceTypeProgress,
-			ownerPerms:   []string{models.PermProgressRead, models.PermProgressWrite},
-			parentOwnerPerms: nil,
-		},
-		{
-			resourceType: models.ResourceTypeComments,
-			ownerPerms:   []string{models.PermCommentsRead, models.PermCommentsWrite, models.PermCommentsDelete},
-			parentOwnerPerms: []string{models.PermCommentsRead, models.PermCommentsWrite},
-		},
-	}
+	defs := models.GetDefinitions()
 
-	for _, p := range policies {
-		policy, err := db.UpsertOwnershipPolicy(ctx, "global", p.resourceType, p.ownerPerms, p.parentOwnerPerms)
+	for _, d := range defs {
+		// Owner permissions: all actions on the resource
+		ownerPerms := []string{}
+		for _, a := range d.Actions {
+			ownerPerms = append(ownerPerms, models.GetPermission(d.Id, a))
+		}
+		// If resource supports activities as children, owners should be able to read activities
+		for _, c := range d.AllowedChildResources {
+			if c == "activities" {
+				ownerPerms = append(ownerPerms, models.GetPermission("activities", "read"))
+				break
+			}
+		}
+
+		var parentOwnerPerms []string
+		// Comments: allow parent owner (e.g., goal/report owner) to read/write comments
+		if d.Id == "comments" {
+			parentOwnerPerms = []string{models.GetPermission("comments", "read"), models.GetPermission("comments", "write")}
+		}
+
+		policy, err := db.UpsertOwnershipPolicy(ctx, "global", d.Id, ownerPerms, parentOwnerPerms)
 		if err != nil {
 			return err
 		}

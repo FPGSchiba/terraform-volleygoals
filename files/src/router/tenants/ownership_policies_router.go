@@ -11,7 +11,6 @@ import (
 
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
-	rd "github.com/fpgschiba/volleygoals/router/resource_definitions"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -34,7 +33,12 @@ func ListOwnershipPolicies(ctx context.Context, event events.APIGatewayProxyRequ
 	}
 	// Return a policy per resource type. If a tenant-specific policy is missing
 	// for a resource type, fall back to the global policy (handled by GetOwnershipPolicy).
-	resourceTypes := []string{"goals", "comments", "progressReports", "progress", "seasons"}
+	// Derive resource types from canonical definitions to ensure underscore-style IDs
+	defs := models.GetDefinitions()
+	resourceTypes := make([]string, 0, len(defs))
+	for _, d := range defs {
+		resourceTypes = append(resourceTypes, d.Id)
+	}
 
 	type policyOut struct {
 		Id                     string   `json:"id,omitempty"`
@@ -109,38 +113,17 @@ func UpdateOwnershipPolicy(ctx context.Context, event events.APIGatewayProxyRequ
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
 
-	// Validate permission format and actions
-	defs := rd.GetDefinitions()
-	// build map resource -> set(actions)
-	actionMap := make(map[string]map[string]bool)
-	for _, d := range defs {
-		m := make(map[string]bool)
-		for _, a := range d.Actions {
-			m[a] = true
-		}
-		actionMap[d.Id] = m
-	}
-
+	// Validate permission format and actions using canonical helper
 	validatePerms := func(perms []string) error {
+		// trim spaces first
+		cleaned := make([]string, 0, len(perms))
 		for _, p := range perms {
 			if strings.TrimSpace(p) == "" {
 				continue
 			}
-			parts := strings.SplitN(p, ":", 2)
-			if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-				return fmt.Errorf("invalid permission format: %s", p)
-			}
-			res := parts[0]
-			act := parts[1]
-			if acts, ok := actionMap[res]; ok {
-				if !acts[act] {
-					return fmt.Errorf("invalid action '%s' for resource '%s'", act, res)
-				}
-			} else {
-				return fmt.Errorf("unknown resource in permission: %s", res)
-			}
+			cleaned = append(cleaned, strings.TrimSpace(p))
 		}
-		return nil
+		return models.ValidatePermissions(cleaned)
 	}
 
 	if err := validatePerms(req.OwnerPermissions); err != nil {
@@ -182,36 +165,16 @@ func BatchUpsertOwnershipPolicies(ctx context.Context, event events.APIGatewayPr
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
 
-	// Prepare validation map
-	defs := rd.GetDefinitions()
-	actionMap := make(map[string]map[string]bool)
-	for _, d := range defs {
-		m := make(map[string]bool)
-		for _, a := range d.Actions {
-			m[a] = true
-		}
-		actionMap[d.Id] = m
-	}
-	validatePerms := func(perms []string) error {
+	// For batch upsert use the same validation helper
+	validatePermsBatch := func(perms []string) error {
+		cleaned := make([]string, 0, len(perms))
 		for _, p := range perms {
 			if strings.TrimSpace(p) == "" {
 				continue
 			}
-			parts := strings.SplitN(p, ":", 2)
-			if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-				return fmt.Errorf("invalid permission format: %s", p)
-			}
-			res := parts[0]
-			act := parts[1]
-			if acts, ok := actionMap[res]; ok {
-				if !acts[act] {
-					return fmt.Errorf("invalid action '%s' for resource '%s'", act, res)
-				}
-			} else {
-				return fmt.Errorf("unknown resource in permission: %s", res)
-			}
+			cleaned = append(cleaned, strings.TrimSpace(p))
 		}
-		return nil
+		return models.ValidatePermissions(cleaned)
 	}
 
 	// Track created policies and previous states for compensation
@@ -223,10 +186,10 @@ func BatchUpsertOwnershipPolicies(ctx context.Context, event events.APIGatewayPr
 		if it.ResourceType == "" {
 			return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, fmt.Errorf("resourceType required"))
 		}
-		if err := validatePerms(it.OwnerPermissions); err != nil {
+		if err := validatePermsBatch(it.OwnerPermissions); err != nil {
 			return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 		}
-		if err := validatePerms(it.ParentOwnerPermissions); err != nil {
+		if err := validatePermsBatch(it.ParentOwnerPermissions); err != nil {
 			return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 		}
 
@@ -260,8 +223,12 @@ func GetResourceModel(ctx context.Context, event events.APIGatewayProxyRequest) 
 		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 	}
 
-	defs := rd.GetDefinitions()
-	resourceTypes := []string{"goals", "comments", "progressReports", "progress", "seasons"}
+	defs := models.GetDefinitions()
+	// Derive resource types from canonical definitions to ensure underscore-style IDs
+	resourceTypes := make([]string, 0, len(defs))
+	for _, d := range defs {
+		resourceTypes = append(resourceTypes, d.Id)
+	}
 
 	type policyOut struct {
 		Id                     string   `json:"id,omitempty"`
@@ -316,7 +283,7 @@ func PreviewEffectivePermissions(ctx context.Context, event events.APIGatewayPro
 	}
 
 	// Validate resourceType exists
-	defs := rd.GetDefinitions()
+	defs := models.GetDefinitions()
 	found := false
 	for _, d := range defs {
 		if d.Id == body.ResourceType {

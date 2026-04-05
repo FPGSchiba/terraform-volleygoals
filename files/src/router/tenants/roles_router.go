@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	log "github.com/sirupsen/logrus"
@@ -76,6 +77,17 @@ func CreateRoleDefinition(ctx context.Context, event events.APIGatewayProxyReque
 	if err := json.Unmarshal([]byte(event.Body), &req); err != nil || req.Name == "" || len(req.Permissions) == 0 {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
+	// Validate provided permissions against canonical definitions
+	cleaned := make([]string, 0, len(req.Permissions))
+	for _, p := range req.Permissions {
+		if strings.TrimSpace(p) == "" {
+			continue
+		}
+		cleaned = append(cleaned, strings.TrimSpace(p))
+	}
+	if err := models.ValidatePermissions(cleaned); err != nil {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+	}
 	role, err := db.CreateRoleDefinition(ctx, tenantId, req.Name, req.Permissions, false)
 	if err != nil {
 		log.WithError(err).Error("CreateRoleDefinition db error")
@@ -109,6 +121,17 @@ func UpdateRoleDefinition(ctx context.Context, event events.APIGatewayProxyReque
 	}
 	var req updateRoleRequest
 	if err := json.Unmarshal([]byte(event.Body), &req); err != nil || len(req.Permissions) == 0 {
+		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
+	}
+	// Validate provided permissions
+	cleaned := make([]string, 0, len(req.Permissions))
+	for _, p := range req.Permissions {
+		if strings.TrimSpace(p) == "" {
+			continue
+		}
+		cleaned = append(cleaned, strings.TrimSpace(p))
+	}
+	if err := models.ValidatePermissions(cleaned); err != nil {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
 	updated, err := db.UpdateRoleDefinitionPermissions(ctx, roleId, req.Permissions)

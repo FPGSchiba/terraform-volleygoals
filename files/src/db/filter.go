@@ -106,10 +106,10 @@ type TeamFilter struct {
 // - createdAfter / createdBefore (RFC3339 timestamps) => createdAfter, createdBefore
 type TenantFilter struct {
 	FilterOptions
-	NameContains   string
-	OwnerId        string
-	CreatedAfter   *time.Time
-	CreatedBefore  *time.Time
+	NameContains  string
+	OwnerId       string
+	CreatedAfter  *time.Time
+	CreatedBefore *time.Time
 }
 
 // BuildExpression builds a DynamoDB filter expression for tenants.
@@ -298,9 +298,9 @@ func TeamInviteFilterFromQuery(q map[string]string) (TeamInviteFilter, error) {
 
 type TeamMemberFilter struct {
 	FilterOptions
-	Role         string // "member" | "admin" | "trainer" | ""
-	UserId       string // userId of the team member
-	Status       string // "active" | "invited" | "removed" | "left" | ""
+	Role          string // "member" | "admin" | "trainer" | ""
+	UserId        string // userId of the team member
+	Status        string // "active" | "invited" | "removed" | "left" | ""
 	NameContains  string // partial match on user name (applied in-memory after enrichment)
 	EmailContains string // partial match on user email (applied in-memory after enrichment)
 }

@@ -250,7 +250,7 @@ func CompensateUpserts(ctx context.Context, createdIDs []string, prevs map[strin
 	for _, cid := range createdIDs {
 		_, err := client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 			TableName: &ownershipPoliciesTableName,
-			Key: map[string]types.AttributeValue{"id": &types.AttributeValueMemberS{Value: cid}},
+			Key:       map[string]types.AttributeValue{"id": &types.AttributeValueMemberS{Value: cid}},
 		})
 		if err != nil {
 			// best-effort: log and continue
@@ -270,8 +270,8 @@ func CompensateUpserts(ctx context.Context, createdIDs []string, prevs map[strin
 		}
 		if prev.UpdatedAt == nil && prev.UpdatedTo == nil {
 			_, _ = client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
-				TableName: &ownershipPoliciesTableName,
-				Key: map[string]types.AttributeValue{"id": &types.AttributeValueMemberS{Value: prev.Id}},
+				TableName:        &ownershipPoliciesTableName,
+				Key:              map[string]types.AttributeValue{"id": &types.AttributeValueMemberS{Value: prev.Id}},
 				UpdateExpression: aws.String("REMOVE updatedAt, updatedTo"),
 			})
 		} else {
@@ -288,9 +288,9 @@ func CompensateUpserts(ctx context.Context, createdIDs []string, prevs map[strin
 				vals[":to"] = &types.AttributeValueMemberS{Value: ""}
 			}
 			_, _ = client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
-				TableName: &ownershipPoliciesTableName,
-				Key: map[string]types.AttributeValue{"id": &types.AttributeValueMemberS{Value: prev.Id}},
-				UpdateExpression: aws.String(expr),
+				TableName:                 &ownershipPoliciesTableName,
+				Key:                       map[string]types.AttributeValue{"id": &types.AttributeValueMemberS{Value: prev.Id}},
+				UpdateExpression:          aws.String(expr),
 				ExpressionAttributeValues: vals,
 			})
 		}

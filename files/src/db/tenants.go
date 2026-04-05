@@ -114,7 +114,7 @@ func RemoveTenantMember(ctx context.Context, memberId string) error {
 			"#S": "status",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":status":   &types.AttributeValueMemberS{Value: string(models.TenantMemberStatusRemoved)},
+			":status":    &types.AttributeValueMemberS{Value: string(models.TenantMemberStatusRemoved)},
 			":updatedAt": updatedAtAttr,
 		},
 	})
@@ -284,4 +284,3 @@ func ListTenantMembers(ctx context.Context, tenantId string, filter TenantMember
 	nextCursor, hasMore := nextCursorFromLEK(result.LastEvaluatedKey)
 	return members, len(members), nextCursor, hasMore, nil
 }
-

@@ -209,6 +209,10 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (re
 	// Seed handlers
 	case "SeedDefaults":
 		response, err = seed.SeedDefaults(ctx, event)
+	case "MigrateGoals":
+		response, err = seed.MigrateGoals(ctx, event)
+	case "MigratePermissions":
+		response, err = seed.MigratePermissions(ctx, event)
 
 	// Tenant management handlers
 	case "CreateTenant":

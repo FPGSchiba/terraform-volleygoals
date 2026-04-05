@@ -110,7 +110,7 @@ func UpdateUser(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 	if err := applyEnabledUpdate(ctx, userSub, request.Enabled); err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
-	
+
 	user, err = users.GetUserBySub(ctx, userSub)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
