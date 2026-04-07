@@ -38,9 +38,10 @@ func seedRoleDefinitions(ctx context.Context) error {
 		}
 	}
 
-	// Trainer: read across all resources, write/delete for content-related resources
-	trainerWrite := map[string]bool{"seasons": true, "team_goals": true, "progress_reports": true, "progress": true, "comments": true}
-	trainerDelete := map[string]bool{"seasons": true, "team_goals": true, "progress_reports": true, "comments": true}
+	// Trainer: read across all resources, write/delete for content-related resources.
+	// Trainers manage invites (but cannot elevate to admin — enforced at the handler level).
+	trainerWrite := map[string]bool{"seasons": true, "team_goals": true, "invites": true, "progress_reports": true, "progress": true, "comments": true}
+	trainerDelete := map[string]bool{"seasons": true, "team_goals": true, "invites": true, "progress_reports": true, "comments": true}
 	trainerPerms := []string{}
 	for _, d := range defs {
 		// read for all
@@ -53,12 +54,17 @@ func seedRoleDefinitions(ctx context.Context) error {
 		}
 	}
 
-	// Member: conservative read access to team-scoped resources
-	memberReadSet := map[string]bool{"teams": true, "members": true, "seasons": true, "team_goals": true, "progress_reports": true, "activities": true}
+	// Member: read access to team-scoped resources plus the ability to create their own
+	// individual goals (enforced via ownership at the handler level) and progress reports.
+	memberReadSet := map[string]bool{"teams": true, "members": true, "seasons": true, "team_goals": true, "individual_goals": true, "progress_reports": true, "comments": true, "activities": true}
+	memberWriteSet := map[string]bool{"progress_reports": true, "progress": true}
 	memberPerms := []string{}
 	for _, d := range defs {
 		if memberReadSet[d.Id] {
 			memberPerms = append(memberPerms, models.GetPermission(d.Id, "read"))
+		}
+		if memberWriteSet[d.Id] {
+			memberPerms = append(memberPerms, models.GetPermission(d.Id, "write"))
 		}
 	}
 

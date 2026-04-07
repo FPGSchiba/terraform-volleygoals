@@ -41,16 +41,18 @@ func CreateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 
 	authorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 
-	// Validate access to each goal
+	// Validate that the author can see each goal referenced in the report.
+	// Read access is sufficient — write access to the goal itself is not required
+	// to report progress on it (members can report on team goals they have read access to).
 	for _, p := range request.Progress {
 		goal, err := db.GetGoalById(ctx, p.GoalId)
 		if err != nil || goal == nil {
 			return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 		}
 		rt := goal.GetResourceType()
-		rp := models.PermTeamGoalsWrite
+		rp := models.PermTeamGoalsRead
 		if goal.GoalType == models.GoalTypeIndividual {
-			rp = models.PermIndividualGoalsWrite
+			rp = models.PermIndividualGoalsRead
 		}
 		allowed, err := utils.CheckPermission(ctx, authorId, teamId,
 			models.Resource{Type: rt, OwnedBy: goal.OwnerId},

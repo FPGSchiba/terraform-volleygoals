@@ -72,9 +72,10 @@ func CreateInvite(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 		return resp, err
 	}
 
-	// Trainers cannot invite with admin role
+	// Only platform admins or team admins may send admin-role invites.
+	// Trainers have invites:write but must not be able to elevate a user to admin.
 	if request.Role == models.TeamMemberRoleAdmin {
-		if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, request.TeamId, models.Resource{Type: models.ResourceTypeInvites}, models.PermInvitesWrite) {
+		if !utils.IsAdmin(event.RequestContext.Authorizer) && !utils.IsTeamAdmin(ctx, event.RequestContext.Authorizer, request.TeamId) {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
 	}

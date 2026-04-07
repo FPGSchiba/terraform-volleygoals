@@ -30,12 +30,17 @@ func CreateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 
 	rt := models.ResourceTypeTeamGoals
 	rp := models.PermTeamGoalsWrite
+	// For individual goals the caller will own the new resource, so ownership policy
+	// applies (any team member may create their own individual goal). For team goals,
+	// creation is role-gated only — members must not bypass via ownership.
+	resource := models.Resource{Type: rt}
 	if request.Type == models.GoalTypeIndividual {
 		rt = models.ResourceTypeIndividualGoals
 		rp = models.PermIndividualGoalsWrite
+		resource = models.Resource{Type: rt, OwnedBy: callerId}
 	}
 
-	allowed, err := utils.CheckPermission(ctx, callerId, teamId, models.Resource{Type: rt, OwnedBy: callerId}, rp)
+	allowed, err := utils.CheckPermission(ctx, callerId, teamId, resource, rp)
 	if err != nil || !allowed {
 		if !utils.IsAdmin(event.RequestContext.Authorizer) {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
