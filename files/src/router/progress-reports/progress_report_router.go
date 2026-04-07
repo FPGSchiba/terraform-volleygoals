@@ -41,6 +41,25 @@ func CreateProgressReport(ctx context.Context, event events.APIGatewayProxyReque
 
 	authorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 
+	// Validate access to each goal
+	for _, p := range request.Progress {
+		goal, err := db.GetGoalById(ctx, p.GoalId)
+		if err != nil || goal == nil {
+			return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
+		}
+		rt := goal.GetResourceType()
+		rp := models.PermTeamGoalsWrite
+		if goal.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsWrite
+		}
+		allowed, err := utils.CheckPermission(ctx, authorId, teamId,
+			models.Resource{Type: rt, OwnedBy: goal.OwnerId},
+			rp)
+		if err != nil || !allowed {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
+	}
+
 	user, uerr := users.GetUserBySub(ctx, authorId)
 	if uerr != nil {
 		log.Printf("CreateProgressReport: failed to fetch user %s: %v", authorId, uerr)

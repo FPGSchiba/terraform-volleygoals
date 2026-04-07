@@ -39,8 +39,8 @@ func seedRoleDefinitions(ctx context.Context) error {
 	}
 
 	// Trainer: read across all resources, write/delete for content-related resources
-	trainerWrite := map[string]bool{"seasons": true, "goals": true, "progress_reports": true, "progress": true, "comments": true}
-	trainerDelete := map[string]bool{"seasons": true, "goals": true, "progress_reports": true, "comments": true}
+	trainerWrite := map[string]bool{"seasons": true, "team_goals": true, "progress_reports": true, "progress": true, "comments": true}
+	trainerDelete := map[string]bool{"seasons": true, "team_goals": true, "progress_reports": true, "comments": true}
 	trainerPerms := []string{}
 	for _, d := range defs {
 		// read for all
@@ -54,7 +54,7 @@ func seedRoleDefinitions(ctx context.Context) error {
 	}
 
 	// Member: conservative read access to team-scoped resources
-	memberReadSet := map[string]bool{"teams": true, "members": true, "seasons": true, "goals": true, "progress_reports": true, "activities": true}
+	memberReadSet := map[string]bool{"teams": true, "members": true, "seasons": true, "team_goals": true, "progress_reports": true, "activities": true}
 	memberPerms := []string{}
 	for _, d := range defs {
 		if memberReadSet[d.Id] {

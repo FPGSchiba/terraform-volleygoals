@@ -161,14 +161,14 @@ func HasTeamPermission(ctx context.Context, authorizer map[string]interface{}, t
 	// global role -> global_admin (for platform admins).
 	if IsAdmin(authorizer) {
 		rd, err := db.GetRoleDefinitionByTenantAndName(ctx, "global", "global_admin")
-		if err != nil || rd == nil {
-			return false
-		}
-		for _, p := range rd.Permissions {
-			if p == action {
-				return true
+		if err == nil && rd != nil {
+			for _, p := range rd.Permissions {
+				if p == action {
+					return true
+				}
 			}
 		}
 	}
+
 	return false
 }

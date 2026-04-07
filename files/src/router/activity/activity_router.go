@@ -114,7 +114,7 @@ func EmitGoalCreated(ctx context.Context, teamId, userId, goalTitle, goalId, own
 		teamId, userId, actorName, actorPicture,
 		"goal.created",
 		fmt.Sprintf("Goal \"%s\" was created", goalTitle),
-		models.ResourceTypeGoals, goalId, ownerId,
+		models.ResourceTypeIndividualGoals, goalId, ownerId,
 	))
 }
 
@@ -125,7 +125,7 @@ func EmitGoalDeleted(ctx context.Context, teamId, userId, goalTitle, goalId, own
 		teamId, userId, actorName, actorPicture,
 		"goal.deleted",
 		fmt.Sprintf("Goal \"%s\" was deleted", goalTitle),
-		models.ResourceTypeGoals, goalId, ownerId,
+		models.ResourceTypeIndividualGoals, goalId, ownerId,
 	))
 }
 
@@ -136,7 +136,7 @@ func EmitGoalStatusChanged(ctx context.Context, teamId, userId, goalTitle string
 		teamId, userId, actorName, actorPicture,
 		"goal.status_changed",
 		fmt.Sprintf("Goal \"%s\" status changed to %s", goalTitle, string(status)),
-		models.ResourceTypeGoals, goalId, ownerId,
+		models.ResourceTypeIndividualGoals, goalId, ownerId,
 	))
 }
 

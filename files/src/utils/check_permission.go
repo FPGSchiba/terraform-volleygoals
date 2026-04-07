@@ -6,6 +6,7 @@ import (
 
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
+	log "github.com/sirupsen/logrus"
 )
 
 // PermissionChecker evaluates whether an actor is allowed to perform an action
@@ -61,7 +62,8 @@ func PreloadPermissions(ctx context.Context, actorId, teamId string, authorizer 
 	}
 
 	resourceTypes := []string{
-		models.ResourceTypeGoals,
+		models.ResourceTypeIndividualGoals,
+		models.ResourceTypeTeamGoals,
 		models.ResourceTypeComments,
 		models.ResourceTypeProgressReports,
 		models.ResourceTypeProgress,
@@ -165,15 +167,18 @@ func (pc *PermissionChecker) Check(ctx context.Context, actorId, teamId string, 
 	// Step 1: actor must be an active team member
 	member, err := pc.LoadTeamMember(ctx, actorId, teamId)
 	if err != nil {
+		log.WithFields(log.Fields{"user_id": actorId, "team_id": teamId, "error": err}).Warn("CheckPermission: failed to load team member")
 		return false, err
 	}
 	if member == nil {
+		log.WithFields(log.Fields{"user_id": actorId, "team_id": teamId}).Warn("CheckPermission: user is not a member of the team")
 		return false, nil
 	}
 
 	// Resolve tenantId from team (empty string = no tenant = use global defaults only)
 	team, err := pc.LoadTeam(ctx, teamId)
 	if err != nil {
+		log.WithFields(log.Fields{"team_id": teamId, "error": err}).Warn("CheckPermission: failed to load team")
 		return false, err
 	}
 	tenantId := ""
@@ -185,6 +190,7 @@ func (pc *PermissionChecker) Check(ctx context.Context, actorId, teamId string, 
 	if resource.OwnedBy != "" && resource.OwnedBy == actorId {
 		policy, err := pc.LoadOwnership(ctx, tenantId, resource.Type)
 		if err != nil {
+			log.WithFields(log.Fields{"tenant_id": tenantId, "type": resource.Type, "error": err}).Warn("CheckPermission: failed to load ownership policy")
 			return false, err
 		}
 		if policy != nil && containsString(policy.OwnerPermissions, action) {
@@ -196,6 +202,7 @@ func (pc *PermissionChecker) Check(ctx context.Context, actorId, teamId string, 
 	if resource.ParentOwnedBy != "" && resource.ParentOwnedBy == actorId {
 		policy, err := pc.LoadOwnership(ctx, tenantId, resource.Type)
 		if err != nil {
+			log.WithFields(log.Fields{"tenant_id": tenantId, "type": resource.Type, "error": err}).Warn("CheckPermission: failed to load ownership policy (parent)")
 			return false, err
 		}
 		if policy != nil && containsString(policy.ParentOwnerPermissions, action) {
@@ -207,6 +214,7 @@ func (pc *PermissionChecker) Check(ctx context.Context, actorId, teamId string, 
 	if tenantId != "" {
 		roleDef, err := pc.LoadRoleByTenantExact(ctx, tenantId, string(member.Role))
 		if err != nil {
+			log.WithFields(log.Fields{"tenant_id": tenantId, "role": string(member.Role), "error": err}).Warn("CheckPermission: failed to load exact role definition")
 			return false, err
 		}
 		if roleDef != nil && containsString(roleDef.Permissions, action) {
@@ -217,11 +225,20 @@ func (pc *PermissionChecker) Check(ctx context.Context, actorId, teamId string, 
 	// Step 5: global default role definition
 	roleDef, err := pc.LoadRoleByTenant(ctx, "global", string(member.Role))
 	if err != nil {
+		log.WithFields(log.Fields{"role": string(member.Role), "error": err}).Warn("CheckPermission: failed to load global role definition")
 		return false, err
 	}
 	if roleDef != nil && containsString(roleDef.Permissions, action) {
 		return true, nil
 	}
+
+	log.WithFields(log.Fields{
+		"user_id":              actorId,
+		"team_id":              teamId,
+		"denied_resource_type": resource.Type,
+		"denied_permission":    action,
+		"role":                 string(member.Role),
+	}).Warn("CheckPermission: evaluated false for all layers")
 
 	return false, nil
 }

@@ -68,7 +68,7 @@ func collectGinErrors(c *gin.Context) string {
 
 // buildFieldsFromGin constructs a log.Fields map from the Gin context and duration (ms float64).
 func buildFieldsFromGin(c *gin.Context, duration float64) log.Fields {
-	return log.Fields{
+	fields := log.Fields{
 		"duration":   duration,
 		"method":     c.Request.Method,
 		"path":       c.Request.URL.Path,
@@ -76,6 +76,19 @@ func buildFieldsFromGin(c *gin.Context, duration float64) log.Fields {
 		"referrer":   headerFirst(c, "Referer", "referer"),
 		"request_id": headerFirst(c, "X-Request-Id", "x-request-id"),
 	}
+
+	if authVal, exists := c.Get("_authorizer"); exists {
+		if authMap, ok := authVal.(map[string]interface{}); ok {
+			userID := GetCognitoUsername(authMap)
+			if userID != "" {
+				fields["user_id"] = userID
+			}
+		}
+	} else if ip := c.ClientIP(); ip != "" {
+		fields["client_ip"] = ip
+	}
+
+	return fields
 }
 
 // classLevel logs an entry depending on status and errors
@@ -87,6 +100,8 @@ func classLevel(entry *log.Entry, status int, errStr string) {
 	}
 	if status >= 500 {
 		entry.Error("server error")
+	} else if status == 401 || status == 403 {
+		entry.Warn("unauthorized access attempt")
 	} else if status >= 400 {
 		entry.Warn("client error")
 	} else {
@@ -131,6 +146,15 @@ func JSONLogLambdaWrapper(handler func(ctx context.Context, event events.APIGate
 			"request_id": requestID,
 		}
 
+		if event.RequestContext.Authorizer != nil {
+			userID := GetCognitoUsername(event.RequestContext.Authorizer)
+			if userID != "" {
+				fields["user_id"] = userID
+			}
+		} else if event.RequestContext.Identity.SourceIP != "" {
+			fields["client_ip"] = event.RequestContext.Identity.SourceIP
+		}
+
 		entry := log.WithFields(fields)
 
 		if err != nil {
@@ -149,6 +173,8 @@ func JSONLogLambdaWrapper(handler func(ctx context.Context, event events.APIGate
 				}
 			}
 			entry.Error("server error")
+		} else if status == 401 || status == 403 {
+			entry.Warn("unauthorized access attempt")
 		} else if status >= 400 {
 			entry.Warn("client error")
 		} else {

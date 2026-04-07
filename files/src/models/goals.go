@@ -33,6 +33,13 @@ type Goal struct {
 	UpdatedAt   time.Time  `dynamodbav:"updatedAt" json:"updatedAt"`
 }
 
+func (g *Goal) GetResourceType() string {
+	if g.GoalType == GoalTypeIndividual {
+		return ResourceTypeIndividualGoals
+	}
+	return ResourceTypeTeamGoals
+}
+
 func (g *Goal) ToAttributeValues() map[string]types.AttributeValue {
 	m, err := ToDynamoMap(g)
 	if err != nil {
