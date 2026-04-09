@@ -27,9 +27,13 @@ var (
 	PermSeasonsWrite  string
 	PermSeasonsDelete string
 
-	PermGoalsRead   string
-	PermGoalsWrite  string
-	PermGoalsDelete string
+	PermTeamGoalsRead   string
+	PermTeamGoalsWrite  string
+	PermTeamGoalsDelete string
+
+	PermIndividualGoalsRead   string
+	PermIndividualGoalsWrite  string
+	PermIndividualGoalsDelete string
 
 	PermProgressReportsRead   string
 	PermProgressReportsWrite  string
@@ -69,9 +73,13 @@ func init() {
 	PermSeasonsWrite = GetPermission("seasons", "write")
 	PermSeasonsDelete = GetPermission("seasons", "delete")
 
-	PermGoalsRead = GetPermission("goals", "read")
-	PermGoalsWrite = GetPermission("goals", "write")
-	PermGoalsDelete = GetPermission("goals", "delete")
+	PermTeamGoalsRead = GetPermission("team_goals", "read")
+	PermTeamGoalsWrite = GetPermission("team_goals", "write")
+	PermTeamGoalsDelete = GetPermission("team_goals", "delete")
+
+	PermIndividualGoalsRead = GetPermission("individual_goals", "read")
+	PermIndividualGoalsWrite = GetPermission("individual_goals", "write")
+	PermIndividualGoalsDelete = GetPermission("individual_goals", "delete")
 
 	PermProgressReportsRead = GetPermission("progress_reports", "read")
 	PermProgressReportsWrite = GetPermission("progress_reports", "write")
@@ -94,7 +102,8 @@ const (
 	ResourceTypeMembers         = "members"
 	ResourceTypeInvites         = "invites"
 	ResourceTypeSeasons         = "seasons"
-	ResourceTypeGoals           = "goals"
+	ResourceTypeTeamGoals       = "team_goals"
+	ResourceTypeIndividualGoals = "individual_goals"
 	ResourceTypeProgressReports = "progress_reports"
 	ResourceTypeProgress        = "progress"
 	ResourceTypeComments        = "comments"

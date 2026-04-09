@@ -10,6 +10,7 @@ import (
 
 	"github.com/fpgschiba/volleygoals/db"
 	"github.com/fpgschiba/volleygoals/models"
+	"github.com/fpgschiba/volleygoals/users"
 	"github.com/fpgschiba/volleygoals/utils"
 )
 
@@ -141,6 +142,15 @@ func AddTenantMember(ctx context.Context, event events.APIGatewayProxyRequest) (
 	if err := json.Unmarshal([]byte(event.Body), &req); err != nil || req.UserId == "" {
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, err)
 	}
+
+	user, err := users.GetUserBySub(ctx, req.UserId)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+	if user == nil {
+		return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorUserNotFound, nil)
+	}
+
 	if req.Role == "" {
 		req.Role = models.TenantMemberRoleMember
 	}
@@ -242,6 +252,40 @@ func ListTenantMembers(ctx context.Context, event events.APIGatewayProxyRequest)
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
 
+	userItems, err := users.GetUsersByTenantMembers(ctx, items)
+	if err != nil {
+		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
+	}
+
+	type TenantMemberResult struct {
+		Id       string                    `json:"id"`
+		TenantId string                    `json:"tenantId"`
+		UserId   string                    `json:"userId"`
+		Role     models.TenantMemberRole   `json:"role"`
+		Status   models.TenantMemberStatus `json:"status"`
+		User     struct {
+			Name    *string `json:"name"`
+			Email   string  `json:"email"`
+			Picture *string `json:"picture"`
+		} `json:"user"`
+	}
+
+	var resultItems []TenantMemberResult
+	for i, item := range items {
+		user := userItems[i]
+		resItem := TenantMemberResult{
+			Id:       item.Id,
+			TenantId: item.TenantId,
+			UserId:   item.UserId,
+			Role:     item.Role,
+			Status:   item.Status,
+		}
+		resItem.User.Name = user.Name
+		resItem.User.Email = user.Email
+		resItem.User.Picture = user.Picture
+		resultItems = append(resultItems, resItem)
+	}
+
 	outNextToken := ""
 	if nextCursor != nil {
 		outNextToken, err = models.EncodeCursor(nextCursor)
@@ -251,7 +295,7 @@ func ListTenantMembers(ctx context.Context, event events.APIGatewayProxyRequest)
 	}
 
 	resp := models.PaginationResponse{
-		Items:     items,
+		Items:     resultItems,
 		Count:     count,
 		NextToken: outNextToken,
 		HasMore:   hasMore,

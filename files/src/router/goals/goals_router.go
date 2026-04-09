@@ -26,11 +26,26 @@ func CreateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 		return utils.ErrorResponse(http.StatusBadRequest, utils.MsgBadRequest, nil)
 	}
 
-	if !utils.HasTeamPermission(ctx, event.RequestContext.Authorizer, teamId, models.Resource{Type: models.ResourceTypeGoals}, models.PermGoalsWrite) {
-		return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+	callerId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+
+	rt := models.ResourceTypeTeamGoals
+	rp := models.PermTeamGoalsWrite
+	// For individual goals the caller will own the new resource, so ownership policy
+	// applies (any team member may create their own individual goal). For team goals,
+	// creation is role-gated only — members must not bypass via ownership.
+	resource := models.Resource{Type: rt}
+	if request.Type == models.GoalTypeIndividual {
+		rt = models.ResourceTypeIndividualGoals
+		rp = models.PermIndividualGoalsWrite
+		resource = models.Resource{Type: rt, OwnedBy: callerId}
 	}
 
-	callerId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+	allowed, err := utils.CheckPermission(ctx, callerId, teamId, resource, rp)
+	if err != nil || !allowed {
+		if !utils.IsAdmin(event.RequestContext.Authorizer) {
+			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+		}
+	}
 	goal, err := instrumented.CreateGoal(ctx, teamId, callerId, request.Type, request.Title, request.Description)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, nil)
@@ -57,9 +72,14 @@ func GetGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*events.
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		rt := goal.GetResourceType()
+		rp := models.PermTeamGoalsRead
+		if goal.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsRead
+		}
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
-			models.PermGoalsRead)
+			models.Resource{Type: rt, OwnedBy: goal.OwnerId},
+			rp)
 		if err != nil || !allowed {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
@@ -97,20 +117,33 @@ func ListGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*event
 	}
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
-	if !utils.IsAdmin(event.RequestContext.Authorizer) {
-		filter.OwnerId = actorId
-		allowed, aerr := utils.CheckPermission(ctx, actorId, teamId,
-			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: actorId},
-			models.PermGoalsRead)
-		if aerr != nil || !allowed {
-			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
-		}
-	}
+	// We no longer strictly bound `filter.OwnerId = actorId` because that breaks
+	// visibility of team goals and managed individual goals. We let DB fetch relevant goals
+	// by team / season, and then filter out unauthorized ones post-fetch to respect Epic 1.3 rules.
 
 	items, count, nextCursor, hasMore, err := db.ListGoals(ctx, filter)
 	if err != nil {
 		return utils.ErrorResponse(http.StatusInternalServerError, utils.MsgInternalServerError, err)
 	}
+
+	var allowedItems []*models.Goal
+	for _, g := range items {
+		if utils.IsAdmin(event.RequestContext.Authorizer) {
+			allowedItems = append(allowedItems, g)
+			continue
+		}
+		rt := g.GetResourceType()
+		rp := models.PermTeamGoalsRead
+		if g.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsRead
+		}
+		allowed, _ := utils.CheckPermission(ctx, actorId, teamId, models.Resource{Type: rt, OwnedBy: g.OwnerId}, rp)
+		if allowed {
+			allowedItems = append(allowedItems, g)
+		}
+	}
+	items = allowedItems
+	count = len(items)
 
 	ownerCache := map[string]*GoalOwner{}
 	for _, g := range items {
@@ -183,9 +216,14 @@ func UpdateGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		rt := goal.GetResourceType()
+		rp := models.PermTeamGoalsWrite
+		if goal.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsWrite
+		}
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
-			models.PermGoalsWrite)
+			models.Resource{Type: rt, OwnedBy: goal.OwnerId},
+			rp)
 		if err != nil || !allowed {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
@@ -222,9 +260,14 @@ func DeleteGoal(ctx context.Context, event events.APIGatewayProxyRequest) (*even
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		rt := goal.GetResourceType()
+		rp := models.PermTeamGoalsDelete
+		if goal.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsDelete
+		}
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
-			models.PermGoalsDelete)
+			models.Resource{Type: rt, OwnedBy: goal.OwnerId},
+			rp)
 		if err != nil || !allowed {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
@@ -274,9 +317,14 @@ func UploadGoalFile(ctx context.Context, event events.APIGatewayProxyRequest) (*
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		rt := goal.GetResourceType()
+		rp := models.PermTeamGoalsWrite
+		if goal.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsWrite
+		}
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
-			models.PermGoalsWrite)
+			models.Resource{Type: rt, OwnedBy: goal.OwnerId},
+			rp)
 		if err != nil || !allowed {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}

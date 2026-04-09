@@ -36,13 +36,42 @@ func CreateComment(ctx context.Context, event events.APIGatewayProxyRequest) (*e
 	}
 
 	// Authorize comment creation against the target resource (e.g., goal/report),
-	// so that ownership-based permissions on the parent resource are honored.
+	// enforcing Epic 1.4 rules (validating read/write on the parent).
 	var targetResource models.Resource
+	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
+
 	switch request.CommentType {
 	case models.CommentTypeGoal:
-		targetResource = models.Resource{Type: models.ResourceTypeGoals}
+		goal, err := db.GetGoalById(ctx, request.TargetId)
+		if err != nil || goal == nil {
+			return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
+		}
+		rt := goal.GetResourceType()
+		rp := models.PermTeamGoalsWrite
+		if goal.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsWrite
+		}
+		// Confirm write permissions on the parent goal itself
+		if !utils.IsAdmin(event.RequestContext.Authorizer) {
+			allowed, err := utils.CheckPermission(ctx, actorId, teamId, models.Resource{Type: rt, OwnedBy: goal.OwnerId}, rp)
+			if err != nil || !allowed {
+				return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+			}
+		}
+		targetResource = models.Resource{Type: rt, OwnedBy: goal.OwnerId}
 	case models.CommentTypeProgressReport:
-		targetResource = models.Resource{Type: models.ResourceTypeProgressReports}
+		report, err := db.GetProgressReportById(ctx, request.TargetId)
+		if err != nil || report == nil {
+			return utils.ErrorResponse(http.StatusNotFound, utils.MsgErrorNotFound, nil)
+		}
+		// Progress reports typically just require write on the report to comment.
+		if !utils.IsAdmin(event.RequestContext.Authorizer) {
+			allowed, err := utils.CheckPermission(ctx, actorId, teamId, models.Resource{Type: models.ResourceTypeProgressReports, OwnedBy: report.AuthorId}, models.PermProgressReportsWrite)
+			if err != nil || !allowed {
+				return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
+			}
+		}
+		targetResource = models.Resource{Type: models.ResourceTypeProgressReports, OwnedBy: report.AuthorId}
 	default:
 		// Fallback to comments resource type if no specific target type matches.
 		targetResource = models.Resource{Type: models.ResourceTypeComments}

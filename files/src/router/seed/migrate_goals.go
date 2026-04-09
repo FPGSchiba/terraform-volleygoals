@@ -106,4 +106,3 @@ func MigrateGoals(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 	log.WithFields(log.Fields{"migrated": migrated, "skipped": skipped}).Info("Migration complete")
 	return utils.SuccessResponse(200, "Migration complete", map[string]int{"migrated": migrated, "skipped": skipped})
 }
-

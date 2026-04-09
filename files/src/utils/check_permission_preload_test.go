@@ -20,26 +20,26 @@ func preloadedData(memberRole string, ownerPerms, rolePerms []string, resourceTy
 }
 
 func TestCanReadActivity_OwnerCanReadOwnGoalActivity(t *testing.T) {
-	pd := preloadedData("member", []string{models.PermGoalsRead}, nil, models.ResourceTypeGoals)
-	a := &models.Activity{TargetType: models.ResourceTypeGoals, TargetOwnerId: "user-1"}
+	pd := preloadedData("member", []string{models.PermIndividualGoalsRead}, nil, models.ResourceTypeIndividualGoals)
+	a := &models.Activity{TargetType: models.ResourceTypeIndividualGoals, TargetOwnerId: "user-1"}
 	assert.True(t, pd.CanReadActivity("user-1", a))
 }
 
 func TestCanReadActivity_NonOwnerMemberCannotReadGoalActivity(t *testing.T) {
-	pd := preloadedData("member", []string{models.PermGoalsRead}, nil, models.ResourceTypeGoals)
-	a := &models.Activity{TargetType: models.ResourceTypeGoals, TargetOwnerId: "user-2"}
+	pd := preloadedData("member", []string{models.PermIndividualGoalsRead}, nil, models.ResourceTypeIndividualGoals)
+	a := &models.Activity{TargetType: models.ResourceTypeIndividualGoals, TargetOwnerId: "user-2"}
 	assert.False(t, pd.CanReadActivity("user-1", a))
 }
 
 func TestCanReadActivity_TrainerCanReadAnyGoalActivity(t *testing.T) {
-	pd := preloadedData("trainer", nil, []string{models.PermGoalsRead}, models.ResourceTypeGoals)
-	a := &models.Activity{TargetType: models.ResourceTypeGoals, TargetOwnerId: "user-2"}
+	pd := preloadedData("trainer", nil, []string{models.PermIndividualGoalsRead}, models.ResourceTypeIndividualGoals)
+	a := &models.Activity{TargetType: models.ResourceTypeIndividualGoals, TargetOwnerId: "user-2"}
 	assert.True(t, pd.CanReadActivity("trainer-1", a))
 }
 
 func TestCanReadActivity_NilMemberDenies(t *testing.T) {
 	pd := &utils.PreloadedData{}
-	a := &models.Activity{TargetType: models.ResourceTypeGoals, TargetOwnerId: "user-1"}
+	a := &models.Activity{TargetType: models.ResourceTypeIndividualGoals, TargetOwnerId: "user-1"}
 	assert.False(t, pd.CanReadActivity("user-1", a))
 }
 

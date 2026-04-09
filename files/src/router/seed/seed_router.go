@@ -28,43 +28,57 @@ func SeedDefaults(ctx context.Context, event events.APIGatewayProxyRequest) (*ev
 }
 
 func seedRoleDefinitions(ctx context.Context) error {
+	defs := models.GetDefinitions()
+
+	// Admin: full access to all resource actions
+	adminPerms := []string{}
+	for _, d := range defs {
+		for _, a := range d.Actions {
+			adminPerms = append(adminPerms, models.GetPermission(d.Id, a))
+		}
+	}
+
+	// Trainer: read across all resources, write/delete for content-related resources.
+	// Trainers manage invites (but cannot elevate to admin — enforced at the handler level).
+	trainerWrite := map[string]bool{"seasons": true, "team_goals": true, "invites": true, "progress_reports": true, "progress": true, "comments": true}
+	trainerDelete := map[string]bool{"seasons": true, "team_goals": true, "invites": true, "progress_reports": true, "comments": true}
+	trainerPerms := []string{}
+	for _, d := range defs {
+		// read for all
+		trainerPerms = append(trainerPerms, models.GetPermission(d.Id, "read"))
+		if trainerWrite[d.Id] {
+			trainerPerms = append(trainerPerms, models.GetPermission(d.Id, "write"))
+		}
+		if trainerDelete[d.Id] {
+			trainerPerms = append(trainerPerms, models.GetPermission(d.Id, "delete"))
+		}
+	}
+
+	// Member: read access to team-scoped resources plus the ability to create their own
+	// individual goals (enforced via ownership at the handler level) and progress reports.
+	memberReadSet := map[string]bool{"teams": true, "members": true, "seasons": true, "team_goals": true, "individual_goals": true, "progress_reports": true, "comments": true, "activities": true}
+	memberWriteSet := map[string]bool{"progress_reports": true, "progress": true}
+	memberPerms := []string{}
+	for _, d := range defs {
+		if memberReadSet[d.Id] {
+			memberPerms = append(memberPerms, models.GetPermission(d.Id, "read"))
+		}
+		if memberWriteSet[d.Id] {
+			memberPerms = append(memberPerms, models.GetPermission(d.Id, "write"))
+		}
+	}
+
 	roles := []struct {
 		name        string
 		permissions []string
 	}{
-		{
-			name: "admin",
-			permissions: []string{
-				models.PermTeamsRead, models.PermTeamsWrite, models.PermTeamsDelete,
-				models.PermTeamSettingsRead, models.PermTeamSettingsWrite,
-				models.PermMembersRead, models.PermMembersWrite, models.PermMembersDelete,
-				models.PermInvitesRead, models.PermInvitesWrite, models.PermInvitesDelete,
-				models.PermSeasonsRead,
-				models.PermActivitiesRead,
-			},
-		},
-		{
-			name: "trainer",
-			permissions: []string{
-				models.PermTeamsRead,
-				models.PermTeamSettingsRead,
-				models.PermMembersRead,
-				models.PermSeasonsRead, models.PermSeasonsWrite, models.PermSeasonsDelete,
-				models.PermGoalsRead, models.PermGoalsWrite, models.PermGoalsDelete,
-				models.PermProgressReportsRead, models.PermProgressReportsWrite, models.PermProgressReportsDelete,
-				models.PermProgressRead, models.PermProgressWrite,
-				models.PermCommentsRead, models.PermCommentsWrite, models.PermCommentsDelete,
-				models.PermActivitiesRead,
-			},
-		},
-		{
-			name: "member",
-			permissions: []string{
-				models.PermTeamsRead,
-				models.PermMembersRead,
-				models.PermSeasonsRead,
-			},
-		},
+		// tenant-scoped roles
+		{name: "admin", permissions: adminPerms},
+		{name: "trainer", permissions: trainerPerms},
+		{name: "member", permissions: memberPerms},
+		// platform-level role stored under the "global" tenant
+		{name: "global_admin", permissions: adminPerms},
+		{name: "tenant_admin", permissions: adminPerms},
 	}
 
 	for _, r := range roles {
@@ -73,7 +87,11 @@ func seedRoleDefinitions(ctx context.Context) error {
 			return err
 		}
 		if existing != nil {
-			log.Infof("role %q already exists, skipping", r.name)
+			// Update the existing role with new permissions if they differ
+			if _, err := db.UpdateRoleDefinitionPermissions(ctx, existing.Id, r.permissions); err != nil {
+				return err
+			}
+			log.Infof("updated role %q", r.name)
 			continue
 		}
 		if _, err := db.CreateRoleDefinition(ctx, "global", r.name, r.permissions, true); err != nil {
@@ -85,41 +103,33 @@ func seedRoleDefinitions(ctx context.Context) error {
 }
 
 func seedOwnershipPolicies(ctx context.Context) error {
-	policies := []struct {
-		resourceType     string
-		ownerPerms       []string
-		parentOwnerPerms []string
-	}{
-		{
-			resourceType: models.ResourceTypeGoals,
-			ownerPerms: []string{
-				models.PermGoalsRead, models.PermGoalsWrite, models.PermGoalsDelete,
-				models.PermCommentsRead, models.PermCommentsWrite,
-			},
-		},
-		{
-			resourceType: models.ResourceTypeProgressReports,
-			ownerPerms: []string{
-				models.PermProgressReportsRead, models.PermProgressReportsWrite, models.PermProgressReportsDelete,
-				models.PermCommentsRead, models.PermCommentsWrite,
-			},
-		},
-		{
-			resourceType: models.ResourceTypeProgress,
-			ownerPerms:   []string{models.PermProgressRead, models.PermProgressWrite},
-		},
-		{
-			resourceType:     models.ResourceTypeComments,
-			ownerPerms:       []string{models.PermCommentsRead, models.PermCommentsWrite, models.PermCommentsDelete},
-			parentOwnerPerms: []string{models.PermCommentsRead, models.PermCommentsWrite},
-		},
-	}
+	defs := models.GetDefinitions()
 
-	for _, p := range policies {
-		if _, err := db.UpsertOwnershipPolicy(ctx, "global", p.resourceType, p.ownerPerms, p.parentOwnerPerms); err != nil {
+	for _, d := range defs {
+		// Owner permissions: all actions on the resource
+		ownerPerms := []string{}
+		for _, a := range d.Actions {
+			ownerPerms = append(ownerPerms, models.GetPermission(d.Id, a))
+		}
+		// If resource supports activities as children, owners should be able to read activities
+		for _, c := range d.AllowedChildResources {
+			if c == "activities" {
+				ownerPerms = append(ownerPerms, models.GetPermission("activities", "read"))
+				break
+			}
+		}
+
+		var parentOwnerPerms []string
+		// Comments: allow parent owner (e.g., goal/report owner) to read/write comments
+		if d.Id == "comments" {
+			parentOwnerPerms = []string{models.GetPermission("comments", "read"), models.GetPermission("comments", "write")}
+		}
+
+		_, err := db.UpsertOwnershipPolicy(ctx, "global", d.Id, ownerPerms, parentOwnerPerms)
+		if err != nil {
 			return err
 		}
-		log.Infof("upserted ownership policy for %q", p.resourceType)
+		log.Infof("upserted ownership policy for %q", d.Id)
 	}
 	return nil
 }

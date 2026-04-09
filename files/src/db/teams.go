@@ -100,9 +100,11 @@ func ListTeamsByTenant(ctx context.Context, tenantId string, filter TeamFilter) 
 		limit = 25
 	}
 
-	in := &dynamodb.ScanInput{
-		TableName: aws.String(teamsTableName),
-		Limit:     aws.Int32(int32(limit)),
+	in := &dynamodb.QueryInput{
+		TableName:              aws.String(teamsTableName),
+		IndexName:              aws.String("tenantIdIndex"),
+		Limit:                  aws.Int32(int32(limit)),
+		KeyConditionExpression: aws.String("#tenantId = :tenantId"),
 	}
 
 	// Build filter expression using TeamFilter
@@ -115,13 +117,6 @@ func ListTeamsByTenant(ctx context.Context, tenantId string, filter TeamFilter) 
 		names = n
 	}
 
-	// Add tenantId filter
-	tenantExpr := "#tenantId = :tenantId"
-	if expr != "" {
-		expr = expr + " AND " + tenantExpr
-	} else {
-		expr = tenantExpr
-	}
 	if names == nil {
 		names = make(map[string]string)
 	}
@@ -131,18 +126,21 @@ func ListTeamsByTenant(ctx context.Context, tenantId string, filter TeamFilter) 
 	}
 	vals[":tenantId"] = &types.AttributeValueMemberS{Value: tenantId}
 
-	in.FilterExpression = aws.String(expr)
+	if expr != "" {
+		in.FilterExpression = aws.String(expr)
+	}
 	in.ExpressionAttributeValues = vals
 	in.ExpressionAttributeNames = names
 
 	// Resume from cursor if provided
 	if filter.Cursor != nil && filter.Cursor.LastID != "" {
 		in.ExclusiveStartKey = map[string]types.AttributeValue{
-			"id": &types.AttributeValueMemberS{Value: filter.Cursor.LastID},
+			"tenantId": &types.AttributeValueMemberS{Value: tenantId},
+			"id":       &types.AttributeValueMemberS{Value: filter.Cursor.LastID},
 		}
 	}
 
-	result, err := client.Scan(ctx, in)
+	result, err := client.Query(ctx, in)
 	if err != nil {
 		return nil, 0, nil, false, err
 	}

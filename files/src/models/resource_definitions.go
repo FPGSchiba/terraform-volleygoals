@@ -4,9 +4,16 @@ package models
 func GetDefinitions() []ResourceDefinition {
 	return []ResourceDefinition{
 		{
-			Id:                    "goals",
-			Name:                  "Goals",
-			Description:           "Individual or team goals",
+			Id:                    "individual_goals",
+			Name:                  "Individual Goals",
+			Description:           "Goals for an individual user",
+			Actions:               []string{"read", "write", "delete"},
+			AllowedChildResources: []string{"comments", "progress_reports", "goal_seasons", "activities"},
+		},
+		{
+			Id:                    "team_goals",
+			Name:                  "Team Goals",
+			Description:           "Goals for an entire team",
 			Actions:               []string{"read", "write", "delete"},
 			AllowedChildResources: []string{"comments", "progress_reports", "goal_seasons", "activities"},
 		},
@@ -36,14 +43,14 @@ func GetDefinitions() []ResourceDefinition {
 			Name:                  "Seasons",
 			Description:           "Team seasons",
 			Actions:               []string{"read", "write", "delete"},
-			AllowedChildResources: []string{"goals", "progress_reports", "goal_seasons", "activities"},
+			AllowedChildResources: []string{"individual_goals", "team_goals", "progress_reports", "goal_seasons", "activities"},
 		},
 		{
 			Id:                    "teams",
 			Name:                  "Teams",
 			Description:           "Teams holding members, goals, and seasons",
 			Actions:               []string{"read", "write", "delete"},
-			AllowedChildResources: []string{"seasons", "goals", "team_settings", "members", "invites", "activities"},
+			AllowedChildResources: []string{"seasons", "individual_goals", "team_goals", "team_settings", "members", "invites", "activities"},
 		},
 		{
 			Id:                    "tenants",

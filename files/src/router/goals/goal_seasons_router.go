@@ -28,9 +28,13 @@ func TagGoalToSeason(ctx context.Context, event events.APIGatewayProxyRequest) (
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		rp := models.PermTeamGoalsWrite
+		if goal.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsWrite
+		}
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
-			models.PermGoalsWrite)
+			models.Resource{Type: goal.GetResourceType(), OwnedBy: goal.OwnerId},
+			rp)
 		if err != nil || !allowed {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
@@ -64,8 +68,8 @@ func UntagGoalFromSeason(ctx context.Context, event events.APIGatewayProxyReques
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
-			models.PermGoalsWrite)
+			models.Resource{Type: goal.GetResourceType(), OwnedBy: goal.OwnerId},
+			models.PermTeamGoalsWrite)
 		if err != nil || !allowed {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}
@@ -94,9 +98,13 @@ func ListGoalSeasons(ctx context.Context, event events.APIGatewayProxyRequest) (
 
 	actorId := utils.GetCognitoUsername(event.RequestContext.Authorizer)
 	if !utils.IsAdmin(event.RequestContext.Authorizer) {
+		rp := models.PermTeamGoalsRead
+		if goal.GoalType == models.GoalTypeIndividual {
+			rp = models.PermIndividualGoalsRead
+		}
 		allowed, err := utils.CheckPermission(ctx, actorId, teamId,
-			models.Resource{Type: models.ResourceTypeGoals, OwnedBy: goal.OwnerId},
-			models.PermGoalsRead)
+			models.Resource{Type: goal.GetResourceType(), OwnedBy: goal.OwnerId},
+			rp)
 		if err != nil || !allowed {
 			return utils.ErrorResponse(http.StatusForbidden, utils.MsgErrorForbidden, nil)
 		}

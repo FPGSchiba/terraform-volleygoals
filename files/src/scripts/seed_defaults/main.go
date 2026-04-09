@@ -78,6 +78,7 @@ func seedRoleDefinitions(ctx context.Context) error {
 		// every available permission. Seeder is idempotent so if the role
 		// already exists it will be skipped.
 		{name: "global_admin", permissions: adminPerms},
+		{name: "tenant_admin", permissions: adminPerms},
 	}
 
 	for _, r := range roles {
@@ -86,7 +87,10 @@ func seedRoleDefinitions(ctx context.Context) error {
 			return err
 		}
 		if existing != nil {
-			log.Printf("  role %q already exists, skipping", r.name)
+			if _, err := db.UpdateRoleDefinitionPermissions(ctx, existing.Id, r.permissions); err != nil {
+				return err
+			}
+			log.Printf("  updated role %q (%s)", existing.Name, existing.Id)
 			continue
 		}
 		def, err := db.CreateRoleDefinition(ctx, "global", r.name, r.permissions, true)

@@ -168,6 +168,13 @@ func HandleRequest(ctx context.Context, event events.APIGatewayProxyRequest) (re
 	case "UploadGoalFile":
 		response, err = goals.UploadGoalFile(ctx, event)
 
+	case "ListGoalSeasons":
+		response, err = goals.ListGoalSeasons(ctx, event)
+	case "UntagGoalFromSeason":
+		response, err = goals.UntagGoalFromSeason(ctx, event)
+	case "TagGoalToSeason":
+		response, err = goals.TagGoalToSeason(ctx, event)
+
 	// Progress Report handlers
 	case "CreateProgressReport":
 		response, err = progress_reports.CreateProgressReport(ctx, event)
