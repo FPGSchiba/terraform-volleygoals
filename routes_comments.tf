@@ -25,13 +25,14 @@ resource "aws_api_gateway_resource" "comment_file_presign" {
 }
 
 module "create_comment_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
   create_options_method = true
+  control_allow_methods = ["POST", "GET"]
   http_methods          = ["POST"]
   name_overwrite        = "create-comment"
   path_name             = "comments"
@@ -97,7 +98,7 @@ module "create_comment_ms" {
 }
 
 module "list_comments_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -158,12 +159,13 @@ module "list_comments_ms" {
 }
 
 module "get_comment_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  control_allow_methods = ["GET", "DELETE", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-comment"
   path_name             = "{commentId}"
@@ -218,7 +220,7 @@ module "get_comment_ms" {
 }
 
 module "update_comment_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -287,7 +289,7 @@ module "update_comment_ms" {
 }
 
 module "delete_comment_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -360,7 +362,7 @@ module "delete_comment_ms" {
 }
 
 module "upload_comment_file_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"

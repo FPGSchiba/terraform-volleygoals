@@ -6,12 +6,13 @@ resource "aws_api_gateway_resource" "self" {
 }
 
 module "get_self_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  control_allow_methods = ["GET", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-self"
   path_name             = "members"
@@ -65,7 +66,7 @@ module "get_self_ms" {
 }
 
 module "update_self_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -131,12 +132,13 @@ resource "aws_api_gateway_resource" "teams_id" {
 }
 
 module "get_teams_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  control_allow_methods = ["POST", "GET"]
   http_methods          = ["GET"]
   name_overwrite        = "list-teams"
   path_name             = "teams"
@@ -186,12 +188,13 @@ module "get_teams_ms" {
 }
 
 module "get_team_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  control_allow_methods = ["GET", "DELETE", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-team"
   path_name             = "{teamId}"
@@ -244,7 +247,7 @@ module "get_team_ms" {
 }
 
 module "create_team_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -305,7 +308,7 @@ module "create_team_ms" {
 }
 
 module "delete_team_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -384,7 +387,7 @@ module "delete_team_ms" {
 }
 
 module "update_team_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -457,7 +460,7 @@ resource "aws_api_gateway_resource" "team_invites" {
 }
 
 module "get_team_invites_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -525,7 +528,7 @@ resource "aws_api_gateway_resource" "team_picture_presign" {
 }
 
 module "upload_team_picture_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -591,7 +594,7 @@ resource "aws_api_gateway_resource" "team_activity" {
 }
 
 module "get_team_activity_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -654,7 +657,7 @@ resource "aws_api_gateway_resource" "team_settings" {
 }
 
 module "update_team_settings_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -735,12 +738,13 @@ resource "aws_api_gateway_resource" "team_member_id" {
 }
 
 module "list_team_members_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  control_allow_methods = ["POST", "GET", "DELETE"]
   http_methods          = ["GET"]
   name_overwrite        = "list-team-members"
   path_name             = "members"
@@ -794,7 +798,7 @@ module "list_team_members_ms" {
 }
 
 module "add_team_member_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -859,12 +863,13 @@ module "add_team_member_ms" {
 }
 
 module "update_team_member_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
+  control_allow_methods = ["DELETE", "PATCH"]
   http_methods          = ["PATCH"]
   name_overwrite        = "update-team-member"
   path_name             = "members"
@@ -923,7 +928,7 @@ module "update_team_member_ms" {
 }
 
 module "delete_team_member_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -988,7 +993,7 @@ module "delete_team_member_ms" {
 }
 
 module "leave_team_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
