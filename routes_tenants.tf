@@ -674,29 +674,29 @@ resource "aws_api_gateway_resource" "tenant_resource_model" {
   path_part   = "resource-model"
 }
 module "get_resource_model_ms" {
-  source                    = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
-  api_id                    = aws_api_gateway_rest_api.api.id
-  code_dir                  = "${path.module}/files/src"
-  cors_enabled              = true
-  control_allow_origin      = local.cors_allowed_origin
-  http_methods              = ["GET"]
-  name_overwrite            = "get-resource-model"
-  path_name                 = "resource-model"
-  create_resource           = false
-  existing_resource_id      = aws_api_gateway_resource.tenant_resource_model.id
-  prefix                    = var.prefix
-  authorizer_id             = aws_api_gateway_authorizer.this.id
-  authorization_type        = "COGNITO_USER_POOLS"
-  enable_tracing            = true
-  timeout                   = 29
-  vpc_networked             = false
-  environment_variables     = local.lambda_environment_variables
-  tags                      = local.tags
-  layer_arns                = local.lambda_layer_arns
-  json_logging              = true
-  handler_name              = "GetResourceModel"
-  pre_built_zip             = data.archive_file.shared_lambda_zip.output_path
-  runtime                   = local.lambda_runtime
+  source                = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  api_id                = aws_api_gateway_rest_api.api.id
+  code_dir              = "${path.module}/files/src"
+  cors_enabled          = true
+  control_allow_origin  = local.cors_allowed_origin
+  http_methods          = ["GET"]
+  name_overwrite        = "get-resource-model"
+  path_name             = "resource-model"
+  create_resource       = false
+  existing_resource_id  = aws_api_gateway_resource.tenant_resource_model.id
+  prefix                = var.prefix
+  authorizer_id         = aws_api_gateway_authorizer.this.id
+  authorization_type    = "COGNITO_USER_POOLS"
+  enable_tracing        = true
+  timeout               = 29
+  vpc_networked         = false
+  environment_variables = local.lambda_environment_variables
+  tags                  = local.tags
+  layer_arns            = local.lambda_layer_arns
+  json_logging          = true
+  handler_name          = "GetResourceModel"
+  pre_built_zip         = data.archive_file.shared_lambda_zip.output_path
+  runtime               = local.lambda_runtime
   additional_iam_statements = [
     {
       actions = ["dynamodb:Query"]
