@@ -32,7 +32,7 @@ module "create_comment_ms" {
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
   create_options_method = true
-  control_allow_methods = ["POST", "OPTIONS", "GET"]
+  control_allow_methods = ["GET", "POST"]
   http_methods          = ["POST"]
   name_overwrite        = "create-comment"
   path_name             = "comments"
@@ -165,7 +165,7 @@ module "get_comment_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["PATCH", "DELETE", "OPTIONS", "GET"]
+  control_allow_methods = ["DELETE", "PATCH", "GET"]
   http_methods          = ["GET"]
   name_overwrite        = "get-comment"
   path_name             = "{commentId}"

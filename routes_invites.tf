@@ -158,7 +158,7 @@ module "revoke_invite_ms" {
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
   create_options_method = true
-  control_allow_methods = ["PATCH", "DELETE", "OPTIONS", "GET"]
+  control_allow_methods = ["DELETE", "PATCH", "GET"]
   http_methods          = ["DELETE"]
   name_overwrite        = "revoke-invite"
   path_name             = "{inviteId}"

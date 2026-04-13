@@ -2,7 +2,10 @@
 resource "aws_dynamodb_table" "teams" {
   name         = "${var.prefix}-teams"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -14,8 +17,11 @@ resource "aws_dynamodb_table" "teams" {
   }
 
   global_secondary_index {
-    name            = "tenantIdIndex"
-    hash_key        = "tenantId"
+    name = "tenantIdIndex"
+    key_schema {
+      attribute_name = "tenantId"
+      key_type       = "HASH"
+    }
     projection_type = "ALL"
   }
 
@@ -25,7 +31,10 @@ resource "aws_dynamodb_table" "teams" {
 resource "aws_dynamodb_table" "team_members" {
   name         = "${var.prefix}-team-members"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -41,20 +50,32 @@ resource "aws_dynamodb_table" "team_members" {
   }
 
   global_secondary_index {
-    hash_key        = "teamId"
-    range_key       = "userId"
+    key_schema {
+      attribute_name = "teamId"
+      key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "userId"
+      key_type       = "RANGE"
+    }
     name            = "teamUserIdIndex"
     projection_type = "ALL"
   }
 
   global_secondary_index {
-    hash_key        = "userId"
+    key_schema {
+      attribute_name = "userId"
+      key_type       = "HASH"
+    }
     name            = "userIdIndex"
     projection_type = "ALL"
   }
 
   global_secondary_index {
-    hash_key        = "teamId"
+    key_schema {
+      attribute_name = "teamId"
+      key_type       = "HASH"
+    }
     name            = "teamIdIndex"
     projection_type = "ALL"
   }
@@ -65,7 +86,10 @@ resource "aws_dynamodb_table" "team_members" {
 resource "aws_dynamodb_table" "invites" {
   name         = "${var.prefix}-invites"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -83,13 +107,19 @@ resource "aws_dynamodb_table" "invites" {
   }
 
   global_secondary_index {
-    hash_key        = "inviteToken"
+    key_schema {
+      attribute_name = "inviteToken"
+      key_type       = "HASH"
+    }
     name            = "tokenIndex"
     projection_type = "ALL"
   }
 
   global_secondary_index {
-    hash_key        = "teamId"
+    key_schema {
+      attribute_name = "teamId"
+      key_type       = "HASH"
+    }
     name            = "teamIdIndex"
     projection_type = "ALL"
   }
@@ -100,7 +130,10 @@ resource "aws_dynamodb_table" "invites" {
 resource "aws_dynamodb_table" "team_settings" {
   name         = "${var.prefix}-team-settings"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -112,7 +145,10 @@ resource "aws_dynamodb_table" "team_settings" {
   }
 
   global_secondary_index {
-    hash_key        = "teamId"
+    key_schema {
+      attribute_name = "teamId"
+      key_type       = "HASH"
+    }
     name            = "teamIdIndex"
     projection_type = "ALL"
   }
@@ -123,7 +159,10 @@ resource "aws_dynamodb_table" "team_settings" {
 resource "aws_dynamodb_table" "seasons" {
   name         = "${var.prefix}-seasons"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -136,7 +175,10 @@ resource "aws_dynamodb_table" "seasons" {
 resource "aws_dynamodb_table" "goals" {
   name         = "${var.prefix}-goals"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -149,7 +191,10 @@ resource "aws_dynamodb_table" "goals" {
 resource "aws_dynamodb_table" "progress_reports" {
   name         = "${var.prefix}-progress-reports"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -162,7 +207,10 @@ resource "aws_dynamodb_table" "progress_reports" {
 resource "aws_dynamodb_table" "progress" {
   name         = "${var.prefix}-progress"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -175,7 +223,10 @@ resource "aws_dynamodb_table" "progress" {
 resource "aws_dynamodb_table" "comments" {
   name         = "${var.prefix}-comments"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -188,7 +239,10 @@ resource "aws_dynamodb_table" "comments" {
 resource "aws_dynamodb_table" "comment_files" {
   name         = "${var.prefix}-comment-files"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -201,7 +255,10 @@ resource "aws_dynamodb_table" "comment_files" {
 resource "aws_dynamodb_table" "activities" {
   name         = "${var.prefix}-activities"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -213,8 +270,11 @@ resource "aws_dynamodb_table" "activities" {
   }
 
   global_secondary_index {
-    name            = "teamIdIndex"
-    hash_key        = "teamId"
+    name = "teamIdIndex"
+    key_schema {
+      attribute_name = "teamId"
+      key_type       = "HASH"
+    }
     projection_type = "ALL"
   }
 
@@ -224,7 +284,10 @@ resource "aws_dynamodb_table" "activities" {
 resource "aws_dynamodb_table" "goal_seasons" {
   name         = "${var.prefix}-goal-seasons"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  key_schema {
+    attribute_name = "id"
+    key_type       = "HASH"
+  }
 
   attribute {
     name = "id"
@@ -240,14 +303,20 @@ resource "aws_dynamodb_table" "goal_seasons" {
   }
 
   global_secondary_index {
-    name            = "goalIdIndex"
-    hash_key        = "goalId"
+    name = "goalIdIndex"
+    key_schema {
+      attribute_name = "goalId"
+      key_type       = "HASH"
+    }
     projection_type = "ALL"
   }
 
   global_secondary_index {
-    name            = "seasonIdIndex"
-    hash_key        = "seasonId"
+    name = "seasonIdIndex"
+    key_schema {
+      attribute_name = "seasonId"
+      key_type       = "HASH"
+    }
     projection_type = "ALL"
   }
 

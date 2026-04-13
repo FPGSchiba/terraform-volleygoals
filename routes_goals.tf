@@ -77,7 +77,7 @@ module "create_goal_ms" {
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
   create_options_method = true
-  control_allow_methods = ["POST", "OPTIONS", "GET"]
+  control_allow_methods = ["GET", "POST"]
   http_methods          = ["POST"]
   name_overwrite        = "create-goal"
   path_name             = "goals"
@@ -157,7 +157,7 @@ module "get_goal_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["DELETE", "OPTIONS", "PUT", "GET"]
+  control_allow_methods = ["DELETE", "PUT", "GET"]
   http_methods          = ["GET"]
   name_overwrite        = "get-goal"
   path_name             = "{goalId}"
@@ -312,7 +312,7 @@ module "tag_goal_season_ms" {
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
   create_options_method = true
-  control_allow_methods = ["POST", "OPTIONS", "DELETE"]
+  control_allow_methods = ["DELETE", "POST"]
   http_methods          = ["POST"]
   name_overwrite        = "tag-goal-season"
   path_name             = "{seasonId}"

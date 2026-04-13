@@ -80,7 +80,7 @@ module "create_tenant_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["POST", "OPTIONS", "GET"]
+  control_allow_methods = ["GET", "POST"]
   http_methods          = ["POST"]
   name_overwrite        = "create-tenant"
   path_name             = "tenants"
@@ -120,7 +120,7 @@ module "get_tenant_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["PATCH", "DELETE", "OPTIONS", "GET"]
+  control_allow_methods = ["DELETE", "PATCH", "GET"]
   http_methods          = ["GET"]
   name_overwrite        = "get-tenant"
   path_name             = "tenants"
@@ -334,7 +334,7 @@ module "list_role_definitions_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["POST", "OPTIONS", "GET"]
+  control_allow_methods = ["POST", "GET"]
   http_methods          = ["GET"]
   name_overwrite        = "list-role-definitions"
   path_name             = "roles"
@@ -422,7 +422,7 @@ module "update_role_definition_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["PATCH", "DELETE", "OPTIONS"]
+  control_allow_methods = ["DELETE", "PATCH"]
   http_methods          = ["PATCH"]
   name_overwrite        = "update-role-definition"
   path_name             = "roles"
