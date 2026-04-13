@@ -7,7 +7,7 @@ resource "aws_api_gateway_resource" "search" {
 }
 
 module "global_search_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -73,7 +73,7 @@ resource "aws_api_gateway_resource" "health" {
 }
 
 module "health_check_ms" {
-  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
 
   api_id                = aws_api_gateway_rest_api.api.id
   code_dir              = "${path.module}/files/src"
@@ -125,7 +125,7 @@ resource "aws_api_gateway_resource" "resource_definitions" {
   path_part   = "resource-definitions"
 }
 module "get_resource_definitions_ms" {
-  source                    = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.2"
+  source                    = "github.com/FPGSchiba/terraform-aws-microservice?ref=v2.4.3"
   api_id                    = aws_api_gateway_rest_api.api.id
   code_dir                  = "${path.module}/files/src"
   cors_enabled              = true
