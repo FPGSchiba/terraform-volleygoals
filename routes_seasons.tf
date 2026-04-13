@@ -371,6 +371,7 @@ module "get_season_stats_ms" {
       resources = [
         aws_dynamodb_table.team_members.arn,
         "${aws_dynamodb_table.team_members.arn}/index/teamUserIdIndex",
+        "${aws_dynamodb_table.team_members.arn}/index/teamIdIndex",
       ]
     },
     {

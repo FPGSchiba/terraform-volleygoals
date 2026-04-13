@@ -697,5 +697,12 @@ module "get_resource_model_ms" {
   handler_name              = "GetResourceModel"
   pre_built_zip             = data.archive_file.shared_lambda_zip.output_path
   runtime                   = local.lambda_runtime
-  additional_iam_statements = []
+  additional_iam_statements = [
+    {
+      actions = ["dynamodb:Query"]
+      resources = [
+        "${aws_dynamodb_table.ownership_policies.arn}/index/tenantResourceTypeIndex"
+      ]
+    }
+  ]
 }
