@@ -80,7 +80,7 @@ module "create_tenant_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["GET", "POST"]
+  control_allow_methods = ["POST", "GET"]
   http_methods          = ["POST"]
   name_overwrite        = "create-tenant"
   path_name             = "tenants"
@@ -120,7 +120,7 @@ module "get_tenant_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["DELETE", "PATCH", "GET"]
+  control_allow_methods = ["GET", "DELETE", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-tenant"
   path_name             = "tenants"

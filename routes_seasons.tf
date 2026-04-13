@@ -42,7 +42,7 @@ module "create_season_ms" {
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
   create_options_method = true
-  control_allow_methods = ["GET", "POST"]
+  control_allow_methods = ["POST", "GET"]
   http_methods          = ["POST"]
   name_overwrite        = "create-season"
   path_name             = "seasons"
@@ -156,7 +156,7 @@ module "get_season_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["DELETE", "PATCH", "GET"]
+  control_allow_methods = ["GET", "DELETE", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-season"
   path_name             = "{seasonId}"
@@ -407,7 +407,7 @@ module "create_progress_report_ms" {
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
   create_options_method = true
-  control_allow_methods = ["GET", "POST"]
+  control_allow_methods = ["POST", "GET"]
   http_methods          = ["POST"]
   name_overwrite        = "create-progress-report"
   path_name             = "progress-reports"
@@ -545,7 +545,7 @@ module "get_progress_report_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["DELETE", "PATCH", "GET"]
+  control_allow_methods = ["GET", "DELETE", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-progress-report"
   path_name             = "{reportId}"

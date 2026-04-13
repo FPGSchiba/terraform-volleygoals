@@ -12,7 +12,7 @@ module "get_self_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["PATCH", "GET"]
+  control_allow_methods = ["GET", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-self"
   path_name             = "members"
@@ -194,7 +194,7 @@ module "get_team_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["DELETE", "PATCH", "GET"]
+  control_allow_methods = ["GET", "DELETE", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-team"
   path_name             = "{teamId}"
@@ -744,7 +744,7 @@ module "list_team_members_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["POST", "DELETE", "GET"]
+  control_allow_methods = ["POST", "GET", "DELETE"]
   http_methods          = ["GET"]
   name_overwrite        = "list-team-members"
   path_name             = "members"

@@ -71,7 +71,7 @@ module "get_user_ms" {
   code_dir              = "${path.module}/files/src"
   cors_enabled          = true
   control_allow_origin  = local.cors_allowed_origin
-  control_allow_methods = ["DELETE", "PATCH", "GET"]
+  control_allow_methods = ["GET", "DELETE", "PATCH"]
   http_methods          = ["GET"]
   name_overwrite        = "get-user"
   path_name             = "{userSub}"
